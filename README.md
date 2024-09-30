@@ -26,15 +26,17 @@ e.	Autocorrelation: If a suggestion of a rational approximation sequence has hig
 10.	Tempo tendency (increasing or decreasing over the length of the sequence) is calculated by taking the inverse of the sum of all ratio deviations in sequence (the best suggestion for rational approximation of the sequence)
 
 
-The files:
-**ratio_analyzer.py** - the ratio analyzer methods
-**rhythm_osc_server.py** - osc communication (with e.g. a vst plugin), gives access to the functions in ratio_analyzer.py
-**osc_io.py** - loaded by rhythm_osc_server.py to handle osc communication
-**rhythm_analyzer_vst.csd** - a simple test VST plugin, taking midi note inputs, communicates with rhythm_osc_server.py for the analysis. Export this as a plugin from Cabbage.
-**rhythm_ratio_analyzer_test.rpp** - Test project for Reaper, with midi sequences and the rhythm_analyzer_vst vst plugin (OSX users might need to delete and add the plugin for Reaper to find it)
-**simple_markovian_rhythm_player.csd** - a simple markovian rhythm player (not yet connected to the analysis, just uses text input for the ratios)
+The files:  
+**ratio_analyzer.py** - the ratio analyzer methods  
+**rhythm_osc_server.py** - osc communication (with e.g. a vst plugin), gives access to the functions in ratio_analyzer.py  
+**osc_io.py** - loaded by rhythm_osc_server.py to handle osc communication  
+**rhythm_analyzer_vst.csd** - a simple test VST plugin, taking midi note inputs, communicates with rhythm_osc_server.py for the analysis. Export this as a plugin from Cabbage.  
+**rhythm_ratio_analyzer_test.rpp** - Test project for Reaper, with midi sequences and the rhythm_analyzer_vst vst plugin (OSX users might need to delete and add the plugin for Reaper to find it)  
+**simple_markovian_rhythm_player.csd** - a simple markovian rhythm player (not yet connected to the analysis, just uses text input for the ratios)  
 
-To use:
-python rhythm_osc_server.py
-Then load the plugin "rhythm_analyzer_vst" in a DAW, hit "record" and send midi notes to it. When you stop recording, analysis will be initiated. hit "play" to hear the best analysis suggestion. The "rank" dropdown will give access to next best suggestions.
+To use:  
+python rhythm_osc_server.py  
+Then load the plugin "rhythm_analyzer_vst" in a DAW, hit "record" and send midi notes to it. When you stop recording, analysis will be initiated. hit "play" to hear the best analysis suggestion. The "rank" dropdown will give access to next best suggestions.  
+
+
 
