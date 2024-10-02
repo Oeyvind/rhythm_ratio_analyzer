@@ -1,0 +1,8 @@
+* markovian player can get stuck if rhythm sequence ends with ratios that does not occur earlier
+- add wraparound option? (transition from last to first)
+- add "nudge" option? (random change)
+
+* markovian player also could need a "sync to pulse" option, where any rhythm pattern leading to contant offbeats will be "guided" back to downbeats
+
+* rhythm analyzer still makes some mistakes
+  - generate definitive test set of rhythms that it must recognize
