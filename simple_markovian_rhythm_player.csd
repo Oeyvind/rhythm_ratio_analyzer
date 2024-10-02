@@ -130,9 +130,9 @@ instr 4
   printarray(giUniqueRatiosItems)
   puts "STM:", 1
   printarray(giTransitionMatrix)
-  ktrig init 1
-  chnset ktrig, "reinit_rhythm"
-  ktrig = 0
+  ;ktrig init 1
+  ;chnset ktrig, "reinit_rhythm"
+  ;ktrig = 0
 endin
 
 
