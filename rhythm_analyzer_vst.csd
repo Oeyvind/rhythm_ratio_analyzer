@@ -1,5 +1,5 @@
 <Cabbage>
-form size(800, 300), caption("Rhythm Analyzer"), pluginId("rtm1"), guiMode("queue"), colour(30,40,40)
+form size(800, 500), caption("Rhythm Analyzer"), pluginId("rtm1"), guiMode("queue"), colour(30,40,40)
 
 button bounds(5, 5, 70, 20), text("record","recording"), channel("record_enable"), colour:0("green"), colour:1("red")
 button bounds(90, 5, 60, 20), text("clear"), channel("clear"), colour:0("green"), colour:1("red"), latched(0)
@@ -40,8 +40,9 @@ nslider bounds(480, 150, 40, 25), channel("gen_tempo_bpm"), range(1, 3000, 60), 
 nslider bounds(540, 150, 40, 25), channel("gen_order"), range(0, 2, 2), fontSize(14)
 label bounds(480, 175, 70, 18), text("g_tempo"), fontSize(12), align("left")
 label bounds(540, 175, 70, 18), text("g_order"), fontSize(12), align("left")
+button bounds(590, 150, 40, 20), text("wrap"), channel("g_wraparound"), colour:0("green"), colour:1("red"), value(1)
 
-csoundoutput bounds(5, 200, 690, 95)
+csoundoutput bounds(5, 200, 690, 295)
 </Cabbage>
 
 <CsoundSynthesizer>
@@ -101,7 +102,8 @@ instr 1
     event "i", -109, 0, .1
   endif
   Sratios chnget "rhythm_ratios"
-  if changed:k(Sratios) == 1 then
+  kwraparound chnget "g_wraparound" ; wraparound
+  if (changed:k(Sratios) == 1) || (changed(kwraparound) > 0) then
     Scoreline sprintfk {{i 102 0 1 "%s"}}, Sratios
     scoreline Scoreline, 1
   endif
@@ -300,7 +302,7 @@ instr 102
   od
   ginumitems = iunique_index
   giUniqueRatiosItems slicearray giUniqueRatiosItems, 0, ginumitems-1
-
+  
   ; now we know how large the STM needs to be, and can proceed filling it
   giTransitionMatrix[][] init ginumitems*2, ginumitems
   index = 0
@@ -308,8 +310,9 @@ instr 102
   i2prev_ratio = -1
   iprev_unique_id = -1
   i2prev_unique_id = -1
-  while index < lenarray(iRatios) do
-    iratio = iRatios[index]
+  iwraparound chnget "g_wraparound" ; wraparound
+  while index < (lenarray(iRatios)+(iwraparound*2)) do
+    iratio = iRatios[index%lenarray(iRatios)]
     iunique_id findarray giUniqueRatiosItems, iratio, 0.01
     ; increment in STM for each observation
     ;print index, iratio, iprev_ratio, i2prev_ratio
@@ -329,7 +332,7 @@ instr 102
   od
   puts "Unique ratios in order of appearance:", 1
   printarray(giUniqueRatiosItems)
-  puts "STM:", 1
+  puts "STM: [unique_ratio - transition_probability], first half is 1st order, 2nd half is 'next to last' order", 1
   printarray(giTransitionMatrix)
 endin
 
@@ -364,7 +367,7 @@ instr 109
 
   ; get probabilities from STM
   giProb_prev[] getrow giTransitionMatrix, iunique_ratio ; 1st order Markov (according to previous item)
-  if iprev_unique_ratio < 0 then; attempt to get around init of both, but fails
+  if iprev_unique_ratio < 0 then; attempt to get around init of both
     iprev_lookup = iunique_ratio
   else
     iprev_lookup = iprev_unique_ratio+ginumitems 

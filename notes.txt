@@ -6,3 +6,13 @@
 
 * rhythm analyzer still makes some mistakes
   - generate definitive test set of rhythms that it must recognize
+
+* vst: 
+  - clear should slear display also
+  - auto record: 
+    - enable record so that it starts recording on the first event received
+    - stop recording N secs after last event (can also be manually triggered)
+    - restart recording (continue) on next event after "pause"
+      - when merging recording segments
+        - last event from previous = first event from next phrase
+
