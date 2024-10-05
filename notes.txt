@@ -1,8 +1,30 @@
-* markovian player can get stuck if rhythm sequence ends with ratios that does not occur earlier
-- add wraparound option? (transition from last to first)
-- add "nudge" option? (random change)
+* audio input to midi trigger conversion with Mountains and lakes
 
-* markovian player also could need a "sync to pulse" option, where any rhythm pattern leading to contant offbeats will be "guided" back to downbeats
+* markovian player could need a "sync to pulse" option, where any rhythm pattern leading to contant offbeats will be "guided" back to downbeats
+
+* markovian generator will most likely not produce compound/compoite patterns? 
+  - e.g. clave and subgroupings
+    - 3,3,2
+    - 3,2,3,2,3,2,2 (5)
+    - 3,2,2,3,2,2,4 (7)
+    - ... or will it? ... if biased towards a sync to pulse/downbeat?
+    - may need a "subgrouping preference" to maintain e.g. groups of 7
+
+* the rhythm generator (markovian and veriants) implemented in Python instead of Csound
+  - easier to handle complex relationships and patterns
+  - Csound player should be milliseconds based (kr clock, millisecond lookup for next event). As simple as possible.
+    - any latency in OSC communication can be remedied (?) as event rate is relatively low
+    - ask for next event data immediately after dispersing an event
+    - can also ask for several next events, then discard unused events if external conditions change
+
+* analyze several overlapping windows
+  - preference rule to maintain assumption from previous window
+  - novelty indicator, should not need to be placed on analysis window boundaries
+  - how to maintain the whole history?
+    - rewrite older ratios?
+    - keep reference to new interpretation (tempo/pulse/triggerseq/ratio-subdiv)
+  - save complete (compound) ratios_commondiv for whole sequence, all recordings. Personal corpus.
+  - in generator: may ask for events within same tempo/complexity segment(s) of whole corpus
 
 * rhythm analyzer still makes some mistakes
   - generate definitive test set of rhythms that it must recognize
