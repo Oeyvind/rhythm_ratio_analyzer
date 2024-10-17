@@ -30,6 +30,7 @@ ratio_dev_abs_max_weight = 1
 grid_dev_weight = 0.2
 evidence_weight = 0.3
 autocorr_weight = 1
+savedata = True
 
 def receive_timevalues(unused_addr, *osc_data):
     '''Message handler. This is called when we receive an OSC message'''
@@ -154,7 +155,21 @@ def analyze(unused_addr, *osc_data):
             logging.info('\nTim spent on Python ratio analysis:')
             logging.info('    RT: {} seconds'.format(t5[0]-t1[0]))
             logging.info('    CPU: {} seconds'.format(t5[1]-t1[1]))
-
+        
+        '''
+        if savedata:
+            # make a dict with all the data to be exported
+            jsondict = {}
+            selection = np.argsort(scores)[:4] # select the 4 best representations
+            for i in selection:
+                ratios_commondiv[i]
+                trigseq = r.make_trigger_sequence(ratios_commondiv[i,:,:2])
+                acorr = r.autocorr(trigseq)
+                pulseposition = np.argmax(acorr[1:])+1
+            with open('rhythmdata_test.json', 'w') as filehandle:
+                json.dump(jsondict, filehandle)
+        '''
+        
 def clear_timedata(unused_addr, *osc_data):
     global timedata
     timedata = []
