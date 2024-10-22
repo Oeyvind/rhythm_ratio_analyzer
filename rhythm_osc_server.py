@@ -21,6 +21,7 @@ logging.basicConfig(level=logging.DEBUG)
 LOG_SIMPLE_RATIOS = True
 LOG_COMMONDIV_RATIOS = True
 LOG_PROFILING = False
+LOG_SIMPLE_REDUCED_RATIOS = True
 
 timedata = []
 minimum_delta_time = 50 #milliseconds
@@ -119,10 +120,27 @@ def analyze(unused_addr, *osc_data):
         logging.debug('\nindices: \n {}'.format(np.argsort(scores)))
         logging.debug('rank: {}'.format(rank))
 
-        i = np.argsort(scores)[int(rank)] # select the representation ranked from the lowest score
+        # to use old, comment out the following paragraph
+        # simplify ratios and remove duplicate ratio representations
+        ratios_reduced = np.copy(ratios_commondiv)
+        ratios_reduced = r.simplify_ratios(ratios_reduced)
+        duplicates = r.find_duplicate_representations(ratios_reduced)
+        ranked_unique_representations = r.get_ranked_unique_representations(duplicates, scores)
+        if LOG_SIMPLE_REDUCED_RATIOS:
+            logging.debug('\nduplicates \n {}'.format(duplicates))
+            logging.debug('\nscores\n {}'.format(scores))
+            logging.debug('\nranked unique\n {}'.format(ranked_unique_representations))
+            logging.debug('\nbest unique\n {}'.format(ratios_reduced[ranked_unique_representations[0]]))
+            logging.debug('+nsecond best unique\n {}'.format(ratios_reduced[ranked_unique_representations[1]]) )
+        
+        # new ranking
+        i = ranked_unique_representations[rank] # select the unique representation ranked from the lowest score
+        # old
+        #i = np.argsort(scores)[int(rank)] # select the representation ranked from the lowest score
+
         logging.debug('using ratio-proposal: {}'.format(i))
-        nums = ratios_commondiv[i,:,0].astype(int).tolist()
-        denoms = ratios_commondiv[i,:,1].astype(int).tolist()
+        nums = ratios_reduced[i,:,0].astype(int).tolist()
+        denoms = ratios_reduced[i,:,1].astype(int).tolist()
         deviations = ratios_commondiv[i,:,2].astype(float).tolist()
         ticktempo_Hz = (1/ratios_commondiv[i,0,-1])*ratios_commondiv[i,0,1]
         ticktempo_bpm = ticktempo_Hz*60
