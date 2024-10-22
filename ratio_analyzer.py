@@ -392,8 +392,8 @@ if __name__ == '__main__':
     print(duplicates)
     print(scores)
     ranked_unique_representations = get_ranked_unique_representations(duplicates, scores)
-print('ranked unique')
-print(ranked_unique_representations)    
+    print('ranked unique')
+    print(ranked_unique_representations)    
 '''    
 [[0, 4], [1, 3, 6, 9, 11, 14, 17], [2], [5, 15], [7, 13], [8, 12], [10], [16], [18], [19, 23], [20, 22, 25, 36], [21], [24], [26], [27, 31], 
  [28, 30], [29], [32], [33], [34], [35], [37]]
