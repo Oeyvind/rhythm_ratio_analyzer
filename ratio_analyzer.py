@@ -5,6 +5,7 @@
 # Oeyvind Brandtsegg 2024
 
 import numpy as np
+np.set_printoptions(suppress=True)
 import scipy.signal as signal
 import math
 from fractions import Fraction
@@ -111,6 +112,36 @@ def make_commondiv_ratios(ratios, commondiv='auto'):
     #ratios[:,:,2] = dev
     return ratios
 
+def simplify_ratios(ratios):
+    """Reduce ratios to lowest terms"""
+    n = ratios[:,:,0].astype(int)
+    d = ratios[:,:,1].astype(int)
+    for i in range(len(n)):
+        for j in range(len(n[0])):
+            f = Fraction(n[i,j],d[i,j])
+            n[i,j] = f.numerator
+            d[i,j] = f.denominator
+    ratios[:,:,0] = n
+    ratios[:,:,1] = d
+    return ratios
+
+def get_ranked_unique_representations(duplicates, scores):
+    print(np.argsort(scores))
+    ranked_unique_representations = []
+    already_included = []
+    for i in np.argsort(scores):
+        #print('argsort score', i)
+        if i not in already_included:
+            for d in range(len(duplicates)):
+                #print('d, already_included', d, already_included)
+                if (i in duplicates[d]):
+                    ranked_unique_representations.append(i)
+                    #print('ranked so far:', ranked_unique_representations)
+                    already_included.extend(duplicates[d])
+                    duplicates.remove(duplicates[d])
+                    break
+    return ranked_unique_representations
+
 def normalize_numerators(ratios):
     norm_num_ratios = np.copy(ratios)
     n = norm_num_ratios[:,:,0].astype(int)
@@ -182,6 +213,29 @@ def autocorr_bitwise(data):
         b1 = b>>i&b
         acorr.append(b1.bit_count())
     return acorr                     
+
+def find_duplicate_representations(ratios):
+    """Find indices in the ratios array where the exact same rational approximations are used (not regarding deviations or other parameters)"""
+    duplicate_list = []
+    for i in range(len(ratios)):
+        nd1 = ratios[i,:,:2] # numerator and denominator
+        duplicate_list.append([])
+        for j in range(i,len(ratios)):
+            nd2 = ratios[j,:,:2]
+            if np.array_equal(nd1,nd2):
+                already_there = False
+                for d in duplicate_list:
+                    if j in d:
+                        already_there = True
+                if not already_there:
+                    duplicate_list[i].append(j)
+    empties = []
+    for i in range(len(duplicate_list)):
+        if len(duplicate_list[i]) == 0:
+            empties.append(i)
+    for i in empties:
+        duplicate_list.remove([])
+    return duplicate_list
 
 def analyze(rhythm):
     """Do the full ratio analysis"""
@@ -271,7 +325,7 @@ if __name__ == '__main__':
     print('\nscores:: \n', [round(d,2) for d in scores])
     print('\nindices: \n', np.argsort(scores))
 
-    time.sleep(2)
+    #time.sleep(2)
 
     autocorr_scores = []
     print('len ratios', len(ratios))
@@ -316,7 +370,7 @@ if __name__ == '__main__':
     '''
     print('\nscores:: \n', [round(d,2) for d in scores])
     print('\nindices: \n', np.argsort(scores))
-    print('example_rhythm', example_rhythm)
+    #print('example_rhythm', example_rhythm)
     '''
     for i in np.argsort(scores)[:4]:
         print('INDX', i)
@@ -327,3 +381,21 @@ if __name__ == '__main__':
         print('num, denom, dev, delta:')
         print(np.array_str(ratios_commondiv[i,:,:-1], precision=3, suppress_small=True))
     '''
+    print('**************************************')
+    '''print(ratios_commondiv[33])
+    print(ratios_commondiv[34])
+    print(ratios_commondiv[34,:,0].astype(int))'''
+    ratios_reduced = simplify_ratios(ratios_commondiv)
+    
+    print(len(ratios))
+    duplicates = find_duplicate_representations(ratios_reduced)
+    print(duplicates)
+    print(scores)
+    ranked_unique_representations = get_ranked_unique_representations(duplicates, scores)
+print('ranked unique')
+print(ranked_unique_representations)    
+'''    
+[[0, 4], [1, 3, 6, 9, 11, 14, 17], [2], [5, 15], [7, 13], [8, 12], [10], [16], [18], [19, 23], [20, 22, 25, 36], [21], [24], [26], [27, 31], 
+ [28, 30], [29], [32], [33], [34], [35], [37]]
+
+[22 20 36 17  1  3 25  6 11  9 14 28 30 24 32 33 34 26 19 23 29 31 27 35 8 21 12 37 16  0  4 13  7 18 10  2  5 15]'''

@@ -15,6 +15,7 @@ import numpy as np
 import time # for profiling
 from datetime import datetime
 import logging 
+import json
 #logging.basicConfig(filename="logging.log", filemode='w', level=logging.DEBUG)
 logging.basicConfig(level=logging.DEBUG)
 LOG_SIMPLE_RATIOS = True
@@ -156,19 +157,19 @@ def analyze(unused_addr, *osc_data):
             logging.info('    RT: {} seconds'.format(t5[0]-t1[0]))
             logging.info('    CPU: {} seconds'.format(t5[1]-t1[1]))
         
-        '''
         if savedata:
             # make a dict with all the data to be exported
             jsondict = {}
             selection = np.argsort(scores)[:4] # select the 4 best representations
             for i in selection:
-                ratios_commondiv[i]
-                trigseq = r.make_trigger_sequence(ratios_commondiv[i,:,:2])
-                acorr = r.autocorr(trigseq)
-                pulseposition = np.argmax(acorr[1:])+1
-            with open('rhythmdata_test.json', 'w') as filehandle:
+                sub_dict = {}
+                sub_dict['ratios'] = ratios_commondiv[i].tolist()
+                sub_dict['trigseq'] = r.make_trigger_sequence(ratios_commondiv[i,:,:2])
+                sub_dict['autocorr'] = r.autocorr(trigseq).tolist()
+                sub_dict['pulsepos'] = (np.argmax(acorr[1:])+1).tolist()
+                jsondict[int(i)] = sub_dict
+            with open('testdata_rhythm.json', 'w') as filehandle:
                 json.dump(jsondict, filehandle)
-        '''
         
 def clear_timedata(unused_addr, *osc_data):
     global timedata
