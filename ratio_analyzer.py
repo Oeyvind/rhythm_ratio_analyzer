@@ -393,9 +393,8 @@ if __name__ == '__main__':
     print(scores)
     ranked_unique_representations = get_ranked_unique_representations(duplicates, scores)
     print('ranked unique')
-    print(ranked_unique_representations)    
-'''    
-[[0, 4], [1, 3, 6, 9, 11, 14, 17], [2], [5, 15], [7, 13], [8, 12], [10], [16], [18], [19, 23], [20, 22, 25, 36], [21], [24], [26], [27, 31], 
- [28, 30], [29], [32], [33], [34], [35], [37]]
-
-[22 20 36 17  1  3 25  6 11  9 14 28 30 24 32 33 34 26 19 23 29 31 27 35 8 21 12 37 16  0  4 13  7 18 10  2  5 15]'''
+    print(ranked_unique_representations)   
+    print('**** best unique')
+    print(ratios_reduced[ranked_unique_representations[0]]) 
+    print('**** second best unique')
+    print(ratios_reduced[ranked_unique_representations[1]]) 
