@@ -134,7 +134,7 @@ def analyze(unused_addr, *osc_data):
             logging.debug('+nsecond best unique\n {}'.format(ratios_reduced[ranked_unique_representations[1]]) )
         
         # new ranking
-        i = ranked_unique_representations[rank] # select the unique representation ranked from the lowest score
+        i = ranked_unique_representations[rank-1] # select the unique representation ranked from the lowest score
         # old
         #i = np.argsort(scores)[int(rank)] # select the representation ranked from the lowest score
 
@@ -178,11 +178,13 @@ def analyze(unused_addr, *osc_data):
         if savedata:
             # make a dict with all the data to be exported
             jsondict = {}
-            selection = np.argsort(scores)[:4] # select the 4 best representations
-            for i in selection:
+            #selection = np.argsort(scores)[:4] # select the 4 best representations
+            ranked_unique_representations[rank]
+            for i in range(4):
                 sub_dict = {}
-                sub_dict['ratios'] = ratios_commondiv[i].tolist()
-                sub_dict['trigseq'] = r.make_trigger_sequence(ratios_commondiv[i,:,:2])
+                j = ranked_unique_representations[i]
+                sub_dict['ratios'] = ratios_reduced[j].tolist()
+                sub_dict['trigseq'] = r.make_trigger_sequence(ratios_commondiv[j,:,:2])
                 sub_dict['autocorr'] = r.autocorr(trigseq).tolist()
                 sub_dict['pulsepos'] = (np.argmax(acorr[1:])+1).tolist()
                 jsondict[int(i)] = sub_dict
