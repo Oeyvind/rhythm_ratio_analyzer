@@ -141,7 +141,7 @@ def analyze(unused_addr, *osc_data):
         logging.debug('using ratio-proposal: {}'.format(i))
         nums = ratios_reduced[i,:,0].astype(int).tolist()
         denoms = ratios_reduced[i,:,1].astype(int).tolist()
-        deviations = ratios_commondiv[i,:,2].astype(float).tolist()
+        deviations = ratios_reduced[i,:,2].astype(float).tolist()
         ticktempo_Hz = (1/ratios_commondiv[i,0,-1])*ratios_commondiv[i,0,1]
         ticktempo_bpm = ticktempo_Hz*60
         logging.debug('ticktempo: {} bpm'.format(ticktempo_bpm))
@@ -184,8 +184,10 @@ def analyze(unused_addr, *osc_data):
                 sub_dict = {}
                 j = ranked_unique_representations[i]
                 sub_dict['ratios'] = ratios_reduced[j].tolist()
-                sub_dict['trigseq'] = r.make_trigger_sequence(ratios_commondiv[j,:,:2])
-                sub_dict['autocorr'] = r.autocorr(trigseq).tolist()
+                trigseq = r.make_trigger_sequence(ratios_commondiv[j,:,:2])
+                sub_dict['trigseq'] = trigseq
+                acorr = r.autocorr(trigseq).tolist()
+                sub_dict['autocorr'] = acorr
                 sub_dict['pulsepos'] = (np.argmax(acorr[1:])+1).tolist()
                 jsondict[int(i)] = sub_dict
             with open('testdata_rhythm.json', 'w') as filehandle:
