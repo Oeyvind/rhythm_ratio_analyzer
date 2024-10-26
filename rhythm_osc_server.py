@@ -12,16 +12,17 @@ Rhythm ratio analyzer in Python, getting time values from Csound
 import osc_io # osc server and client 
 import ratio_analyzer as r
 import numpy as np
+import markov_model_wrapper as mm
 import time # for profiling
 from datetime import datetime
 import logging 
 import json
 #logging.basicConfig(filename="logging.log", filemode='w', level=logging.DEBUG)
 logging.basicConfig(level=logging.DEBUG)
-LOG_SIMPLE_RATIOS = True
-LOG_COMMONDIV_RATIOS = True
+LOG_SIMPLE_RATIOS = False
+LOG_COMMONDIV_RATIOS = False
 LOG_PROFILING = False
-LOG_SIMPLE_REDUCED_RATIOS = True
+LOG_SIMPLE_REDUCED_RATIOS = False
 
 timedata = []
 minimum_delta_time = 50 #milliseconds
@@ -32,7 +33,14 @@ ratio_dev_abs_max_weight = 1
 grid_dev_weight = 0.2
 evidence_weight = 0.3
 autocorr_weight = 1
-savedata = True
+savedata = False
+
+mm_models = [] # to hold markov model objects
+mm_indices = None # to hold event indices
+mm_data = None # to hold markov model data
+mm_query = [0, None, None, None, None] # initial markov query
+mm_order = 2 # so far always 2
+mm_dimensions = 2 # so far needs to be 2
 
 def receive_timevalues(unused_addr, *osc_data):
     '''Message handler. This is called when we receive an OSC message'''
@@ -175,6 +183,19 @@ def analyze(unused_addr, *osc_data):
             logging.info('    RT: {} seconds'.format(t5[0]-t1[0]))
             logging.info('    CPU: {} seconds'.format(t5[1]-t1[1]))
         
+        # markov model training
+        mm_datasize = len(ratios_reduced[0])
+        global mm_indices, mm_data, mm_models
+        mm_indices = np.arange(mm_datasize)
+        mm_data = np.empty((mm_dimensions,mm_datasize),dtype='float')
+        for i in range(mm_datasize):
+            ratio_float1 = ratios_reduced[0][i][0]/ratios_reduced[0][i][1]
+            ratio_float2 = ratios_reduced[1][i][0]/ratios_reduced[1][i][1]
+            mm_data[0,i] = ratio_float1
+            mm_data[1,i] = ratio_float2
+            print('mm_data', mm_data)
+        mm_models = mm.analyze(mm_data)
+
         if savedata:
             # make a dict with all the data to be exported
             jsondict = {}
@@ -203,6 +224,14 @@ def receive_parameter_controls(unused_addr, *osc_data):
     global benni_weight, nd_sum_weight, ratio_dev_weight, ratio_dev_abs_max_weight, grid_dev_weight, evidence_weight, autocorr_weight, minimum_delta_time
     benni_weight, nd_sum_weight, ratio_dev_weight, ratio_dev_abs_max_weight, grid_dev_weight, evidence_weight, autocorr_weight, minimum_delta_time = osc_data
     logging.debug('receive_parameter_controls {}'.format(osc_data))
+
+def mm_generate(unused_addr, *osc_data):
+    '''Message handler. This is called when we receive an OSC message'''
+    global mm_models, mm_indices, mm_data, mm_query
+    next_item_index, m_query = mm.generate(mm_order, mm_dimensions, mm_models, mm_indices, mm_data, mm_query)
+    returnmsg = (mm_data[0][next_item_index], next_item_index)
+    osc_io.sendOSC("markov_generate", returnmsg) # send OSC back to Csound
+
 
 if __name__ == "__main__": # if we run this module as main we will start the server
     osc_io.dispatcher.map("/csound_timevalues", receive_timevalues) # here we assign the function to be called when we receive OSC on this address

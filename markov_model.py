@@ -2,14 +2,14 @@
 # -*- coding: latin-1 -*-
 
 """ 
-A simple markov chain generator.
+A multidimensional variable order markov chain generator.
 
-@author: Øyvind Brandtsegg 2018
+@author: Øyvind Brandtsegg 2024
 @contact: obrandts@gmail.com
 @license: GPL
 """
 
-import random
+import numpy as np 
 
 class Markov:
 
@@ -68,7 +68,8 @@ def analyze_vmo_vdim(data, datasize):
     print('**** **** done analyzing **** ****')
     return m_1ord, m_1ord_2D, m_2ord, m_2ord_2D
 
-def generate_vmo_vdim(m_query, coefs, indices):
+def generate_vmo_vdim(models, m_query, coefs, indices, data):
+    m_1ord, m_1ord_2D, m_2ord, m_2ord_2D = models
     next_item_index, next_item_1ord, next_item_1ord_2D, next_item_2ord, next_item_2ord_2D = m_query
     order, dimension = coefs # the markov order and the number of dimensions to take into account
     alternatives_1ord = m_1ord.next_items(next_item_1ord)
@@ -131,13 +132,13 @@ def generate_vmo_vdim(m_query, coefs, indices):
 
 # test
 if __name__ == '__main__' :
-    import numpy as np
     # example with 2D data
     data = np.array([[1,2,3,4,1,2,3,4,1,2,3,1,2,3,1,2,3,4,5,1],
                      ['A','A','A','A','A','A','A','A','B','B','B','B','B','B','B','B','B','B','B','A']])
     #analyze variable markov order in 2 dimensions
     datasize = np.shape(data)[1]
     m_1ord, m_1ord_2D, m_2ord, m_2ord_2D = analyze_vmo_vdim(data, datasize)
+    models = (m_1ord, m_1ord_2D, m_2ord, m_2ord_2D)
     #generate
     indices = np.arange(datasize)
     order = 2
@@ -152,7 +153,7 @@ if __name__ == '__main__' :
     m_query = [0, next_item_1ord, next_item_1ord_2D, next_item_2ord, next_item_2ord_2D]
     i = 0
     while i < 50:
-        m_query = generate_vmo_vdim(m_query, coefs, indices) #query markov models for next event and update query for next iteration
+        m_query = generate_vmo_vdim(models, m_query, coefs, indices, data) #query markov models for next event and update query for next iteration
         next_item_index = m_query[0]
         print(f'the next item is  {data[0][next_item_index]} at index {next_item_index}')
         i += 1
