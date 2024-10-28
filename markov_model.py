@@ -63,8 +63,12 @@ def analyze_vmo_vdim(data, datasize):
         m_1ord.analyze(data[0][i], i)
         m_1ord_2D.analyze((data[0][i],data[1][i]), i)
         if i > 0:
-            m_2ord.analyze((data[0][i-1],data[0][i]), i)
-            m_2ord_2D.analyze(((data[0][i-1],data[1][i-1]),(data[0][i],data[1][i])), i)
+            # "free" 2nd order where we only register transition from (next to last) event
+            m_2ord.analyze((data[0][i-1]), i)
+            m_2ord_2D.analyze(((data[0][i-1],data[1][i-1])), i)
+            # previous verison where 2nd order was truly 2nd order
+            #m_2ord.analyze((data[0][i-1],data[0][i]), i)
+            #m_2ord_2D.analyze(((data[0][i-1],data[1][i-1]),(data[0][i],data[1][i])), i)
     print('**** **** done analyzing **** ****')
     return m_1ord, m_1ord_2D, m_2ord, m_2ord_2D
 

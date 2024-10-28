@@ -256,7 +256,9 @@ def mm_print(unused_addr, *osc_data):
     print('mm_data', mm_data)
     #print('mm_models', mm_models)
     for m in mm_models:
-        print(m, '\n', m.markov_stm, '\n')
+        print(m)
+        for key, value in m.markov_stm.items():
+            print(key, value)
 
 if __name__ == "__main__": # if we run this module as main we will start the server
     osc_io.dispatcher.map("/csound_timevalues", receive_timevalues) # here we assign the function to be called when we receive OSC on this address
