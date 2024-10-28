@@ -37,10 +37,11 @@ label bounds(220, 175, 100, 18), text("pulseposition"), fontSize(12), align("lef
 
 button bounds(400, 150, 70, 20), text("generate"), channel("generate"), colour:0("green"), colour:1("red")
 nslider bounds(480, 150, 40, 25), channel("gen_tempo_bpm"), range(1, 3000, 60), fontSize(14)
-nslider bounds(540, 150, 40, 25), channel("gen_order"), range(0, 2, 2), fontSize(14)
+nslider bounds(540, 150, 40, 25), channel("gen_order"), range(0, 2, 2, 1, 0.5), fontSize(14)
+nslider bounds(600, 150, 40, 25), channel("gen_dimension"), range(1, 2, 2, 1, 1), fontSize(14)
 label bounds(480, 175, 70, 18), text("g_tempo"), fontSize(12), align("left")
 label bounds(540, 175, 70, 18), text("g_order"), fontSize(12), align("left")
-button bounds(590, 150, 40, 20), text("wrap"), channel("g_wraparound"), colour:0("green"), colour:1("red"), value(1)
+label bounds(600, 175, 70, 18), text("g_dim"), fontSize(12), align("left")
 
 csoundoutput bounds(5, 200, 690, 295)
 </Cabbage>
@@ -57,27 +58,13 @@ csoundoutput bounds(5, 200, 690, 295)
 ksmps = 32
 nchnls = 2
 0dbfs = 1
+
 massign -1, 2
 pgmassign 0, -1 ; ignore program change
+
 gitrig_ftab ftgen 0, 0, 4096, 2, 0
 gitrig_ftab_empty ftgen 0, 0, 4096, 2, 0
 gihandle OSCinit 9999 ; set the network port number where we will receive OSC data from Python
-
-
-; The transition matrix holds transition probabilities from one ratio to all others,
-; similar to an STM in a Markov model, but it is not normalized, we just add 1 to each observed transition.
-; The indices into the STM are not the ratio items themselves, 
-; but the index into giUniqueRatiosItems where the ratio (item) can be found.
-; The STM has twice as many rows as the max number of items, as we also keep track of second order transitions.
-; This is done in the loosest possible manner, where we think a tuplet of [second_last_item, unknown], 
-; but we actually just store the second_last_item as the lookup key. 
-; Combined with the probabilities of the usual case (last item, first order Markov transition), 
-; it allows something similar to a second order Markov chain, but with some more flexibility.
-; We may need this flexibility when we combine the Markov transitions with other preference rules,
-; allowing output sequences not observed in the input (leading to possible dead ends in the STM).
-ginumitems = 2 ; initial assumption on how many unique ratios we will see, updated later
-giUniqueRatiosItems[] init ginumitems
-giTransitionMatrix[][] init ginumitems*2, ginumitems
 
 
 ; GUI handling
@@ -100,12 +87,6 @@ instr 1
   endif
   if ktrig_generate_stop > 0 then
     event "i", -109, 0, .1
-  endif
-  Sratios chnget "rhythm_ratios"
-  kwraparound chnget "g_wraparound" ; wraparound
-  if (changed:k(Sratios) == 1) || (changed(kwraparound) > 0) then
-    Scoreline sprintfk {{i 102 0 1 "%s"}}, Sratios
-    scoreline Scoreline, 1
   endif
 endin
 
@@ -269,160 +250,33 @@ endin
 ; *******************************
 ; generator
 
-; get rhythm from gui, triggered from instr 1
-instr 102
-  p3 = 1/kr
-  Sratios strget p4
-  puts Sratios, 1
-  Sparts[] strsplit Sratios, ","
-  iRatios[] init lenarray(Sparts)
-  index = 0
-  while index < lenarray(Sparts) do
-    Sratio sprintf "return %s", Sparts[index]
-    iratio evalstr Sratio
-    iRatios[index] = iratio
-    index += 1
-  od
-
-  ; analyze rhythm series: collect unique ratios, record the indices where each ratio occurs
-  puts "All ratios in order of appearance:", 1
-  printarray iRatios
-  ; first find how many unique ratios and index them in order of appearance
-  giUniqueRatiosItems init lenarray(iRatios) ; generous assumption of size
-  index = 0
-  iunique_index = 0
-  while index < lenarray(iRatios) do
-    iratio = iRatios[index]
-    iunique_id findarray giUniqueRatiosItems, iratio, 0.01
-    if iunique_id == -1 then
-      giUniqueRatiosItems[iunique_index] = iratio
-      iunique_index += 1
-    endif
-    index += 1
-  od
-  ginumitems = iunique_index
-  giUniqueRatiosItems slicearray giUniqueRatiosItems, 0, ginumitems-1
-  
-  ; now we know how large the STM needs to be, and can proceed filling it
-  giTransitionMatrix[][] init ginumitems*2, ginumitems
-  index = 0
-  iprev_ratio = -1
-  i2prev_ratio = -1
-  iprev_unique_id = -1
-  i2prev_unique_id = -1
-  iwraparound chnget "g_wraparound" ; wraparound
-  while index < (lenarray(iRatios)+(iwraparound*2)) do
-    iratio = iRatios[index%lenarray(iRatios)]
-    iunique_id findarray giUniqueRatiosItems, iratio, 0.01
-    ; increment in STM for each observation
-    ;print index, iratio, iprev_ratio, i2prev_ratio
-    ;print iunique_id, iprev_unique_id, i2prev_unique_id
-    if iprev_ratio > -1 then
-      giTransitionMatrix[iprev_unique_id][iunique_id] = giTransitionMatrix[iprev_unique_id][iunique_id]+1
-      if i2prev_ratio > -1 then
-        giTransitionMatrix[i2prev_unique_id+ginumitems][iunique_id] = giTransitionMatrix[i2prev_unique_id+ginumitems][iunique_id]+1
-      endif
-    endif
-    ; bookeeping
-    i2prev_ratio = iprev_ratio
-    i2prev_unique_id = iprev_unique_id
-    iprev_ratio = iratio
-    iprev_unique_id = iunique_id
-    index += 1
-  od
-  puts "Unique ratios in order of appearance:", 1
-  printarray(giUniqueRatiosItems)
-  puts "STM: [unique_ratio - transition_probability], first half is 1st order, 2nd half is 'next to last' order", 1
-  printarray(giTransitionMatrix)
-endin
-
-
 instr 109
   ktempo_bpm chnget "gen_tempo_bpm"
   ktempo = ktempo_bpm/60
   korder chnget "gen_order" ; Markov-ish order, may be fractional, up to 2nd order
-  iorder chnget "gen_order"
-  korder init iorder
-  iord1tab ftgen 0, 0, 4, 2, 0, 1, 1, 1; first order weight lookup
-  iord2tab ftgen 0, 0, 4, 2, 0, 0, 1, 1; second order weight lookup
-  iratio = giUniqueRatiosItems[0] ; gotta start somewhere, to be updated
-  ;iprev_ratio = -1 ; not known at start
-  iprev_unique_ratio = -1 ; not known at start
-
+  kdimension chnget "gen_dimension"
   ; play it
   kmetrotempo init 1
   ktrig metro kmetrotempo
+  ;kratio_set chnget "ratio_set"
+  ;kindex_set chnget "index_set"
+  ;kupdate changed kratio_set, kindex_set
+  kupdate init 0
+  kratio init 1
+  kindex init 0
+  kcount init 0
+  kcount += ktrig
   inoise_instr = 120
   if ktrig > 0 then
     event "i", inoise_instr, 0, 0.1
-    reinit thething
+    OSCsend kcount, "127.0.0.1", 9901, "/csound_markov_gen", "fffff", korder, kdimension, kindex, kratio, kupdate
   endif
-
-  thething:    
-  iord1 tablei i(korder), iord1tab
-  iord2 tablei i(korder), iord2tab
-
-  iunique_ratio findarray giUniqueRatiosItems, iratio, 0.01
-  print iunique_ratio, iprev_unique_ratio
-
-  ; get probabilities from STM
-  giProb_prev[] getrow giTransitionMatrix, iunique_ratio ; 1st order Markov (according to previous item)
-  if iprev_unique_ratio < 0 then; attempt to get around init of both
-    iprev_lookup = iunique_ratio
-  else
-    iprev_lookup = iprev_unique_ratio+ginumitems 
-  endif
-  print iprev_lookup
-  giProb_2prev[] getrow giTransitionMatrix, iprev_lookup ; probability according to 2nd previous item (independent of previous item)
-  printarray giProb_2prev
-  ; normalize
-  imax_prob_prev maxarray giProb_prev
-  inorm_prev divz 1, imax_prob_prev, 1
-  giProb_prev = giProb_prev*inorm_prev
-  imax_prob_2prev maxarray giProb_2prev
-  inorm_2prev divz 1, imax_prob_2prev, 1
-  giProb_2prev = giProb_2prev*inorm_2prev
-
-  print iord1, iord2
-  
-  giProb_prev = giProb_prev*iord1+(1-iord1); first order, also covers zeroeth order when iord1=0
-  giProb_2prev = giProb_2prev*iord2+(1-iord2) ; second order
-  giProb[] = giProb_prev*giProb_2prev
-  
-  ; normalize and safeguard against dead ends
-  imax_prob maxarray giProb
-  if imax_prob == 0 then ; if we have no combined probabilities
-    giProb = giProb_prev+giProb_2prev ; use OR probability instead of AND probability, so we don't get stuck
-    puts "Fall back to OR probability for one event", 1
-    imax_prob maxarray giProb 
-    if imax_prob == 0 then ; in the unlikely case there are still no options
-      giProb = giProb+1 ; set all equal
-      puts "Fall back to random selection for one event", 1
-    endif
-  endif
-  inorm divz 1, imax_prob, 1
-  giProb = giProb*inorm
-
-  ; select: fill an array with random variables, multiply with probabilities, select max
-  iSelect[] init ginumitems
-  index = 0
-  while index < lenarray(iSelect) do
-    iSelect[index] = random(0, 1)
-    index += 1
-  od
-  printarray giProb_prev
-  printarray giProb_2prev
-  printarray giProb
-  iSelect1[] = iSelect*giProb
-  i_, iselect maxarray iSelect1
-  ; iselect is now an index into the unique ratios 
-  iratio = giUniqueRatiosItems[iselect]
-  iprev_unique_ratio = iunique_ratio
-
-  print iratio
-  puts "\n", 1
-  rireturn
-  kmetrotempo = ktempo/iratio
+  nextmsg:
+  kmess OSClisten gihandle, "python_markov_gen", "ff", kindex, kratio ; receive OSC data from Python
+  if kmess == 0 goto done
+  kgoto nextmsg ; jump back to the OSC listen line, to see if there are more messages waiting in the network buffer
+  done:
+  kmetrotempo = ktempo/kratio
 
 endin
 

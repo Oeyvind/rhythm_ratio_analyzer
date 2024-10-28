@@ -128,7 +128,7 @@ def generate_vmo_vdim(models, m_query, coefs, indices, data):
     else: 
         next_item_2ord = None
         next_item_2ord_2D = None
-    return (next_item_index, next_item_1ord, next_item_1ord_2D, next_item_2ord, next_item_2ord_2D)
+    return [next_item_index, next_item_1ord, next_item_1ord_2D, next_item_2ord, next_item_2ord_2D]
 
 # test
 if __name__ == '__main__' :
