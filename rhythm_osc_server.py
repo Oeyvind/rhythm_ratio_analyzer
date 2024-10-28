@@ -23,6 +23,7 @@ LOG_SIMPLE_RATIOS = False
 LOG_COMMONDIV_RATIOS = False
 LOG_PROFILING = False
 LOG_SIMPLE_REDUCED_RATIOS = False
+LOG_MARKOV_INPUT = True
 
 timedata = []
 minimum_delta_time = 50 #milliseconds
@@ -188,12 +189,19 @@ def analyze(unused_addr, *osc_data):
         global mm_indices, mm_data, mm_models
         mm_indices = np.arange(mm_datasize)
         mm_data = np.empty((mm_dimensions,mm_datasize),dtype='float')
+        best = i = ranked_unique_representations[0]
+        next_best = ranked_unique_representations[1]
         for i in range(mm_datasize):
-            ratio_float1 = ratios_reduced[0][i][0]/ratios_reduced[0][i][1]
-            ratio_float2 = ratios_reduced[1][i][0]/ratios_reduced[1][i][1]
+            nums = ratios_reduced[i,:,0].astype(int).tolist()
+            ratio_float1 = ratios_reduced[best][i][0]/ratios_reduced[best][i][1]
+            ratio_float2 = ratios_reduced[next_best][i][0]/ratios_reduced[next_best][i][1]
             mm_data[0,i] = ratio_float1
             mm_data[1,i] = ratio_float2
-            print('mm_data', mm_data)
+            if LOG_MARKOV_INPUT:
+                logging.debug(f'mm ratio1: {ratios_reduced[best][i][0]},{ratios_reduced[best][i][1]}')
+                logging.debug(f'mm as float {ratio_float1}')
+        if LOG_MARKOV_INPUT:
+            logging.debug(f'mm_data: {mm_data}')
         mm_models = mm.analyze(mm_data)
 
         if savedata:
