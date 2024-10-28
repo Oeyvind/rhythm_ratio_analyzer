@@ -42,6 +42,7 @@ nslider bounds(600, 150, 40, 25), channel("gen_dimension"), range(1, 2, 2, 1, 1)
 label bounds(480, 175, 70, 18), text("g_tempo"), fontSize(12), align("left")
 label bounds(540, 175, 70, 18), text("g_order"), fontSize(12), align("left")
 label bounds(600, 175, 70, 18), text("g_dim"), fontSize(12), align("left")
+button bounds(650, 150, 40, 20), text("print stm"), channel("mm_print"), colour:0("green"), colour:1("red"), latched(0)
 
 csoundoutput bounds(5, 200, 690, 295)
 </Cabbage>
@@ -87,6 +88,12 @@ instr 1
   endif
   if ktrig_generate_stop > 0 then
     event "i", -109, 0, .1
+  endif
+  ; print markov stm
+  kprint chnget "mm_print"
+  kprint_on trigger kprint, 0.5, 0
+  if kprint_on > 0 then
+    event "i", 110, 0, .1
   endif
 endin
 
@@ -278,6 +285,11 @@ instr 109
   done:
   kmetrotempo = ktempo/kratio
 
+endin
+
+; print markov stm
+instr 110
+    OSCsend 1, "127.0.0.1", 9901, "/csound_markov_print", "f", 1
 endin
 
 ; rhythm trig player

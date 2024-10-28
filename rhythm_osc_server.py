@@ -215,8 +215,10 @@ def analyze(unused_addr, *osc_data):
                 json.dump(jsondict, filehandle)
         
 def clear_timedata(unused_addr, *osc_data):
-    global timedata
+    global timedata, mm_models
     timedata = []
+    for m in mm_models:
+        m.clear()
 
 def receive_parameter_controls(unused_addr, *osc_data):
     '''Message handler. This is called when we receive an OSC message'''
@@ -240,6 +242,13 @@ def mm_generate(unused_addr, *osc_data):
     print('returnmsg', returnmsg)
     osc_io.sendOSC("python_markov_gen", returnmsg) # send OSC back to Csound
 
+def mm_print(unused_addr, *osc_data):
+    '''Message handler. This is called when we receive an OSC message'''
+    _unused = osc_data
+    print('mm_data', mm_data)
+    #print('mm_models', mm_models)
+    for m in mm_models:
+        print(m, '\n', m.markov_stm, '\n')
 
 if __name__ == "__main__": # if we run this module as main we will start the server
     osc_io.dispatcher.map("/csound_timevalues", receive_timevalues) # here we assign the function to be called when we receive OSC on this address
@@ -247,11 +256,6 @@ if __name__ == "__main__": # if we run this module as main we will start the ser
     osc_io.dispatcher.map("/csound_parametercontrols", receive_parameter_controls) # 
     osc_io.dispatcher.map("/csound_clear", clear_timedata) # 
     osc_io.dispatcher.map("/csound_markov_gen", mm_generate) # 
+    osc_io.dispatcher.map("/csound_markov_print", mm_print) # 
     osc_io.asyncio.run(osc_io.run_osc_server()) # run the OSC server and client
 
-mm_models = [] # to hold markov model objects
-mm_indices = None # to hold event indices
-mm_data = None # to hold markov model data
-mm_query = [0, None, None, None, None] # initial markov query
-mm_order = 2 # so far always 2
-mm_dimensions = 2 # so far needs to be 2
