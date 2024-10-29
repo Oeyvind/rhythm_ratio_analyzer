@@ -11,9 +11,9 @@ def analyze(data):
     models = (m_1ord, m_1ord_2D, m_2ord, m_2ord_2D)
     return models
 
-def generate(order, dimensions, models, indices, data, m_query=[0, None, None, None, None]):
+def generate(order, dimensions, models, indices, data, m_query=[0, None, None, None, None, None]):
     coefs = (order, dimensions)
-    if not m_query[1]:
+    if not m_query[2]:
       start_index = np.random.choice(indices)
       next_item_1ord = data[0][start_index]
       m_query[1] = next_item_1ord

@@ -39,7 +39,8 @@ savedata = False
 mm_models = [] # to hold markov model objects
 mm_indices = None # to hold event indices
 mm_data = None # to hold markov model data
-mm_query = [0, None, None, None, None] # initial markov query
+mm_query = [0, None, None, None, None, None] # initial markov query. 
+# query format: [next_item_index, request_next_item, next_item_1ord, next_item_1ord_2D, next_item_2ord, next_item_2ord_2D]
 mm_order = 2 # so far always 2
 mm_dimensions = 2 # so far needs to be 2
 
@@ -238,12 +239,14 @@ def receive_parameter_controls(unused_addr, *osc_data):
 def mm_generate(unused_addr, *osc_data):
     '''Message handler. This is called when we receive an OSC message'''
     global mm_models, mm_indices, mm_data, mm_query
-    order, dimension, index, ratio, update = osc_data
+    order, dimension, index, ratio, request_item, update = osc_data
+    if request_item < 0:
+        request_item = None
     mm_order = order
     mm_dimensions = dimension
     if update > 0:
         mm_query[0] = index 
-        mm_query[1] = ratio 
+        mm_query[2] = ratio 
     print('***mm_query', mm_query)
     next_item_index, mm_query = mm.generate(mm_order, mm_dimensions, mm_models, mm_indices, mm_data, mm_query)
     returnmsg = [int(next_item_index), float(mm_data[0][next_item_index])]

@@ -271,12 +271,13 @@ instr 109
   kupdate init 0
   kratio init 1
   kindex init 0
+  krequest_item init -1
   kcount init 0
   kcount += ktrig
   inoise_instr = 120
   if ktrig > 0 then
     event "i", inoise_instr, 0, 0.1
-    OSCsend kcount, "127.0.0.1", 9901, "/csound_markov_gen", "fffff", korder, kdimension, kindex, kratio, kupdate
+    OSCsend kcount, "127.0.0.1", 9901, "/csound_markov_gen", "ffffff", korder, kdimension, kindex, kratio, krequest_item, kupdate
   endif
   nextmsg:
   kmess OSClisten gihandle, "python_markov_gen", "ff", kindex, kratio ; receive OSC data from Python

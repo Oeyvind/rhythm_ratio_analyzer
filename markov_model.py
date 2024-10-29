@@ -74,8 +74,10 @@ def analyze_vmo_vdim(data, datasize):
 
 def generate_vmo_vdim(models, m_query, coefs, indices, data):
     m_1ord, m_1ord_2D, m_2ord, m_2ord_2D = models
-    next_item_index, next_item_1ord, next_item_1ord_2D, next_item_2ord, next_item_2ord_2D = m_query
+    next_item_index, request_next_item, next_item_1ord, next_item_1ord_2D, next_item_2ord, next_item_2ord_2D = m_query
     order, dimension = coefs # the markov order and the number of dimensions to take into account
+    if request_next_item:
+        print(f'requested: {request_next_item}')
     alternatives_1ord = m_1ord.next_items(next_item_1ord)
     alternatives_1ord_2D = m_1ord_2D.next_items(next_item_1ord_2D)
     alternatives_2ord = m_2ord.next_items(next_item_2ord)
@@ -132,7 +134,7 @@ def generate_vmo_vdim(models, m_query, coefs, indices, data):
     else: 
         next_item_2ord = None
         next_item_2ord_2D = None
-    return [next_item_index, next_item_1ord, next_item_1ord_2D, next_item_2ord, next_item_2ord_2D]
+    return [next_item_index, None, next_item_1ord, next_item_1ord_2D, next_item_2ord, next_item_2ord_2D]
 
 # test
 if __name__ == '__main__' :
