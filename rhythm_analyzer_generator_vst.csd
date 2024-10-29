@@ -260,11 +260,18 @@ endin
 instr 109
   ktempo_bpm chnget "gen_tempo_bpm"
   ktempo = ktempo_bpm/60
+  kbeat_duration = 60/ktempo_bpm
   korder chnget "gen_order" ; Markov-ish order, may be fractional, up to 2nd order
   kdimension chnget "gen_dimension"
   ; play it
-  kmetrotempo init 1
-  ktrig metro kmetrotempo
+  ;kmetrotempo init 1
+  ;ktrig metro kmetrotempo
+
+  ; alternative clock based on delta time to next event
+  ktime timeinsts
+  knext_event_time init 0
+  kget_event = (ktime > knext_event_time) ? 1 : 0 ; if current time is greater than the time for the next event, then activate
+  ktrig trigger kget_event, 0.5, 0
   ;kratio_set chnget "ratio_set"
   ;kindex_set chnget "index_set"
   ;kupdate changed kratio_set, kindex_set
@@ -276,15 +283,17 @@ instr 109
   kcount += ktrig
   inoise_instr = 120
   if ktrig > 0 then
+    ktime_then = ktime
     event "i", inoise_instr, 0, 0.1
     OSCsend kcount, "127.0.0.1", 9901, "/csound_markov_gen", "ffffff", korder, kdimension, kindex, kratio, krequest_item, kupdate
   endif
   nextmsg:
-  kmess OSClisten gihandle, "python_markov_gen", "ff", kindex, kratio ; receive OSC data from Python
-  if kmess == 0 goto done
-  kgoto nextmsg ; jump back to the OSC listen line, to see if there are more messages waiting in the network buffer
+    kmess OSClisten gihandle, "python_markov_gen", "ff", kindex, kratio ; receive OSC data from Python
+    if kmess == 0 goto done
+    kgoto nextmsg ; jump back to the OSC listen line, to see if there are more messages waiting in the network buffer
   done:
-  kmetrotempo = ktempo/kratio
+  ;kmetrotempo = ktempo/kratio
+  knext_event_time = ktime_then + (kratio*kbeat_duration)
 
 endin
 
