@@ -263,15 +263,21 @@ instr 109
   kbeat_duration = 60/ktempo_bpm
   korder chnget "gen_order" ; Markov-ish order, may be fractional, up to 2nd order
   kdimension chnget "gen_dimension"
-  ; play it
-  ;kmetrotempo init 1
-  ;ktrig metro kmetrotempo
 
-  ; alternative clock based on delta time to next event
+  ; event clock
   ktime timeinsts
   knext_event_time init 0
   kget_event = (ktime > knext_event_time) ? 1 : 0 ; if current time is greater than the time for the next event, then activate
   ktrig trigger kget_event, 0.5, 0
+  ; downbeat clock
+  knext_downbeat_time init 0
+  kdownbeat = (ktime > knext_downbeat_time) ? 1 : 0 
+  ktrig_downbeat trigger kdownbeat, 0.5, 0
+  if ktrig_downbeat > 0 then
+    knext_downbeat_time = ktime+kbeat_duration
+    idownbeat_instr = 119
+    event "i", idownbeat_instr, 0, 0.3
+  endif
   ;kratio_set chnget "ratio_set"
   ;kindex_set chnget "index_set"
   ;kupdate changed kratio_set, kindex_set
@@ -292,7 +298,6 @@ instr 109
     if kmess == 0 goto done
     kgoto nextmsg ; jump back to the OSC listen line, to see if there are more messages waiting in the network buffer
   done:
-  ;kmetrotempo = ktempo/kratio
   knext_event_time = ktime_then + (kratio*kbeat_duration)
 
 endin
@@ -302,11 +307,23 @@ instr 110
     OSCsend 1, "127.0.0.1", 9901, "/csound_markov_print", "f", 1
 endin
 
+; downbeat instr
+instr 119
+  iamp = ampdbfs(-15)
+  aenv expon 1, p3, 0.0001
+  a1 oscil 1, 440
+  a1 *= aenv
+  a1 *= iamp
+  outs a1, a1
+endin
+
 ; rhythm trig player
 instr 120
+  iamp = ampdbfs(-6)
   aenv expon 1, p3, 0.0001
   anoise rnd31 1, 1
   anoise *= aenv
+  anoise *= iamp
   outs anoise, anoise
 endin
 
