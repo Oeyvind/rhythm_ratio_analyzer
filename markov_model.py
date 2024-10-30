@@ -37,6 +37,7 @@ class Markov:
         # as we are live recording items for analysis, dead ends are likely, and needs to be dealt with
         if previous and (previous not in self.markov_stm.keys()):
             print(f'Markov: {self.name} dead end, returning zero probabilities')
+            print(f'key: {previous}, allkeys: {self.markov_stm.keys()}')
             return self.empty_index_container
         if len(self.markov_stm.keys()) == 0:
             print('Empty Markov sequence')
