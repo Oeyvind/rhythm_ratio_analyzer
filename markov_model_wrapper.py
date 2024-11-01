@@ -7,11 +7,11 @@ np.set_printoptions(suppress=True)
 
 def analyze(data):
     datasize = np.shape(data)[1]
-    m_1ord, m_1ord_2D, m_2ord, m_2ord_2D = mm.analyze_vmo_vdim(data, datasize)
-    models = (m_1ord, m_1ord_2D, m_2ord, m_2ord_2D)
+    m_1ord, m_1ord_2D = mm.analyze_vmo_vdim(data, datasize)
+    models = (m_1ord, m_1ord_2D)
     return models
 
-def generate(order, dimensions, models, indices, data, m_query=[0, None, None, None, None, None]):
+def generate(order, dimensions, models, indices, data, m_query=[0, None, None, None]):
     coefs = (order, dimensions)
     if not m_query[2]:
       start_index = np.random.choice(indices)

@@ -39,7 +39,7 @@ savedata = False
 mm_models = [] # to hold markov model objects
 mm_indices = None # to hold event indices
 mm_data = None # to hold markov model data
-mm_query = [0, None, None, None, None, None] # initial markov query. 
+mm_query = [0, None, None, None] # initial markov query. 
 # query format: [next_item_index, request_next_item, next_item_1ord, next_item_1ord_2D, next_item_2ord, next_item_2ord_2D]
 mm_order = 2 # so far always 2
 mm_dimensions = 2 # so far needs to be 2
@@ -259,7 +259,7 @@ def mm_print(unused_addr, *osc_data):
     print('mm_data', mm_data)
     #print('mm_models', mm_models)
     for m in mm_models:
-        print(m)
+        print(m, m.name)
         for key, value in m.markov_stm.items():
             print(key, value)
 
