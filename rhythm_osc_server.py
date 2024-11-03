@@ -36,6 +36,7 @@ evidence_weight = 0.3
 autocorr_weight = 1
 savedata = False
 
+
 mm_models = [] # to hold markov model objects
 mm_indices = None # to hold event indices
 mm_data = None # to hold markov model data

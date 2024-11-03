@@ -38,8 +38,9 @@ class Markov:
 
     def next_items(self, previous=None):
         # as we are live recording items for analysis, dead ends are likely, and needs to be dealt with
+        print(self.name, previous)
         if previous and (previous not in self.markov_stm.keys()):
-            print(f'Markov: {self.name} dead end at key {previous}, wrap around ')
+            #print(f'Markov: {self.name} dead end at key {previous}, wrap around ')
             #print(f'key: {previous}, allkeys: {self.markov_stm.keys()}')
             return self.wraparound_index_container
         if len(self.markov_stm.keys()) == 0:
@@ -85,8 +86,7 @@ class MarkovHelper:
         print('**** **** done analyzing **** ****')
 
     def generate_vmo_vdim(self, m_query, coefs):
-        print(f'*** *** ***                                   {self.markov_history}, {m_query}')
-        
+        #print(f'*** *** ***                                   {self.markov_history}, {m_query}')
         next_item_index, request_next_item, next_item_1ord, next_item_1ord_2D = m_query
         order, dimension = coefs # the markov order and the number of dimensions to take into account
         
@@ -136,7 +136,7 @@ class MarkovHelper:
                 print(f'history {[self.data[0][i] for i in self.markov_history]}')
                 print(f'alternatives \n {self.alternatives_1ord} \n {self.alternatives_2ord}')
                 prob = self.alternatives_1ord # fallback
-                self.markov_history = self.no_markov_history # and erase history
+                self.markov_history = self.no_markov_history.copy() # and erase history
         elif (order == 2) and (dimension == 2):
             prob = self.alternatives_1ord_2D*self.alternatives_2ord_2D # good, if 2nd order is possible
             if np.sum(prob) == 0:
@@ -144,7 +144,7 @@ class MarkovHelper:
                 print(f'history {[(self.data[0][i],self.data[1][i]) for i in self.markov_history]}')
                 print(f'alternatives \n {self.alternatives_1ord_2D} \n {self.alternatives_2ord_2D}')
                 prob = self.alternatives_1ord_2D # fallback
-                self.markov_history = self.no_markov_history # and erase history
+                self.markov_history = self.no_markov_history.copy() # and erase history
                 if np.sum(self.prob) == 0:
                     print(f'Last resort fallback for order {order}, dimension {dimension}')
                     prob = self.alternatives_1ord # fallback
