@@ -276,7 +276,7 @@ instr 109
   if ktrig_downbeat > 0 then
     knext_downbeat_time = ktime+kbeat_duration
     idownbeat_instr = 119
-    event "i", idownbeat_instr, 0, 0.3
+    ;event "i", idownbeat_instr, 0, 0.3
   endif
   ;kratio_set chnget "ratio_set"
   ;kindex_set chnget "index_set"

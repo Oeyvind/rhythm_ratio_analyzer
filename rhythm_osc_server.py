@@ -12,7 +12,7 @@ Rhythm ratio analyzer in Python, getting time values from Csound
 import osc_io # osc server and client 
 import ratio_analyzer as r
 import numpy as np
-import markov_model_wrapper as mm
+import markov_model as mm
 import time # for profiling
 from datetime import datetime
 import logging 
@@ -36,14 +36,12 @@ evidence_weight = 0.3
 autocorr_weight = 1
 savedata = False
 
-
-mm_models = [] # to hold markov model objects
-mm_indices = None # to hold event indices
+mh = None # Markov helper object
 mm_data = None # to hold markov model data
+mm_datasize = -1
+mm_max_order = 2
 mm_query = [0, None, None, None] # initial markov query. 
-# query format: [next_item_index, request_next_item, next_item_1ord, next_item_1ord_2D, next_item_2ord, next_item_2ord_2D]
-mm_order = 2 # so far always 2
-mm_dimensions = 2 # so far needs to be 2
+# query format: [next_item_index, request_next_item, next_item_1ord, next_item_1ord_2D]
 
 def receive_timevalues(unused_addr, *osc_data):
     '''Message handler. This is called when we receive an OSC message'''
@@ -187,9 +185,10 @@ def analyze(unused_addr, *osc_data):
             logging.info('    CPU: {} seconds'.format(t5[1]-t1[1]))
         
         # markov model training
+        global mm_data, mm_datasize, mm_max_order, mh
         mm_datasize = len(ratios_reduced[0])
-        global mm_indices, mm_data, mm_models
-        mm_indices = np.arange(mm_datasize)
+        #mm_indices = np.arange(mm_datasize)
+        mm_dimensions = 2 # set max dimensions here for now
         mm_data = np.empty((mm_dimensions,mm_datasize),dtype='float')
         best = i = ranked_unique_representations[0]
         next_best = ranked_unique_representations[1]
@@ -204,7 +203,9 @@ def analyze(unused_addr, *osc_data):
                 logging.debug(f'mm as float {ratio_float1}')
         if LOG_MARKOV_INPUT:
             logging.debug(f'mm_data: {mm_data}')
-        mm_models = mm.analyze(mm_data)
+        #analyze variable markov order in 2 dimensions
+        mh = mm.MarkovHelper(mm_data, max_size=100, max_order=mm_max_order)
+        mh.analyze_vmo_vdim()
 
         if savedata:
             # make a dict with all the data to be exported
@@ -225,10 +226,11 @@ def analyze(unused_addr, *osc_data):
                 json.dump(jsondict, filehandle)
         
 def clear_timedata(unused_addr, *osc_data):
-    global timedata, mm_models
+    global timedata
     timedata = []
-    for m in mm_models:
+    for m in [mh.m_1ord, mh.m_1ord_2D]:
         m.clear()
+    print('clear timeseries and Markov data')
 
 def receive_parameter_controls(unused_addr, *osc_data):
     '''Message handler. This is called when we receive an OSC message'''
@@ -239,17 +241,16 @@ def receive_parameter_controls(unused_addr, *osc_data):
 
 def mm_generate(unused_addr, *osc_data):
     '''Message handler. This is called when we receive an OSC message'''
-    global mm_models, mm_indices, mm_data, mm_query
+    global mm_query
     order, dimension, index, ratio, request_item, update = osc_data
     if request_item < 0:
         request_item = None
-    mm_order = order
-    mm_dimensions = dimension
     if update > 0:
         mm_query[0] = index 
-        mm_query[2] = ratio 
+        mm_query[1] = request_item 
     print('***mm_query', mm_query)
-    next_item_index, mm_query = mm.generate(mm_order, mm_dimensions, mm_models, mm_indices, mm_data, mm_query)
+    mm_query = mh.generate_vmo_vdim(mm_query, (order,dimension)) #query markov models for next event and update query for next iteration
+    next_item_index = mm_query[0]
     returnmsg = [int(next_item_index), float(mm_data[0][next_item_index])]
     print('returnmsg', returnmsg)
     osc_io.sendOSC("python_markov_gen", returnmsg) # send OSC back to Csound
@@ -259,10 +260,10 @@ def mm_print(unused_addr, *osc_data):
     _unused = osc_data
     print('mm_data', mm_data)
     #print('mm_models', mm_models)
-    for m in mm_models:
+    for m in [mh.m_1ord, mh.m_1ord_2D]:
         print(m, m.name)
         for key, value in m.markov_stm.items():
-            print(key, value)
+            print(key, value[mm_max_order:mm_datasize+mm_max_order])
 
 if __name__ == "__main__": # if we run this module as main we will start the server
     osc_io.dispatcher.map("/csound_timevalues", receive_timevalues) # here we assign the function to be called when we receive OSC on this address
