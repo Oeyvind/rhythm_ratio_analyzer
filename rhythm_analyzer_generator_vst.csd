@@ -29,19 +29,23 @@ label bounds(5, 100, 80, 20), text("Deviations"), fontSize(12), align("left")
 texteditor bounds(85, 100, 710, 20), channel("deviations"), fontSize(15), colour("black"), fontColour("white"), caretColour("white")
 
 nslider bounds(5, 150, 50, 22), channel("ticktempo_bpm"), range(10, 5000, 100), fontSize(14)
-nslider bounds(110, 150, 50, 22), channel("tempo_tendency"), range(-10, 10, 0), fontSize(14)
-nslider bounds(220, 150, 50, 22), channel("pulseposition"), range(0, 20, 0, 1, 1), fontSize(14)
-label bounds(5, 175, 100, 18), text("ticktempo_bpm"), fontSize(12), align("left")
-label bounds(110, 175, 100, 18), text("tempo_tendency"), fontSize(12), align("left")
-label bounds(220, 175, 100, 18), text("pulseposition"), fontSize(12), align("left")
+nslider bounds(90, 150, 50, 22), channel("tempo_tendency"), range(-10, 10, 0), fontSize(14)
+nslider bounds(180, 150, 50, 22), channel("pulseposition"), range(0, 20, 0, 1, 1), fontSize(14)
+label bounds(5, 175, 100, 18), text("ticktpo_bpm"), fontSize(12), align("left")
+label bounds(90, 175, 100, 18), text("tpo_tendency"), fontSize(12), align("left")
+label bounds(180, 175, 100, 18), text("pulsepos"), fontSize(12), align("left")
 
-button bounds(400, 150, 70, 20), text("generate"), channel("generate"), colour:0("green"), colour:1("red")
-nslider bounds(480, 150, 40, 25), channel("gen_tempo_bpm"), range(1, 3000, 60), fontSize(14)
-nslider bounds(540, 150, 40, 25), channel("gen_order"), range(0, 2, 2, 1, 0.5), fontSize(14)
-nslider bounds(600, 150, 40, 25), channel("gen_dimension"), range(1, 2, 2, 1, 1), fontSize(14)
-label bounds(480, 175, 70, 18), text("g_tempo"), fontSize(12), align("left")
-label bounds(540, 175, 70, 18), text("g_order"), fontSize(12), align("left")
-label bounds(600, 175, 70, 18), text("g_dim"), fontSize(12), align("left")
+button bounds(300, 150, 70, 20), text("generate"), channel("generate"), colour:0("green"), colour:1("red")
+nslider bounds(380, 150, 40, 25), channel("gen_tempo_bpm"), range(1, 3000, 60), fontSize(14)
+nslider bounds(440, 150, 40, 25), channel("gen_order"), range(0, 2, 2, 1, 0.5), fontSize(14)
+nslider bounds(500, 150, 40, 25), channel("gen_dimension"), range(1, 2, 2, 1, 1), fontSize(14)
+label bounds(380, 175, 70, 18), text("g_tempo"), fontSize(12), align("left")
+label bounds(440, 175, 70, 18), text("g_order"), fontSize(12), align("left")
+label bounds(500, 175, 70, 18), text("g_dim"), fontSize(12), align("left")
+button bounds(550, 150, 40, 20), text("dwnbeat sync"), channel("downbeat_sync"), colour:0("green"), colour:1("red"), latched(1)
+nslider bounds(595, 150, 40, 25), channel("downbeat_sync_strength"), range(0, 1, 0.5), fontSize(14)
+label bounds(595, 175, 70, 18), text("sync_w"), fontSize(12), align("left")
+
 button bounds(650, 150, 40, 20), text("print stm"), channel("mm_print"), colour:0("green"), colour:1("red"), latched(0)
 
 csoundoutput bounds(5, 200, 690, 295)
@@ -263,6 +267,8 @@ instr 109
   kbeat_duration = 60/ktempo_bpm
   korder chnget "gen_order" ; Markov-ish order, may be fractional, up to 2nd order
   kdimension chnget "gen_dimension"
+  kdownbeat_sync chnget "downbeat_sync"
+  kdownbeat_sync_strength chnget "downbeat_sync_strength"
 
   ; event clock
   ktime timeinsts
@@ -273,25 +279,29 @@ instr 109
   knext_downbeat_time init 0
   kdownbeat = (ktime > knext_downbeat_time) ? 1 : 0 
   ktrig_downbeat trigger kdownbeat, 0.5, 0
+  kzero = 0
   if ktrig_downbeat > 0 then
+    cabbageSetValue "downbeat_sync", kzero
     knext_downbeat_time = ktime+kbeat_duration
     idownbeat_instr = 119
-    ;event "i", idownbeat_instr, 0, 0.3
+    event "i", idownbeat_instr, 0, 0.3
   endif
   ;kratio_set chnget "ratio_set"
   ;kindex_set chnget "index_set"
   ;kupdate changed kratio_set, kindex_set
   kupdate init 0
+  kupdate = kdownbeat_sync ; temporary
   kratio init 1
   kindex init 0
-  krequest_item init -1
+  krequest_ratio init -1
+  krequest_weight = kdownbeat_sync_strength ; may not necessary to rename/patch this, if it will only be used for that purpose
   kcount init 0
   kcount += ktrig
   inoise_instr = 120
   if ktrig > 0 then
     ktime_then = ktime
     event "i", inoise_instr, 0, 0.1
-    OSCsend kcount, "127.0.0.1", 9901, "/csound_markov_gen", "ffffff", korder, kdimension, kindex, kratio, krequest_item, kupdate
+    OSCsend kcount, "127.0.0.1", 9901, "/csound_markov_gen", "fffffff", korder, kdimension, kindex, kratio, krequest_ratio, krequest_weight, kupdate
   endif
   nextmsg:
     kmess OSClisten gihandle, "python_markov_gen", "ff", kindex, kratio ; receive OSC data from Python
@@ -299,7 +309,7 @@ instr 109
     kgoto nextmsg ; jump back to the OSC listen line, to see if there are more messages waiting in the network buffer
   done:
   knext_event_time = ktime_then + (kratio*kbeat_duration)
-
+  krequest_ratio = (knext_downbeat_time-ktime_then)/kbeat_duration ; request this ratio to sync with next downbeat
 endin
 
 ; print markov stm

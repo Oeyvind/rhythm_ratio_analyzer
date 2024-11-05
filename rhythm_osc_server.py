@@ -40,8 +40,8 @@ mh = None # Markov helper object
 mm_data = None # to hold markov model data
 mm_datasize = -1
 mm_max_order = 2
-mm_query = [0, None, None, None] # initial markov query. 
-# query format: [next_item_index, request_next_item, next_item_1ord, next_item_1ord_2D]
+mm_query = [0, None, 0, None, None] # initial markov query. 
+# query format: [next_item_index, request_next_item, request_weight, next_item_1ord, next_item_1ord_2D]
 
 def receive_timevalues(unused_addr, *osc_data):
     '''Message handler. This is called when we receive an OSC message'''
@@ -242,12 +242,14 @@ def receive_parameter_controls(unused_addr, *osc_data):
 def mm_generate(unused_addr, *osc_data):
     '''Message handler. This is called when we receive an OSC message'''
     global mm_query
-    order, dimension, index, ratio, request_item, update = osc_data
+    order, dimension, index, ratio, request_item, request_weight, update = osc_data
     if request_item < 0:
         request_item = None
     if update > 0:
-        mm_query[0] = index 
+        mm_query[0] = int(index) 
         mm_query[1] = request_item 
+        mm_query[2] = request_weight
+        # query format: [next_item_index, request_next_item, request_weight, next_item_1ord, next_item_1ord_2D]
     print('***mm_query', mm_query)
     mm_query = mh.generate_vmo_vdim(mm_query, (order,dimension)) #query markov models for next event and update query for next iteration
     next_item_index = mm_query[0]

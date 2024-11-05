@@ -38,10 +38,10 @@ class Markov:
 
     def next_items(self, previous=None):
         # as we are live recording items for analysis, dead ends are likely, and needs to be dealt with
-        print(self.name, previous)
+        #print(self.name, previous)
         if previous and (previous not in self.markov_stm.keys()):
-            #print(f'Markov: {self.name} dead end at key {previous}, wrap around ')
-            #print(f'key: {previous}, allkeys: {self.markov_stm.keys()}')
+            print(f'Markov: {self.name} dead end at key {previous}, wrap around ')
+            print(f'key: {previous}, allkeys: {self.markov_stm.keys()}')
             return self.wraparound_index_container
         if len(self.markov_stm.keys()) == 0:
             print('Empty Markov sequence')
@@ -76,6 +76,7 @@ class MarkovHelper:
         self.alternatives_1ord_2D = np.zeros(self.maxsize+self.max_order)
         self.alternatives_2ord = np.zeros(self.maxsize+self.max_order)
         self.alternatives_2ord_2D = np.zeros(self.maxsize+self.max_order)
+        self.request = np.zeros(self.maxsize+self.max_order)
         self.prob = np.zeros(self.maxsize+self.max_order)
         
     def analyze_vmo_vdim(self):
@@ -86,8 +87,7 @@ class MarkovHelper:
         print('**** **** done analyzing **** ****')
 
     def generate_vmo_vdim(self, m_query, coefs):
-        #print(f'*** *** ***                                   {self.markov_history}, {m_query}')
-        next_item_index, request_next_item, next_item_1ord, next_item_1ord_2D = m_query
+        next_item_index, request_next_item, request_weight, next_item_1ord, next_item_1ord_2D = m_query
         order, dimension = coefs # the markov order and the number of dimensions to take into account
         
         # need to update and keep track of previous events for higher orders
@@ -96,12 +96,10 @@ class MarkovHelper:
             i = self.markov_history[-2] # if we have recorded history
         else:
             i = next_item_index-1 # generate history from where we are
+        print(f'*** *** ***  {self.markov_history}, {m_query}, index: {i}')
         next_item_2ord = self.data[0][i]
         next_item_2ord_2D = (self.data[0][i],self.data[1][i])
             
-        # if we request a specific item, handle this here TODO:(query markov model and roll view forward by 1)
-        if request_next_item:
-            print(f'requested: {request_next_item}')
         # get alternatives from Markov model
         self.alternatives_1ord = self.m_1ord.next_items(next_item_1ord)[2:self.current_datasize+2]
         self.alternatives_1ord_2D = self.m_1ord_2D.next_items(next_item_1ord_2D)[2:self.current_datasize+2]
@@ -133,21 +131,37 @@ class MarkovHelper:
             prob = self.alternatives_1ord*self.alternatives_2ord # good, if 2nd order is possible
             if np.sum(prob) == 0:
                 print(f'Fallback for order {order}, dimension {dimension}')
-                print(f'history {[self.data[0][i] for i in self.markov_history]}')
-                print(f'alternatives \n {self.alternatives_1ord} \n {self.alternatives_2ord}')
+                #print(f'history {[self.data[0][i] for i in self.markov_history]}')
+                #print(f'alternatives \n {self.alternatives_1ord} \n {self.alternatives_2ord}')
                 prob = self.alternatives_1ord # fallback
                 self.markov_history = self.no_markov_history.copy() # and erase history
         elif (order == 2) and (dimension == 2):
             prob = self.alternatives_1ord_2D*self.alternatives_2ord_2D # good, if 2nd order is possible
             if np.sum(prob) == 0:
                 print(f'Fallback for order {order}, dimension {dimension}')
-                print(f'history {[(self.data[0][i],self.data[1][i]) for i in self.markov_history]}')
-                print(f'alternatives \n {self.alternatives_1ord_2D} \n {self.alternatives_2ord_2D}')
+                #print(f'history {[(self.data[0][i],self.data[1][i]) for i in self.markov_history]}')
+                #print(f'alternatives \n {self.alternatives_1ord_2D} \n {self.alternatives_2ord_2D}')
                 prob = self.alternatives_1ord_2D # fallback
                 self.markov_history = self.no_markov_history.copy() # and erase history
                 if np.sum(self.prob) == 0:
                     print(f'Last resort fallback for order {order}, dimension {dimension}')
                     prob = self.alternatives_1ord # fallback
+
+        # if we request a specific item, handle this here 
+        if request_next_item:
+            # in case we request a value that is not exactly equal to a key in the stm, we first find the closest match
+            keys = np.asarray(list(self.m_1ord.markov_stm.keys()))
+            #print(request_next_item, keys)
+            request_next_item_closest = keys[np.abs(request_next_item-keys).argmin()]
+            print(f'* * * * * * requested value {request_next_item_closest} with weight {request_weight}')
+            request = self.m_1ord.next_items(request_next_item_closest)[3:self.current_datasize+3]
+            print(f'r {request} type {type(request)}')
+            request *= request_weight
+            prob *= (1-request_weight)
+            print(f'r {request}')
+            print(f'p {prob}')
+            prob += request
+            print(f'p {prob}')
 
         # normalize probabilities, and choose next from probability distribution
         sumprob = np.sum(prob)
@@ -163,7 +177,7 @@ class MarkovHelper:
 
         self.markov_history = self.markov_history[1:]+self.markov_history[:1] # roll the list one item back
         self.markov_history[-1] = next_item_index
-        return [next_item_index, None, next_item_1ord, next_item_1ord_2D]
+        return [next_item_index, None, 0, next_item_1ord, next_item_1ord_2D]
 
 # test
 if __name__ == '__main__' :
@@ -171,7 +185,7 @@ if __name__ == '__main__' :
     #data = np.array([[1,2,3,4,1,2,3,4,1,2,3,1,2,3,1,2,3,4,5,1],
     #                 ['A','A','A','A','A','A','A','A','B','B','B','B','B','B','B','B','B','B','B','B']])
     data = np.array([[1,2,2,1,3,4,5],
-                     ['A','A','A','A','A','A','A']])
+                     [1,1,1,1,1,1,1]])
     datasize = np.shape(data[0])[0]
     max_order = 2
     #analyze variable markov order in 2 dimensions
@@ -181,7 +195,7 @@ if __name__ == '__main__' :
     order = 2
     dimensions = 1
     coefs = (order, dimensions)
-    start_index = 3#np.random.choice(indices)
+    start_index = 1#np.random.choice(indices)
     next_item_1ord = data[0][start_index]
     # for debug only
     print('stm')
@@ -194,7 +208,7 @@ if __name__ == '__main__' :
     # query
     print(f'The first item is {next_item_1ord} at index {start_index}')
     next_item_1ord_2D = None
-    m_query = [start_index, None, next_item_1ord, next_item_1ord_2D]
+    m_query = [start_index, None, 0, next_item_1ord, next_item_1ord_2D]
     i = 0
     while i < 10:
         m_query = mh.generate_vmo_vdim(m_query, coefs) #query markov models for next event and update query for next iteration
@@ -202,3 +216,18 @@ if __name__ == '__main__' :
         print(f'the next item is  {data[0][next_item_index]} at index {next_item_index}')
         i += 1
     print(f'generated {i} items')
+    m_query[0] = int(2) # index
+    m_query[1] = 3.01 # request
+    m_query[2] = 1 # request weight
+    m_query = mh.generate_vmo_vdim(m_query, coefs) #query markov models for next event and update query for next iteration
+    next_item_index = m_query[0]
+    print(f'the next item is  {data[0][next_item_index]} at index {next_item_index}')
+'''    i = 0
+    while i < 3:
+        m_query = mh.generate_vmo_vdim(m_query, coefs) #query markov models for next event and update query for next iteration
+        next_item_index = m_query[0]
+        print(f'the next item is  {data[0][next_item_index]} at index {next_item_index}')
+        i += 1
+    print(f'generated {i} items')
+
+'''
