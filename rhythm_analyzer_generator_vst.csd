@@ -263,8 +263,6 @@ endin
 
 instr 109
   ktempo_bpm chnget "gen_tempo_bpm"
-  ktempo = ktempo_bpm/60
-  kbeat_duration = 60/ktempo_bpm
   korder chnget "gen_order" ; Markov-ish order, may be fractional, up to 2nd order
   kdimension chnget "gen_dimension"
   kdownbeat_sync chnget "downbeat_sync"
@@ -275,6 +273,10 @@ instr 109
   knext_event_time init 0
   kget_event = (ktime > knext_event_time) ? 1 : 0 ; if current time is greater than the time for the next event, then activate
   ktrig trigger kget_event, 0.5, 0
+  ; only allow tempo change on event, hold old tempo until next event trig
+  ;ktempo = ktempo_bpm/60
+  ktempo_bpm samphold ktempo_bpm, ktrig
+  kbeat_duration = 60/ktempo_bpm
   ; downbeat clock
   knext_downbeat_time init 0
   kdownbeat = (ktime > knext_downbeat_time) ? 1 : 0 
@@ -306,10 +308,14 @@ instr 109
   nextmsg:
     kmess OSClisten gihandle, "python_markov_gen", "ff", kindex, kratio ; receive OSC data from Python
     if kmess == 0 goto done
-    kgoto nextmsg ; jump back to the OSC listen line, to see if there are more messages waiting in the network buffer
+    kgoto nextmsg ; make sure we read all messages in the network buffer
   done:
-  knext_event_time = ktime_then + (kratio*kbeat_duration)
-  krequest_ratio = (knext_downbeat_time-ktime_then)/kbeat_duration ; request this ratio to sync with next downbeat
+  imax_resolution = 12
+  knext_event_time = (round(((ktime_then + (kratio*kbeat_duration))-knext_downbeat_time)*imax_resolution)/imax_resolution)+knext_downbeat_time
+  ;knext_event_time_unsync = ktime_then + (kratio*kbeat_duration) ; unsynced to downbeat
+  ;Sdebug sprintfk "at ratio %.2f sync dev %f", kratio, knext_event_time-knext_event_time_unsync
+  ;puts Sdebug, knext_event_time
+  krequest_ratio = (knext_downbeat_time-knext_event_time)/kbeat_duration ; request this ratio to sync with next downbeat
 endin
 
 ; print markov stm
@@ -324,7 +330,7 @@ instr 119
   a1 oscil 1, 440
   a1 *= aenv
   a1 *= iamp
-  outs a1, a1
+  outs a1, a1*0
 endin
 
 ; rhythm trig player
@@ -334,7 +340,7 @@ instr 120
   anoise rnd31 1, 1
   anoise *= aenv
   anoise *= iamp
-  outs anoise, anoise
+  outs anoise*0, anoise
 endin
 
 </CsInstruments>
