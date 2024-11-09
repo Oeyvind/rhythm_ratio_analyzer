@@ -268,40 +268,42 @@ instr 109
   kdownbeat_sync chnget "downbeat_sync"
   kdownbeat_sync_strength chnget "downbeat_sync_strength"
 
-  ; event clock
-  ktime timeinsts
-  knext_event_time init 0
-  kget_event = (ktime > knext_event_time) ? 1 : 0 ; if current time is greater than the time for the next event, then activate
-  ktrig trigger kget_event, 0.5, 0
-  ; only allow tempo change on event, hold old tempo until next event trig
-  ;ktempo = ktempo_bpm/60
-  ktempo_bpm samphold ktempo_bpm, ktrig
-  kbeat_duration = 60/ktempo_bpm
-  ; downbeat clock
+  ; beat clock
+  kclock_counter init 0
+  kclock_counter += (ktempo_bpm/60)
+  kbeat_clock = (kclock_counter/kr)
+  iclock_resolution = 10000 ; 0.1 millisec
+
+  ; downbeat trig
   knext_downbeat_time init 0
-  kdownbeat = (ktime > knext_downbeat_time) ? 1 : 0 
+  kdownbeat = (kbeat_clock > knext_downbeat_time) ? 1 : 0 
   ktrig_downbeat trigger kdownbeat, 0.5, 0
   kzero = 0
   if ktrig_downbeat > 0 then
     cabbageSetValue "downbeat_sync", kzero
-    knext_downbeat_time = ktime+kbeat_duration
+    knext_downbeat_time += 1
     idownbeat_instr = 119
     event "i", idownbeat_instr, 0, 0.3
   endif
+
   ;kratio_set chnget "ratio_set"
   ;kindex_set chnget "index_set"
   ;kupdate changed kratio_set, kindex_set
   kupdate init 0
   kupdate = kdownbeat_sync ; temporary
-  kratio init 1
   kindex init 0
   krequest_ratio init -1
   krequest_weight = kdownbeat_sync_strength ; may not necessary to rename/patch this, if it will only be used for that purpose
+  inoise_instr = 120
+  ; event trig
+  kratio init 1
+  knext_event_time init 0
+  kget_event = (kbeat_clock > knext_event_time) ? 1 : 0 ; if current time is greater than the time for the next event, then activate
+  ktrig trigger kget_event, 0.5, 0
   kcount init 0
   kcount += ktrig
-  inoise_instr = 120
   if ktrig > 0 then
-    ktime_then = ktime
+    knext_event_time += round(kratio*iclock_resolution)/iclock_resolution 
     event "i", inoise_instr, 0, 0.1
     OSCsend kcount, "127.0.0.1", 9901, "/csound_markov_gen", "fffffff", korder, kdimension, kindex, kratio, krequest_ratio, krequest_weight, kupdate
   endif
@@ -310,12 +312,21 @@ instr 109
     if kmess == 0 goto done
     kgoto nextmsg ; make sure we read all messages in the network buffer
   done:
-  imax_resolution = 12
-  knext_event_time = (round(((ktime_then + (kratio*kbeat_duration))-knext_downbeat_time)*imax_resolution)/imax_resolution)+knext_downbeat_time
-  ;knext_event_time_unsync = ktime_then + (kratio*kbeat_duration) ; unsynced to downbeat
-  ;Sdebug sprintfk "at ratio %.2f sync dev %f", kratio, knext_event_time-knext_event_time_unsync
-  ;puts Sdebug, knext_event_time
-  krequest_ratio = (knext_downbeat_time-knext_event_time)/kbeat_duration ; request this ratio to sync with next downbeat
+  
+  ;kratio_to_next_downbeat = limit((knext_downbeat_time-knext_event_time_unsync)/kbeat_duration, 0, 99) ; remaining this ratio until next downbeat
+  ;kratio_to_next_downbeat = round(kratio_to_next_downbeat*imax_resolution)/imax_resolution ; quantize to get rid of numerical error accumulation
+  ;Sdebug sprintfk "time %.3f next downbeat %f ratio %f, ratio_to_down %f", ktime, knext_downbeat_time, kratio, kratio_to_next_downbeat
+  ;puts Sdebug, ktime
+  
+  /*
+  if (kratio-kratio_to_next_downbeat) < -itolerance then ; happens before the next downbeat
+    knext_event_time = knext_event_time_unsync ; keep going
+  else  ; happens (on or after) the next downbeat
+    knext_event_time = knext_downbeat_time + ((kratio-kratio_to_next_downbeat)*kbeat_duration)
+  endif
+  */
+  kratio_to_next_downbeat = knext_downbeat_time-knext_event_time
+  krequest_ratio = kratio_to_next_downbeat ; in case we want to request a ratio that will sync to next downbeat 
 endin
 
 ; print markov stm

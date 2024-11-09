@@ -254,7 +254,7 @@ def mm_generate(unused_addr, *osc_data):
     mm_query = mh.generate_vmo_vdim(mm_query, (order,dimension)) #query markov models for next event and update query for next iteration
     next_item_index = mm_query[0]
     returnmsg = [int(next_item_index), float(mm_data[0][next_item_index])]
-    print('returnmsg', returnmsg)
+    #print('returnmsg', returnmsg)
     osc_io.sendOSC("python_markov_gen", returnmsg) # send OSC back to Csound
 
 def mm_print(unused_addr, *osc_data):

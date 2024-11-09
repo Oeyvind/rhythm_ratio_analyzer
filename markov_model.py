@@ -96,7 +96,7 @@ class MarkovHelper:
             i = self.markov_history[-2] # if we have recorded history
         else:
             i = next_item_index-1 # generate history from where we are
-        print(f'*** *** ***  {self.markov_history}, {m_query}, index: {i}')
+        #print(f'*** *** ***  {self.markov_history}, {m_query}, index: {i}')
         next_item_2ord = self.data[0][i]
         next_item_2ord_2D = (self.data[0][i],self.data[1][i])
             
