@@ -1,3 +1,14 @@
+* maybe need to write a variant on the Markov class where we just give each event a value 
+  - for example for downbeat weight, for each event: how heavy it is
+  - for other parameters: 
+    amplitude (or velocity)
+    pitch class (how much does it conform to a pitch class)
+    melodic scale (how much does it conform to a scale)
+    - some of these might need separate analysis modules to give the proper values
+    - for example the downbeat weight needs a separate analysis (maybe based on the autocorr analysis)
+
+
+---
 * audio input to midi trigger conversion with Mountains and lakes
 
 * markovian player could need a "sync to pulse" option, where any rhythm pattern leading to contant offbeats will be "guided" back to downbeats
@@ -10,7 +21,7 @@
     - ... or will it? ... if biased towards a sync to pulse/downbeat?
     - may need a "subgrouping preference" to maintain e.g. groups of 7
 
-* the rhythm generator (markovian and veriants) implemented in Python instead of Csound
+* the rhythm generator (markovian and variants) implemented in Python instead of Csound
   - easier to handle complex relationships and patterns
   - Csound player should be milliseconds based (kr clock, millisecond lookup for next event). As simple as possible.
     - any latency in OSC communication can be remedied (?) as event rate is relatively low
