@@ -22,32 +22,33 @@
 
 import numpy as np
 
-
-# use an array of values as the probability distribution for random.choice
-data = np.asarray([0.25,0.25,0.5,1,2,3,4])
-indexmask = np.asarray([0,0,1,0,1,0,0])
-indexmask_norm = indexmask/np.sum(indexmask)
-next = np.random.choice(data,p=indexmask_norm)
-print(next)
-
-mask_1 = np.ma.masked_equal(data, 0.5)
-mask_2 = np.ma.masked_equal(data, 3)
-mask = np.ma.getmask(mask_1)+np.ma.getmask(mask_2)
-masked = data * mask
-print(mask, np.ma.array(data, mask=mask))
-#mask_bool = np.ma.make_mask(mask_eq)
-#print(mask_bool)
-
 # profiling tests
 import cProfile
-datasize = 10000000
-data = np.random.rand(datasize)
-def mask_array(a,v1,v2):
-  mask = np.ma.masked_values(a, v1, rtol=0.000001, atol=0.000001)
-  masked = np.ma.array(data, mask=mask)
-  #masked = a * mask
-  #print(np.sum(a), np.sum(masked))
-cProfile.run('mask_array(data,0.5,0.6)')
+maxweights = 100
+datasize = 100000
+weights = np.ones(maxweights)
+data = np.random.rand(datasize*maxweights)
+data = np.reshape(data, (datasize, maxweights))
+print(data[0][0])
+current_datasize = 10000
+current_weightsize = 10
+d = data[:current_datasize,:current_weightsize]
+print(data[0][0])
+print(d[0][0])
+w = weights[:current_weightsize]
+def dot(a1, a2):
+  p = np.dot(a1, a2)
+  #print(p)
+#cProfile.run('dot(data,weights)')
+def allocate(datasize, maxweights):
+  data = np.zeros(datasize*maxweights)
+  data += 0.5
+  data *= 3
+  #data = np.reshape(data, (datasize, maxweights))
+cProfile.run('allocate(datasize, maxweights)')
+cProfile.run('dot(d,w)')
+print(data[0][0])
+print(d[0][0])
 
 '''
 def multiply_array(a,scale):

@@ -62,23 +62,29 @@ class MarkovHelper:
     def __init__(self, data, max_size=100, max_order=2):
         self.maxsize = max_size # allocate more space than we need, we will add more data later
         self.max_order = max_order
-        self.markov_history = [None, None]
-        self.no_markov_history = [None, None]
+        self.parms = ['markov1', 'markov2', 'markov1_2D', 'markov2_2D', 'request'] # just to start somewhere
+        self.current_numparms = len(self.parms)
+        self.max_parms = len(self.parms)+5 # just to start somewhere
+        self.weights = np.zeros(self.max_parms)
+        self.temperature = 1 # 1 is default (no temperature influence)
+
         # instantiate analyzer classes
         self.m_1ord = Markov(size=self.maxsize, max_order=self.max_order, name='1ord')
         self.m_1ord_2D = Markov(size=self.maxsize, max_order=self.max_order, name='1ord_2D')
+        self.markov_history = [None, None]
+        self.no_markov_history = [None, None]
+
         # set data and allocate data containers
         self.data = data
         self.current_datasize = np.shape(self.data)[1]
         self.indices = np.arange(self.current_datasize)
-        self.alternatives_all = np.ones(self.current_datasize)
-        self.alternatives_1ord = np.zeros(self.maxsize+self.max_order)
-        self.alternatives_1ord_2D = np.zeros(self.maxsize+self.max_order)
-        self.alternatives_2ord = np.zeros(self.maxsize+self.max_order)
-        self.alternatives_2ord_2D = np.zeros(self.maxsize+self.max_order)
-        self.request = np.zeros(self.maxsize+self.max_order)
-        self.prob = np.zeros(self.maxsize+self.max_order)
-        
+        self.corpus = np.zeros(self.maxsize*self.max_parms)
+        self.corpus = np.reshape(self.corpus, (self.maxsize,self.max_parms))
+        # rewrite alternatives as views of corpus
+        #self.flat_probabilities = np.ones(self.current_datasize)
+        self.alternatives_markov_temp = np.zeros(self.maxsize+self.max_order)
+        self.prob = np.zeros(self.maxsize)
+                
     def analyze_vmo_vdim(self):
         # analyze item by item
         for i in range(self.current_datasize):
@@ -86,95 +92,71 @@ class MarkovHelper:
             self.m_1ord_2D.analyze((self.data[0][i],self.data[1][i]), i)
         print('**** **** done analyzing **** ****')
 
+    def set_weights(self, coefs, request_weight):
+        # cumbersome hack for now
+        order, dimension = coefs # the markov order and the number of dimensions to take into account
+        if order == 0:
+            self.weights[:3] = 0
+        if order == 1:
+            self.weights[0] = 1
+        if order == 2:
+            self.weights[:1] = 1
+        if dimension == 2:
+            self.weights[2:4] = 1
+        self.weights[5] = request_weight
+
+    def set_temperature(self, temperature):
+        if temperature < 0.01 : temperature = 0.01
+        self.temperature = 1/temperature
+
     def generate_vmo_vdim(self, m_query, coefs):
         next_item_index, request_next_item, request_weight, next_item_1ord, next_item_1ord_2D = m_query
-        order, dimension = coefs # the markov order and the number of dimensions to take into account
-        
+        self.set_weights(coefs, request_weight)
+        temperature = 0.2 # low is deternimistic, high is random
+        self.set_temperature(temperature)
+
         # need to update and keep track of previous events for higher orders
         self.markov_history[-1] = next_item_index
         if self.markov_history[-2]:
             i = self.markov_history[-2] # if we have recorded history
         else:
             i = next_item_index-1 # generate history from where we are
-        #print(f'*** *** ***  {self.markov_history}, {m_query}, index: {i}')
         next_item_2ord = self.data[0][i]
         next_item_2ord_2D = (self.data[0][i],self.data[1][i])
             
         # get alternatives from Markov model
-        self.alternatives_1ord = self.m_1ord.next_items(next_item_1ord)[2:self.current_datasize+2]
-        self.alternatives_1ord_2D = self.m_1ord_2D.next_items(next_item_1ord_2D)[2:self.current_datasize+2]
-        self.alternatives_2ord = self.m_1ord.next_items(next_item_2ord)[1:self.current_datasize+1]
-        self.alternatives_2ord_2D = self.m_1ord_2D.next_items(next_item_2ord_2D)[1:self.current_datasize+1]
-
-        # Collate probabilities from the different ways to query out models
-        # ...simplified for now, the fractional orders are sketchy but might just work for the purpose of musical sequence generation
-        # remember that the alternatives for 2nd order only take into account transitions from the next to last event, so
-        # they have to be multiplied with the 1st order alternatives to get a correct 2nd order markov chain
-        # If the second order markov give zero probabilities, we fall back to first order,
-        # We might add other fallback strategies, for example "second order with unknown" (our current 2nd order lookup result on its own)
-        if order == 0:
-            prob = np.copy(self.alternatives_all) # good
-        
-        elif (0 < order <= 1) and (dimension == 1):
-            ones = np.copy(self.alternatives_all)
-            prob = (self.alternatives_1ord*order)+(ones*(1-order)) # good
-        elif (0 < order <= 1) and (dimension == 2):
-            ones = np.copy(self.alternatives_all)
-            prob = (self.alternatives_1ord*order)+(self.alternatives_1ord_2D*order)+(ones*(1-order)) #sketchy probabilities
-
-        elif (order == 1.5) and (dimension == 1): 
-            prob = self.alternatives_1ord+self.alternatives_2ord # sketchy probabilities
-        elif (order == 1.5) and (dimension == 2): 
-            prob = self.alternatives_1ord+self.alternatives_2ord+self.alternatives_1ord_2D+self.alternatives_2ord_2D # sketchy probabilities
-
-        elif (order == 2) and (dimension == 1):
-            prob = self.alternatives_1ord*self.alternatives_2ord # good, if 2nd order is possible
-            if np.sum(prob) == 0:
-                print(f'Fallback for order {order}, dimension {dimension}')
-                #print(f'history {[self.data[0][i] for i in self.markov_history]}')
-                #print(f'alternatives \n {self.alternatives_1ord} \n {self.alternatives_2ord}')
-                prob = self.alternatives_1ord # fallback
-                self.markov_history = self.no_markov_history.copy() # and erase history
-        elif (order == 2) and (dimension == 2):
-            prob = self.alternatives_1ord_2D*self.alternatives_2ord_2D # good, if 2nd order is possible
-            if np.sum(prob) == 0:
-                print(f'Fallback for order {order}, dimension {dimension}')
-                #print(f'history {[(self.data[0][i],self.data[1][i]) for i in self.markov_history]}')
-                #print(f'alternatives \n {self.alternatives_1ord_2D} \n {self.alternatives_2ord_2D}')
-                prob = self.alternatives_1ord_2D # fallback
-                self.markov_history = self.no_markov_history.copy() # and erase history
-                if np.sum(self.prob) == 0:
-                    print(f'Last resort fallback for order {order}, dimension {dimension}')
-                    prob = self.alternatives_1ord # fallback
-
+        self.alternatives_markov_temp = self.m_1ord.next_items(next_item_1ord)[2:self.current_datasize+2]
+        self.corpus[:self.current_datasize, 0] = self.alternatives_markov_temp[:self.current_datasize]
+        self.alternatives_markov_temp = self.m_1ord.next_items(next_item_2ord)[1:self.current_datasize+1]
+        self.corpus[:self.current_datasize, 1] = self.alternatives_markov_temp[:self.current_datasize]
+        self.alternatives_markov_temp = self.m_1ord_2D.next_items(next_item_1ord_2D)[2:self.current_datasize+2]
+        self.corpus[:self.current_datasize, 2] = self.alternatives_markov_temp[:self.current_datasize]
+        self.alternatives_markov_temp = self.m_1ord_2D.next_items(next_item_2ord_2D)[1:self.current_datasize+1]
+        self.corpus[:self.current_datasize, 3] = self.alternatives_markov_temp[:self.current_datasize]
         # if we request a specific item, handle this here 
         if request_next_item:
             # in case we request a value that is not exactly equal to a key in the stm, we first find the closest match
             keys = np.asarray(list(self.m_1ord.markov_stm.keys()))
-            #print(request_next_item, keys)
             request_next_item_closest = keys[np.abs(request_next_item-keys).argmin()]
             print(f'* * * * * * requested value {request_next_item_closest} with weight {request_weight}')
             request = self.m_1ord.next_items(request_next_item_closest)[3:self.current_datasize+3]
-            print(f'r {request} type {type(request)}')
-            request *= request_weight
-            prob *= (1-request_weight)
-            print(f'r {request}')
-            print(f'p {prob}')
-            prob += request
-            print(f'p {prob}')
-
-        # normalize probabilities, and choose next from probability distribution
-        sumprob = np.sum(prob)
+            self.corpus[:self.current_datasize, 4] = request
+        
+        # Scale by weights and sum: dot product corpus and weight. Then adjust temnperature
+        self.prob = np.dot(self.corpus[:self.current_datasize, :self.current_numparms], self.weights[:self.current_numparms])
+        self.prob /= np.amax(self.prob) # normalize
+        self.prob = np.power(self.prob, self.temperature) # temperature adjustment
+        sumprob = np.sum(self.prob)
         if sumprob > 0:
-            prob = prob/sumprob
-            next_item_index = np.random.choice(self.indices,p=prob)
+            self.prob = self.prob/sumprob #normalize sum to 1
+            next_item_index = np.random.choice(self.indices,p=self.prob)
         else:
             print(f'Markov zero probability from query {m_query}, choose one at random')
             next_item_index = np.random.choice(self.indices)
 
+        # update history
         next_item_1ord = self.data[0][next_item_index]
         next_item_1ord_2D = (self.data[0][next_item_index],self.data[1][next_item_index])
-
         self.markov_history = self.markov_history[1:]+self.markov_history[:1] # roll the list one item back
         self.markov_history[-1] = next_item_index
         return [next_item_index, None, 0, next_item_1ord, next_item_1ord_2D]
@@ -182,10 +164,10 @@ class MarkovHelper:
 # test
 if __name__ == '__main__' :
     # example with 2D data
-    #data = np.array([[1,2,3,4,1,2,3,4,1,2,3,1,2,3,1,2,3,4,5,1],
-    #                 ['A','A','A','A','A','A','A','A','B','B','B','B','B','B','B','B','B','B','B','B']])
-    data = np.array([[1,2,2,1,3,4,5],
-                     [1,1,1,1,1,1,1]])
+    data = np.array([[1,2,3,4,1,2,3,4,1,2,3,1,2,3,1,2,3,4,5,1],
+                     ['A','A','A','A','A','A','A','A','B','B','B','B','B','B','B','B','B','B','B','B']])
+    #data = np.array([[1,2,2,1,3,4,5],
+    #                 [1,1,1,1,1,1,1]])
     datasize = np.shape(data[0])[0]
     max_order = 2
     #analyze variable markov order in 2 dimensions
@@ -193,7 +175,7 @@ if __name__ == '__main__' :
     mh.analyze_vmo_vdim()
     #generate
     order = 2
-    dimensions = 1
+    dimensions = 2
     coefs = (order, dimensions)
     start_index = 1#np.random.choice(indices)
     next_item_1ord = data[0][start_index]
@@ -211,18 +193,23 @@ if __name__ == '__main__' :
     m_query = [start_index, None, 0, next_item_1ord, next_item_1ord_2D]
     i = 0
     while i < 10:
+        #print(f'query {m_query}')
         m_query = mh.generate_vmo_vdim(m_query, coefs) #query markov models for next event and update query for next iteration
         next_item_index = m_query[0]
         print(f'the next item is  {data[0][next_item_index]} at index {next_item_index}')
         i += 1
     print(f'generated {i} items')
+
+'''
     m_query[0] = int(2) # index
     m_query[1] = 3.01 # request
     m_query[2] = 1 # request weight
     m_query = mh.generate_vmo_vdim(m_query, coefs) #query markov models for next event and update query for next iteration
     next_item_index = m_query[0]
     print(f'the next item is  {data[0][next_item_index]} at index {next_item_index}')
-'''    i = 0
+'''
+'''
+    i = 0
     while i < 3:
         m_query = mh.generate_vmo_vdim(m_query, coefs) #query markov models for next event and update query for next iteration
         next_item_index = m_query[0]
