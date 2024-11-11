@@ -89,7 +89,7 @@ class MarkovHelper:
         # analyze item by item
         for i in range(self.current_datasize):
             self.m_1ord.analyze(self.data[0][i], i)
-            self.m_1ord_2D.analyze((self.data[0][i],self.data[1][i]), i)
+            self.m_1ord_2D.analyze(self.data[1][i], i)
         print('**** **** done analyzing **** ****')
 
     def set_weights(self, coefs, request_weight):
@@ -109,10 +109,9 @@ class MarkovHelper:
         if temperature < 0.01 : temperature = 0.01
         self.temperature = 1/temperature
 
-    def generate_vmo_vdim(self, m_query, coefs):
+    def generate_vmo_vdim(self, m_query, coefs, temperature):
         next_item_index, request_next_item, request_weight, next_item_1ord, next_item_1ord_2D = m_query
         self.set_weights(coefs, request_weight)
-        temperature = 0.2 # low is deternimistic, high is random
         self.set_temperature(temperature)
 
         # need to update and keep track of previous events for higher orders
@@ -122,7 +121,7 @@ class MarkovHelper:
         else:
             i = next_item_index-1 # generate history from where we are
         next_item_2ord = self.data[0][i]
-        next_item_2ord_2D = (self.data[0][i],self.data[1][i])
+        next_item_2ord_2D = self.data[1][i]
             
         # get alternatives from Markov model
         self.alternatives_markov_temp = self.m_1ord.next_items(next_item_1ord)[2:self.current_datasize+2]
@@ -144,9 +143,12 @@ class MarkovHelper:
         
         # Scale by weights and sum: dot product corpus and weight. Then adjust temnperature
         self.prob = np.dot(self.corpus[:self.current_datasize, :self.current_numparms], self.weights[:self.current_numparms])
-        self.prob /= np.amax(self.prob) # normalize
-        self.prob = np.power(self.prob, self.temperature) # temperature adjustment
-        sumprob = np.sum(self.prob)
+        if np.amax(self.prob) > 0:
+            self.prob /= np.amax(self.prob) # normalize
+            self.prob = np.power(self.prob, self.temperature) # temperature adjustment
+            sumprob = np.sum(self.prob)
+        else:
+            sumprob = 0
         if sumprob > 0:
             self.prob = self.prob/sumprob #normalize sum to 1
             next_item_index = np.random.choice(self.indices,p=self.prob)
@@ -156,7 +158,7 @@ class MarkovHelper:
 
         # update history
         next_item_1ord = self.data[0][next_item_index]
-        next_item_1ord_2D = (self.data[0][next_item_index],self.data[1][next_item_index])
+        next_item_1ord_2D = self.data[1][next_item_index]
         self.markov_history = self.markov_history[1:]+self.markov_history[:1] # roll the list one item back
         self.markov_history[-1] = next_item_index
         return [next_item_index, None, 0, next_item_1ord, next_item_1ord_2D]
@@ -177,6 +179,7 @@ if __name__ == '__main__' :
     order = 2
     dimensions = 2
     coefs = (order, dimensions)
+    temperature = 0.2 # low (<1.0) is deternimistic, high (>1.0) is more random
     start_index = 1#np.random.choice(indices)
     next_item_1ord = data[0][start_index]
     # for debug only
@@ -194,27 +197,9 @@ if __name__ == '__main__' :
     i = 0
     while i < 10:
         #print(f'query {m_query}')
-        m_query = mh.generate_vmo_vdim(m_query, coefs) #query markov models for next event and update query for next iteration
+        m_query = mh.generate_vmo_vdim(m_query, coefs, temperature) #query markov models for next event and update query for next iteration
         next_item_index = m_query[0]
         print(f'the next item is  {data[0][next_item_index]} at index {next_item_index}')
         i += 1
     print(f'generated {i} items')
 
-'''
-    m_query[0] = int(2) # index
-    m_query[1] = 3.01 # request
-    m_query[2] = 1 # request weight
-    m_query = mh.generate_vmo_vdim(m_query, coefs) #query markov models for next event and update query for next iteration
-    next_item_index = m_query[0]
-    print(f'the next item is  {data[0][next_item_index]} at index {next_item_index}')
-'''
-'''
-    i = 0
-    while i < 3:
-        m_query = mh.generate_vmo_vdim(m_query, coefs) #query markov models for next event and update query for next iteration
-        next_item_index = m_query[0]
-        print(f'the next item is  {data[0][next_item_index]} at index {next_item_index}')
-        i += 1
-    print(f'generated {i} items')
-
-'''

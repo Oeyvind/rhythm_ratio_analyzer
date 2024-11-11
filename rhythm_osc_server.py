@@ -242,7 +242,7 @@ def receive_parameter_controls(unused_addr, *osc_data):
 def mm_generate(unused_addr, *osc_data):
     '''Message handler. This is called when we receive an OSC message'''
     global mm_query
-    order, dimension, index, ratio, request_item, request_weight, update = osc_data
+    order, dimension, temperature, index, ratio, request_item, request_weight, update = osc_data
     if request_item < 0:
         request_item = None
     if update > 0:
@@ -251,7 +251,7 @@ def mm_generate(unused_addr, *osc_data):
         mm_query[2] = request_weight
         # query format: [next_item_index, request_next_item, request_weight, next_item_1ord, next_item_1ord_2D]
     print('***mm_query', mm_query)
-    mm_query = mh.generate_vmo_vdim(mm_query, (order,dimension)) #query markov models for next event and update query for next iteration
+    mm_query = mh.generate_vmo_vdim(mm_query, (order,dimension), temperature) #query markov models for next event and update query for next iteration
     next_item_index = mm_query[0]
     returnmsg = [int(next_item_index), float(mm_data[0][next_item_index])]
     #print('returnmsg', returnmsg)

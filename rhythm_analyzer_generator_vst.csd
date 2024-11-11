@@ -39,14 +39,17 @@ button bounds(300, 150, 70, 20), text("generate"), channel("generate"), colour:0
 nslider bounds(380, 150, 40, 25), channel("gen_tempo_bpm"), range(1, 3000, 60), fontSize(14)
 nslider bounds(440, 150, 40, 25), channel("gen_order"), range(0, 2, 2, 1, 0.5), fontSize(14)
 nslider bounds(500, 150, 40, 25), channel("gen_dimension"), range(1, 2, 2, 1, 1), fontSize(14)
+nslider bounds(560, 150, 40, 25), channel("gen_temperature"), range(0.01, 10, 0.2, 1, 0.01), fontSize(14)
 label bounds(380, 175, 70, 18), text("g_tempo"), fontSize(12), align("left")
 label bounds(440, 175, 70, 18), text("g_order"), fontSize(12), align("left")
 label bounds(500, 175, 70, 18), text("g_dim"), fontSize(12), align("left")
-button bounds(550, 150, 40, 20), text("dwnbeat sync"), channel("downbeat_sync"), colour:0("green"), colour:1("red"), latched(1)
-nslider bounds(595, 150, 40, 25), channel("downbeat_sync_strength"), range(0, 1, 0.5), fontSize(14)
-label bounds(595, 175, 70, 18), text("sync_w"), fontSize(12), align("left")
+label bounds(560, 175, 70, 18), text("g_temp"), fontSize(12), align("left")
 
-button bounds(650, 150, 40, 20), text("print stm"), channel("mm_print"), colour:0("green"), colour:1("red"), latched(0)
+button bounds(610, 150, 40, 20), text("dwnbeat sync"), channel("downbeat_sync"), colour:0("green"), colour:1("red"), latched(1)
+nslider bounds(655, 150, 40, 25), channel("downbeat_sync_strength"), range(0, 1, 0.5), fontSize(14)
+label bounds(655, 175, 70, 18), text("sync_w"), fontSize(12), align("left")
+
+button bounds(710, 150, 40, 20), text("print stm"), channel("mm_print"), colour:0("green"), colour:1("red"), latched(0)
 
 csoundoutput bounds(5, 200, 690, 295)
 </Cabbage>
@@ -267,6 +270,7 @@ instr 109
   kdimension chnget "gen_dimension"
   kdownbeat_sync chnget "downbeat_sync"
   kdownbeat_sync_strength chnget "downbeat_sync_strength"
+  ktemperature chnget "gen_temperature"
 
   ; beat clock
   kclock_counter init 0
@@ -305,7 +309,7 @@ instr 109
   if ktrig > 0 then
     knext_event_time += round(kratio*iclock_resolution)/iclock_resolution 
     event "i", inoise_instr, 0, 0.1
-    OSCsend kcount, "127.0.0.1", 9901, "/csound_markov_gen", "fffffff", korder, kdimension, kindex, kratio, krequest_ratio, krequest_weight, kupdate
+    OSCsend kcount, "127.0.0.1", 9901, "/csound_markov_gen", "ffffffff", korder, kdimension, ktemperature, kindex, kratio, krequest_ratio, krequest_weight, kupdate
   endif
   nextmsg:
     kmess OSClisten gihandle, "python_markov_gen", "ff", kindex, kratio ; receive OSC data from Python
