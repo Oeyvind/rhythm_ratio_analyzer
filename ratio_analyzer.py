@@ -67,14 +67,6 @@ def ratio_scores(ratios, timeseries):
         gridsize_deviations.append(gridsize_deviation)
         benedetti_height.append(np.add.reduce(np.multiply(ratios[i,:,0], ratios[i,:,1]))) # sum of Benedetti heights across all ratios in each set
         nd_add.append(np.add.reduce(np.add(ratios[i,:,0], ratios[i,:,1]))) # sum of sums of numerators and denominators in each set
-        '''for i in range(len(ratios)):
-        print('ratio_set\n', ratios[i])
-        print('ratio_deviations',ratio_deviations[i]) 
-        print('ratio_deviation_abs',ratio_deviation_abs[i]) 
-        print('ratio_deviation_abs_max',ratio_deviation_abs_max[i]) 
-        print('gridsize_deviations', gridsize_deviations)
-        print('benedetti_height',benedetti_height[i]) 
-        print('nd_add',nd_add[i])'''
     return ratio_deviations, ratio_deviation_abs, ratio_deviation_abs_max, gridsize_deviations, benedetti_height, nd_add 
 
 def test_gridsize_deviation(timeseries, gridsize, offset=-1):
@@ -103,7 +95,6 @@ def make_commondiv_ratios(ratios, commondiv='auto'):
     for i in range(len(n)):
         for j in range(len(n[0])):
             f = commondiv/d[i,j]
-            #print(commondiv, d[i,j], f)
             n[i,j] *= f
             d[i,j] *= f
             #dev[i,j] *= f
@@ -126,17 +117,13 @@ def simplify_ratios(ratios):
     return ratios
 
 def get_ranked_unique_representations(duplicates, scores):
-    print(np.argsort(scores))
     ranked_unique_representations = []
     already_included = []
     for i in np.argsort(scores):
-        #print('argsort score', i)
         if i not in already_included:
             for d in range(len(duplicates)):
-                #print('d, already_included', d, already_included)
                 if (i in duplicates[d]):
                     ranked_unique_representations.append(i)
-                    #print('ranked so far:', ranked_unique_representations)
                     already_included.extend(duplicates[d])
                     duplicates.remove(duplicates[d])
                     break
@@ -237,16 +224,45 @@ def find_duplicate_representations(ratios):
         duplicate_list.remove([])
     return duplicate_list
 
-def analyze(rhythm):
+def analyze(timedata, rank, weights):
     """Do the full ratio analysis"""
-    pass
+    benni_weight, nd_sum_weight, ratio_dev_weight, ratio_dev_abs_max_weight, grid_dev_weight, evidence_weight, autocorr_weight = weights
+    rat2 = ratio_to_each(timedata, div_limit=2)
+    rat4 = ratio_to_each(timedata, div_limit=4)
+    ratios = np.concatenate((rat2, rat4), axis=0)
+    ratio_deviations, ratio_deviation_abs, ratio_deviation_abs_max, gridsize_deviations, benedetti_height, nd_add = ratio_scores(ratios,timedata)
+    ratios_commondiv = make_commondiv_ratios(ratios)
+    norm_num_ratios = normalize_numerators(ratios_commondiv)
+    evidence_scores = evidence(norm_num_ratios)
+    autocorr_scores = []
+    for i in range(len(ratios)):
+        trigseq = make_trigger_sequence(ratios_commondiv[i,:,:2])
+        acorr = autocorr_bitwise(trigseq)
+        autocorr_scores.append(np.max(acorr[1:])**2) #max autocorr, raised to give more difference
+    scores = normalize_and_add_scores(
+        [benedetti_height, nd_add, ratio_deviation_abs, ratio_deviation_abs_max, gridsize_deviations, evidence_scores, autocorr_scores], 
+        [benni_weight, nd_sum_weight, ratio_dev_weight, ratio_dev_abs_max_weight, grid_dev_weight, evidence_weight, autocorr_weight],
+        [0, 0, 0, 0, 0, 1, 1])
 
-                                               
-# scratch pad
+    # simplify ratios and remove duplicate ratio representations
+    ratios_reduced = np.copy(ratios_commondiv)
+    ratios_reduced = simplify_ratios(ratios_reduced)
+    duplicates = find_duplicate_representations(ratios_reduced)
+    ranked_unique_representations = get_ranked_unique_representations(duplicates, scores)
+    # new ranking
+    selected = ranked_unique_representations[rank-1] # select the unique representation ranked from the lowest score
 
+    ticktempo_Hz = (1/ratios_commondiv[selected,0,-1])*ratios_commondiv[selected,0,1]
+    ticktempo_bpm = ticktempo_Hz*60
+    trigseq = make_trigger_sequence(ratios_commondiv[selected,:,:2])
+    acorr = autocorr(trigseq)
+    pulseposition = np.argmax(acorr[1:])+1
+    tempo_tendency = ratio_deviations[selected]*-1 # invert deviation to adjust tempo
+    
+    # return
+    return ratios_reduced, ranked_unique_representations, selected, trigseq, ticktempo_bpm, tempo_tendency, pulseposition
 
 if __name__ == '__main__':
-    t0 = time.perf_counter(), time.process_time()
     # example rhythms
     # rhythm is represented here by the time stamp of each event
     t = [0.0, 0.3467, 0.524, 1.02, 1.546, 1.8553, 2.088, 2.362, 2.6053, 2.8713, 3.1333, 3.62, 3.962, 4.176,]    
@@ -259,7 +275,22 @@ if __name__ == '__main__':
     # manuell slark
     #t = [0,    0.3,      0.5,    0.8,    1.3,    1.5,    1.8,    2,      2.5,    2.8,   3]
     #t = [66.9, 67.2, 67.4, 67.9, 68.4, 68.7, 69.0, 69.2, 69.5, 69.7, 70.0, 70.5, 70.8, 71.0, 71.3, 71.6, 71.9, 72.4, 72.6, 72.9, 73.1, 73.6, 74.0, 74.2]
-    example_rhythm = t
+    benni_weight = 1
+    nd_sum_weight = 1
+    ratio_dev_weight = 0.3
+    ratio_dev_abs_max_weight = 1
+    grid_dev_weight = 0.2
+    evidence_weight = 0.3
+    autocorr_weight = 1
+    weights = [benni_weight, nd_sum_weight, ratio_dev_weight, ratio_dev_abs_max_weight, grid_dev_weight, evidence_weight, autocorr_weight]
+    rank = 1
+    ratios_reduced, ranked_unique_representations, selected, trigseq, ticktempo_bpm, tempo_tendency, pulseposition = analyze(t, rank, weights)
+    ratios_list = ratios_reduced[selected].tolist()
+    for i in range(len(ratios_list)):
+        print(ratios_list[i])
+    #print(ratios_reduced[selected,:,:3]) #nom, denom, deviation
+    #print(ratios_reduced[selected,0,0], type(ratios_reduced[selected,0,0]))
+    #example_rhythm = t
     #example_rhythm = [0, 1.0, 1.5, 2, 2.7, 3.1, 4.1]
     #example_rhythm = [0, 1.75, 2, 3.0]
     #example_rhythm = [0, 0.7, 1, 1.66, 2, 2.25, 3, 4]
@@ -268,7 +299,7 @@ if __name__ == '__main__':
     #example_rhythm = [0, 0.7, 1, 1.5, 2]
     #example_rhythm = [0, 1, 1.51, 2.5, 3]
 
-    #example_rhythm = [2*t for t in example_rhythm]
+'''
     rat2 = ratio_to_each(example_rhythm, div_limit=2)
     rat4 = ratio_to_each(example_rhythm, div_limit=4)
     ratios = np.concatenate((rat2, rat4), axis=0)
@@ -291,18 +322,6 @@ if __name__ == '__main__':
     
     
     ratio_deviations, ratio_deviation_abs, ratio_deviation_abs_max, gridsize_deviations, benedetti_height, nd_add = ratio_scores(ratios,example_rhythm)
-    '''
-    for i in range(len(ratios)):
-        print('\nINDX', i)
-        print('ref_delta:', round(ratios[i,0,-1],2), 
-              ' benni:',int(benedetti_height[i]), 
-              ' nd_add:',round(nd_add[i],2), 
-              ' dev_abs', round(ratio_deviation_abs[i], 2), 
-              ' dev_abs_max', round(ratio_deviation_abs_max[i], 2), 
-              ' g_dev:', round(gridsize_deviations[i],2))
-        print('num, denom, dev, delta:')
-        print(np.array_str(ratios[i,:,:-1], precision=3, suppress_small=True))
-    '''
     ratios_commondiv = make_commondiv_ratios(ratios)
     norm_num_ratios = normalize_numerators(ratios_commondiv)
     evidence_scores = evidence(norm_num_ratios)
@@ -325,7 +344,6 @@ if __name__ == '__main__':
     print('\nscores:: \n', [round(d,2) for d in scores])
     print('\nindices: \n', np.argsort(scores))
 
-    #time.sleep(2)
 
     autocorr_scores = []
     print('len ratios', len(ratios))
@@ -357,34 +375,9 @@ if __name__ == '__main__':
     print('\nTime spent processing with timeseries length {}:'.format(len(example_rhythm)))
     print('    RT: {} seconds'.format(t3[0]-t0[0]))
     print('    CPU: {} seconds'.format(t3[1]-t0[1]))
-        
-    '''
-    for i in range(len(ratios_commondiv)):
-        print('INDX', i)
-        print('ref_delta:', round(ratios_commondiv[i,0,-1],2), ' benni:',int(benedetti_height[i]), 
-              ' nd:',round(nd_add[i],2), ' devsum', round(ratio_deviation_abs[i], 2), 
-              ' devmax', round(ratio_deviation_abs_max[i], 2), ' g_dev:', round(gridsize_deviations[i],2),
-              ' evidence', evidence_scores[i], 'acorr_max', autocorr_scores[i])
-        print('num, denom, dev, delta:')
-        print(np.array_str(ratios_commondiv[i,:,:-1], precision=3, suppress_small=True))
-    '''
+
     print('\nscores:: \n', [round(d,2) for d in scores])
     print('\nindices: \n', np.argsort(scores))
-    #print('example_rhythm', example_rhythm)
-    '''
-    for i in np.argsort(scores)[:4]:
-        print('INDX', i)
-        print('ref_delta:', round(ratios_commondiv[i,0,-1],2), ' benni:',int(benedetti_height[i]), 
-              ' nd:',round(nd_add[i],2), ' devsum', round(ratio_deviation_abs[i], 2), 
-              ' devmax', round(ratio_deviation_abs_max[i], 2), ' g_dev:', round(gridsize_deviations[i],2),
-              ' evidence', evidence_scores[i], 'acorr_max', autocorr_scores[i])
-        print('num, denom, dev, delta:')
-        print(np.array_str(ratios_commondiv[i,:,:-1], precision=3, suppress_small=True))
-    '''
-    print('**************************************')
-    '''print(ratios_commondiv[33])
-    print(ratios_commondiv[34])
-    print(ratios_commondiv[34,:,0].astype(int))'''
     ratios_reduced = simplify_ratios(ratios_commondiv)
     
     print(len(ratios))
@@ -398,3 +391,4 @@ if __name__ == '__main__':
     print(ratios_reduced[ranked_unique_representations[0]]) 
     print('**** second best unique')
     print(ratios_reduced[ranked_unique_representations[1]]) 
+'''
