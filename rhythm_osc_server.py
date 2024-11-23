@@ -98,7 +98,8 @@ def analyze(unused_addr, *osc_data):
         if LOG_MARKOV_INPUT:
             logging.debug(f'mm_data: {mm_data}')
         #analyze variable markov order in 2 dimensions
-        mh = mm.MarkovHelper(mm_data, max_size=100, max_order=mm_max_order)
+        mh = mm.MarkovHelper(data=None, d_size2=2, max_size=100, max_order=mm_max_order)
+        mh.set_data(mm_data)
         mh.analyze_vmo_vdim()
 
         if savedata:
@@ -145,7 +146,20 @@ def mm_generate(unused_addr, *osc_data):
         mm_query[2] = request_weight
         # query format: [next_item_index, request_next_item, request_weight, next_item_1ord, next_item_1ord_2D]
     print('***mm_query', mm_query)
-    mm_query = mh.generate_vmo_vdim(mm_query, (order,dimension), temperature) #query markov models for next event and update query for next iteration
+
+    weights = np.zeros(5) # TEMPORARY, was order, dimension
+    # cumbersome hack for now
+    if order == 0:
+        weights[:3] = 0
+    if order == 1:
+        weights[0] = 1
+    if order == 2:
+        weights[:2] = 1
+    if dimension == 2:
+        weights[2:4] = 1
+    weights[4] = request_weight
+    
+    mm_query = mh.generate_vmo_vdim(mm_query, weights, temperature) #query markov models for next event and update query for next iteration
     next_item_index = mm_query[0]
     returnmsg = [int(next_item_index), float(mm_data[0][next_item_index])]
     #print('returnmsg', returnmsg)
