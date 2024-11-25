@@ -13,8 +13,9 @@ import numpy as np
 np.set_printoptions(precision=2)
 
 class Markov:
+    # the basic core functionality of registering the order of which symbols appear
 
-    def __init__(self, size=100, max_order=2, name='noname'): # this method is called when the class is instantiated
+    def __init__(self, size=100, max_order=2, name='noname'): 
         self.markov_stm = {}
         self.max_order = max_order # we use this to pad the index_container, so we later can use array views for higher order lookup
         self.empty_index_container = np.zeros(size+max_order)
@@ -60,6 +61,8 @@ class Markov:
         self.previous_item = None 
         
 class MarkovHelper:
+    # coordinate several queries (different orders, and different dimensions/parameters) to the Markov model
+
     def __init__(self, data=None, d_size2=2, max_size=100, max_order=2):
         self.maxsize = max_size # allocate more space than we need, we will add more data later
         self.max_order = max_order
@@ -125,19 +128,6 @@ class MarkovHelper:
 
     def set_weights(self, weights):
         self.weights = weights
-        '''
-        # cumbersome hack for now
-        order, dimension = coefs # the markov order and the number of dimensions to take into account
-        if order == 0:
-            self.weights[:3] = 0
-        if order == 1:
-            self.weights[0] = 1
-        if order == 2:
-            self.weights[:1] = 1
-        if dimension == 2:
-            self.weights[2:4] = 1
-        self.weights[5] = request_weight
-        '''
 
     def set_temperature(self, temperature):
         if temperature < 0.01 : temperature = 0.01
@@ -187,7 +177,7 @@ class MarkovHelper:
             sumprob = 0
         if sumprob > 0:
             self.prob = self.prob/sumprob #normalize sum to 1
-            #print('prob2', self.prob)
+            print('prob', self.prob, self.indices)
             next_item_index = np.random.choice(self.indices,p=self.prob)
         else:
             print(f'Markov zero probability from query {m_query}, choose one at random')
@@ -199,6 +189,30 @@ class MarkovHelper:
         self.markov_history = self.markov_history[1:]+self.markov_history[:1] # roll the list one item back
         self.markov_history[-1] = next_item_index
         return [next_item_index, None, 0, next_item_1ord, next_item_1ord_2D]
+
+class MarkovManager:
+    # manage Markov process registration and analysis
+
+    def __init__(self, mh):
+        
+        self.mh = mh  
+        self.mm_query = [0, None, 0, None, None] # initial markov query. 
+        # query format: [next_item_index, request_next_item, request_weight, next_item_1ord, next_item_1ord_2D]      
+
+    def add_data_chunk(self, newdata, best, next_best):
+        datasize = len(newdata[0])
+        dimensions = 2 # set max dimensions here for now
+        data = np.empty((dimensions,datasize),dtype='float')
+        for i in range(datasize):
+            ratio_float1 = newdata[best][i][0]/newdata[best][i][1]
+            ratio_float2 = newdata[next_best][i][0]/newdata[next_best][i][1]
+            data[0,i] = ratio_float1
+            data[1,i] = ratio_float2
+        
+        #analyze variable markov order in 2 dimensions
+        #mh = mm.MarkovHelper(data=None, d_size2=2, max_size=100, max_order=mm_max_order)
+        self.mh.set_data(data)
+        self.mh.analyze_vmo_vdim()
 
 # test
 if __name__ == '__main__' :

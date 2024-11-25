@@ -36,12 +36,8 @@ evidence_weight = 0.3
 autocorr_weight = 1
 savedata = False
 
-mh = None # Markov helper object
-mm_data = None # to hold markov model data
-mm_datasize = -1
-mm_max_order = 2
-mm_query = [0, None, 0, None, None] # initial markov query. 
-# query format: [next_item_index, request_next_item, request_weight, next_item_1ord, next_item_1ord_2D]
+mh = mm.MarkovHelper(data=None, d_size2=2, max_size=100, max_order=2)
+mm = mm.MarkovManager(mh)
 
 def receive_timevalues(unused_addr, *osc_data):
     '''Message handler. This is called when we receive an OSC message'''
@@ -67,40 +63,20 @@ def analyze(unused_addr, *osc_data):
         weights = [benni_weight, nd_sum_weight, ratio_dev_weight, ratio_dev_abs_max_weight, grid_dev_weight, evidence_weight, autocorr_weight]
         ratios_reduced, ranked_unique_representations, selected, trigseq, ticktempo_bpm, tempo_tendency, pulseposition = r.analyze(timedata, rank, weights)
         ratios_list = ratios_reduced[selected].tolist()
-    for i in range(len(ratios_list)):
-        returnmsg = [ratios_list[i][0], ratios_list[i][1], ratios_list[i][2]] #pack the values that we want to send back to Csound via OSC
-        osc_io.sendOSC("python_rhythmdata", returnmsg) # send OSC back to Csound
-        returnmsg = [-1, 1, 0] #pack terminator
-        osc_io.sendOSC("python_rhythmdata", returnmsg) # send OSC back to Csound
+        for i in range(len(ratios_list)):
+            returnmsg = [ratios_list[i][0], ratios_list[i][1], ratios_list[i][2]] #pack the values that we want to send back to Csound via OSC
+            osc_io.sendOSC("python_rhythmdata", returnmsg) # send OSC back to Csound
+            returnmsg = [-1, 1, 0] #pack terminator
+            osc_io.sendOSC("python_rhythmdata", returnmsg) # send OSC back to Csound
         for i in range(len(trigseq)):
             osc_io.sendOSC("python_triggerdata", [i, trigseq[i]]) # send OSC back to Csound
         returnmsg = [ticktempo_bpm,tempo_tendency,float(pulseposition)]
         osc_io.sendOSC("python_other", returnmsg) # send OSC back to Csound
 
-        # REFACTORED TO HERE, NOW DO THE PROBABLISTIC PROCESSING IN A SEPARATE MODULE        
-        # markov model training
-        global mm_data, mm_datasize, mm_max_order, mh
-        mm_datasize = len(ratios_reduced[0])
-        #mm_indices = np.arange(mm_datasize)
-        mm_dimensions = 2 # set max dimensions here for now
-        mm_data = np.empty((mm_dimensions,mm_datasize),dtype='float')
+        # markov model "training"
         best = ranked_unique_representations[0]
         next_best = ranked_unique_representations[1]
-        for i in range(mm_datasize):
-            #nums = ratios_reduced[i,:,0].astype(int).tolist()
-            ratio_float1 = ratios_reduced[best][i][0]/ratios_reduced[best][i][1]
-            ratio_float2 = ratios_reduced[next_best][i][0]/ratios_reduced[next_best][i][1]
-            mm_data[0,i] = ratio_float1
-            mm_data[1,i] = ratio_float2
-            if LOG_MARKOV_INPUT:
-                logging.debug(f'mm ratio1: {ratios_reduced[best][i][0]},{ratios_reduced[best][i][1]}')
-                logging.debug(f'mm as float {ratio_float1}')
-        if LOG_MARKOV_INPUT:
-            logging.debug(f'mm_data: {mm_data}')
-        #analyze variable markov order in 2 dimensions
-        mh = mm.MarkovHelper(data=None, d_size2=2, max_size=100, max_order=mm_max_order)
-        mh.set_data(mm_data)
-        mh.analyze_vmo_vdim()
+        mm.add_data_chunk(ratios_reduced, best, next_best)
 
         if savedata:
             # make a dict with all the data to be exported
@@ -136,16 +112,15 @@ def receive_parameter_controls(unused_addr, *osc_data):
 
 def mm_generate(unused_addr, *osc_data):
     '''Message handler. This is called when we receive an OSC message'''
-    global mm_query
     order, dimension, temperature, index, ratio, request_item, request_weight, update = osc_data
     if request_item < 0:
         request_item = None
     if update > 0:
-        mm_query[0] = int(index) 
-        mm_query[1] = request_item 
-        mm_query[2] = request_weight
+        mm.mm_query[0] = int(index) 
+        mm.mm_query[1] = request_item 
+        mm.mm_query[2] = request_weight
         # query format: [next_item_index, request_next_item, request_weight, next_item_1ord, next_item_1ord_2D]
-    print('***mm_query', mm_query)
+    print('***mm_query', mm.mm_query)
 
     weights = np.zeros(5) # TEMPORARY, was order, dimension
     # cumbersome hack for now
@@ -159,9 +134,9 @@ def mm_generate(unused_addr, *osc_data):
         weights[2:4] = 1
     weights[4] = request_weight
     
-    mm_query = mh.generate_vmo_vdim(mm_query, weights, temperature) #query markov models for next event and update query for next iteration
-    next_item_index = mm_query[0]
-    returnmsg = [int(next_item_index), float(mm_data[0][next_item_index])]
+    mm.mm_query = mh.generate_vmo_vdim(mm.mm_query, weights, temperature) #query markov models for next event and update query for next iteration
+    next_item_index = mm.mm_query[0]
+    returnmsg = [int(next_item_index), float(mh.data[0][next_item_index])]
     #print('returnmsg', returnmsg)
     osc_io.sendOSC("python_markov_gen", returnmsg) # send OSC back to Csound
 
