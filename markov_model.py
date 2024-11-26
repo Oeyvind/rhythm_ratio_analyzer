@@ -18,7 +18,7 @@ class Markov:
     def __init__(self, size=100, max_order=2, name='noname'): 
         self.markov_stm = {}
         self.max_order = max_order # we use this to pad the index_container, so we later can use array views for higher order lookup
-        self.empty_index_container = np.zeros(size+max_order, dtype=np.float32) 
+        self.empty_index_container = np.zeros(size+max_order, dtype=np.float32) # float32 faster than int or float64
         self.wraparound_index_container = np.copy(self.empty_index_container)
         self.wraparound_index_container[max_order] = 1 # to use for avoiding dead ends
         self.previous_item = None 

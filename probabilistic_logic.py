@@ -165,7 +165,7 @@ class Probabilistic_logic:
             request = self.m_1ord.next_items(request_next_item_closest)[3:self.current_datasize+3]
             self.indx_container[:self.current_datasize, 4] = request
         
-        # Scale by weights and sum: dot product indx_container and weight. Then adjust temnperature
+        # Scale by weights and sum: dot product indx_container and weight. Then adjust temperature
         #print(f'prob \n {self.indx_container[:self.current_datasize, :self.numparms]}')
         self.prob = np.dot(self.indx_container[:self.current_datasize, :self.numparms], self.weights)
         if np.amax(self.prob) > 0:
