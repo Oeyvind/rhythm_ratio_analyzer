@@ -170,6 +170,11 @@ instr 31
     endif
     cabbageSet changed(kindex+1), "time_series", "text", Stimevalues1
     kindex += 1
+    skipindex:
+      kskipindex OSClisten gihandle, "python_skipindex", "i", kindex  ; if Python skipped this index, update our index
+      if kskipindex == 0 goto done_skipindex
+      kgoto skipindex ; jump back to the OSC listen line, to see if there are more messages waiting in the network buffer
+    done_skipindex:
   endif
 
   ; send analyze trigger to Python
@@ -178,7 +183,9 @@ instr 31
   OSCsend kanalyzetrig, "127.0.0.1", 9901, "/csound_analyze_trig", "i", krank
   ; clear timedata in Python
   OSCsend changed(kclear), "127.0.0.1", 9901, "/csound_clear", "i", kclear
-  
+  kindex = changed(kclear) > 0 ? 0 : kindex
+  puts "reset index", changed(kclear)
+
   ; send other parameter controls to Python
   kbenni_weight chnget "benni_weight"
   knd_weight chnget "nd_weight"

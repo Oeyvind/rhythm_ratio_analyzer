@@ -237,8 +237,9 @@ def find_duplicate_representations(ratios):
         duplicate_list.remove([])
     return duplicate_list
 
-def analyze(timedata, rank):
+def analyze(t, rank):
     """Do the full ratio analysis"""
+    timedata = t.tolist()
     benni_weight, nd_sum_weight, ratio_dev_weight, ratio_dev_abs_max_weight, grid_dev_weight, evidence_weight, autocorr_weight = weights # global weights
     rat2 = ratio_to_each(timedata, div_limit=2)
     rat4 = ratio_to_each(timedata, div_limit=4)
@@ -287,7 +288,8 @@ if __name__ == '__main__':
     #t = [0,    0.25,     0.5,    0.75,   1.25,   1.5,    1.75,   2,      2.5,    2.75,   3]
     # manuell slark
     #t = [0,    0.3,      0.5,    0.8,    1.3,    1.5,    1.8,    2,      2.5,    2.8,   3]
-    #t = [66.9, 67.2, 67.4, 67.9, 68.4, 68.7, 69.0, 69.2, 69.5, 69.7, 70.0, 70.5, 70.8, 71.0, 71.3, 71.6, 71.9, 72.4, 72.6, 72.9, 73.1, 73.6, 74.0, 74.2]
+    t = [ 6.69,  7.19,  7.44,  7.69,  8.19,  8.52,  8.69,  9.19,  9.44,  9.69, 10.19]
+    t = np.array(t,dtype=np.float32)
     benni_weight = 1
     nd_sum_weight = 1
     ratio_dev_weight = 0.3

@@ -11,7 +11,9 @@ Main program, runs the rhythm_osc_server and probabilistic logic modules
 
 import numpy as np 
 np.set_printoptions(precision=2)
-
+import ratio_analyzer 
+import markov_model 
+import rhythm_osc_server
 # allocation of data containers
 
 max_events = 100 # 100 for test, 10.000 for small scale production
@@ -33,6 +35,7 @@ pnum_corpus = {
 # corpus is the main data container for events
 nparms_corpus = len(pnum_corpus.keys())
 corpus = np.zeros((max_events,nparms_corpus), dtype=np.float32) # float32 faster than int or float64
+
 # parameter names and indices in the probabilistic logic module
 pnum_prob = {
   'ratio_best': 0, # 'zeroeth order' just means give us all indices where the value occurs
@@ -51,5 +54,6 @@ pnum_prob = {
   'pitch_relative': 13,
 }
 
-#if __name__ == '__main__' :
-#  pass
+# instantiate and start osc server
+server = rhythm_osc_server.Osc_server(corpus, pnum_corpus, ratio_analyzer, markov_model)
+server.start_server()
