@@ -11,8 +11,21 @@ import math
 from fractions import Fraction
 import time # for profiling
 #import logging 
-#logging.basicConfig(filename="logging.log", filemode='w', level=logging.INFO)
+#logging.basicConfig(level=logging.DEBUG)
 
+weights = [1,1,0.3,1,0.2,0.3,1]
+# weights for the scoring of ratio alternatives, in this order:
+#benni_weight
+#nd_sum_weight
+#ratio_dev_weight
+#ratio_dev_abs_max_weight
+#grid_dev_weight
+#evidence_weight
+#autocorr_weight
+
+def set_weights(w):
+    global weights
+    weights = w
 
 def ratio_to_each(timeseries, mode='connect', div_limit=4):
     """Ratio of delta times to each other delta time in rhythm sequence. Also including combinations of two neighbouring delta times as reference"""
@@ -224,9 +237,9 @@ def find_duplicate_representations(ratios):
         duplicate_list.remove([])
     return duplicate_list
 
-def analyze(timedata, rank, weights):
+def analyze(timedata, rank):
     """Do the full ratio analysis"""
-    benni_weight, nd_sum_weight, ratio_dev_weight, ratio_dev_abs_max_weight, grid_dev_weight, evidence_weight, autocorr_weight = weights
+    benni_weight, nd_sum_weight, ratio_dev_weight, ratio_dev_abs_max_weight, grid_dev_weight, evidence_weight, autocorr_weight = weights # global weights
     rat2 = ratio_to_each(timedata, div_limit=2)
     rat4 = ratio_to_each(timedata, div_limit=4)
     ratios = np.concatenate((rat2, rat4), axis=0)
@@ -283,8 +296,9 @@ if __name__ == '__main__':
     evidence_weight = 0.3
     autocorr_weight = 1
     weights = [benni_weight, nd_sum_weight, ratio_dev_weight, ratio_dev_abs_max_weight, grid_dev_weight, evidence_weight, autocorr_weight]
+    set_weights(weights)
     rank = 1
-    ratios_reduced, ranked_unique_representations, selected, trigseq, ticktempo_bpm, tempo_tendency, pulseposition = analyze(t, rank, weights)
+    ratios_reduced, ranked_unique_representations, selected, trigseq, ticktempo_bpm, tempo_tendency, pulseposition = analyze(t, rank)
     ratios_list = ratios_reduced[selected].tolist()
     for i in range(len(ratios_list)):
         print(ratios_list[i])

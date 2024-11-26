@@ -17,10 +17,6 @@ button bounds(650, 5, 40, 20), text("calc"), channel("calc"), colour:0("green"),
 combobox channel("rank"), bounds(700, 5, 60, 20), text("1", "2", "3", "4", "5", "6", "7", "8"), value(1)
 label bounds(760, 5, 60, 20), text("Rank"), fontSize(12), align("left")
 
-label bounds(690, 125, 60, 20), text("min_delta"), fontSize(12), align("left")
-nslider bounds(750, 125, 40, 25), channel("minimum_delta_time"), range(0, 100, 50), fontSize(14)
-
-
 label bounds(5, 40, 80, 20), text("Time Series"), fontSize(12), align("left")
 texteditor bounds(85, 40, 710, 20), channel("time_series"), fontSize(15), colour("black"), fontColour("white"), caretColour("white")
 label bounds(5, 70, 80, 20), text("Rhythm Ratios"), fontSize(12), align("left")
@@ -191,15 +187,14 @@ instr 31
   kgrid_dev_weight chnget "grid_dev_weight"
   kevidence_weight chnget "evidence_weight"
   kautocorr_weight chnget "autocorr_weight"
-  kminimum_delta_time chnget "minimum_delta_time"
   
   OSCsend changed(kbenni_weight, knd_weight, kratio_dev_weight, 
                   kratio_dev_abs_max_weight, kgrid_dev_weight, 
-                  kevidence_weight, kautocorr_weight, kminimum_delta_time), 
-                  "127.0.0.1", 9901, "/csound_parametercontrols", "ffffffff", 
+                  kevidence_weight, kautocorr_weight), 
+                  "127.0.0.1", 9901, "/csound_parametercontrols", "fffffff", 
                   kbenni_weight, knd_weight, kratio_dev_weight, 
                   kratio_dev_abs_max_weight, kgrid_dev_weight, 
-                  kevidence_weight, kautocorr_weight, kminimum_delta_time
+                  kevidence_weight, kautocorr_weight
 
   ; receive and process rhythm ratio data from Python
   knum init 1

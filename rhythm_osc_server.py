@@ -19,22 +19,19 @@ import logging
 import json
 #logging.basicConfig(filename="logging.log", filemode='w', level=logging.DEBUG)
 logging.basicConfig(level=logging.DEBUG)
-LOG_SIMPLE_RATIOS = False
-LOG_COMMONDIV_RATIOS = False
-LOG_PROFILING = False
-LOG_SIMPLE_REDUCED_RATIOS = False
-LOG_MARKOV_INPUT = True
 
 timedata = []
-minimum_delta_time = 50 #milliseconds
-benni_weight = 1
-nd_sum_weight = 1
-ratio_dev_weight = 0.3
-ratio_dev_abs_max_weight = 1
-grid_dev_weight = 0.2
-evidence_weight = 0.3
-autocorr_weight = 1
-savedata = False
+
+weights = {
+    'benni_weight': 1,
+    'nd_sum_weight': 1
+    'ratio_dev_weight': 0.3
+    'ratio_dev_abs_max_weight': 1
+    'grid_dev_weight': 0.2
+    'evidence_weight': 0.3
+    'autocorr_weight': 1,
+    'minimum_delta_time': 50 #milliseconds
+}
 
 mh = mm.MarkovHelper(data=None, d_size2=2, max_size=100, max_order=2)
 mm = mm.MarkovManager(mh)
@@ -60,7 +57,6 @@ def analyze(unused_addr, *osc_data):
         print('WARNING: NOT ENOUGH DATA TO ANALYZE')
         return
     if rank > 0:
-        weights = [benni_weight, nd_sum_weight, ratio_dev_weight, ratio_dev_abs_max_weight, grid_dev_weight, evidence_weight, autocorr_weight]
         ratios_reduced, ranked_unique_representations, selected, trigseq, ticktempo_bpm, tempo_tendency, pulseposition = r.analyze(timedata, rank, weights)
         ratios_list = ratios_reduced[selected].tolist()
         for i in range(len(ratios_list)):
@@ -77,24 +73,6 @@ def analyze(unused_addr, *osc_data):
         best = ranked_unique_representations[0]
         next_best = ranked_unique_representations[1]
         mm.add_data_chunk(ratios_reduced, best, next_best)
-
-        if savedata:
-            # make a dict with all the data to be exported
-            jsondict = {}
-            #selection = np.argsort(scores)[:4] # select the 4 best representations
-            ranked_unique_representations[rank]
-            for i in range(4):
-                sub_dict = {}
-                j = ranked_unique_representations[i]
-                sub_dict['ratios'] = ratios_reduced[j].tolist()
-                trigseq = r.make_trigger_sequence(ratios_commondiv[j,:,:2])
-                sub_dict['trigseq'] = trigseq
-                acorr = r.autocorr(trigseq).tolist()
-                sub_dict['autocorr'] = acorr
-                sub_dict['pulsepos'] = (np.argmax(acorr[1:])+1).tolist()
-                jsondict[int(i)] = sub_dict
-            with open('testdata_rhythm.json', 'w') as filehandle:
-                json.dump(jsondict, filehandle)
         
 def clear_timedata(unused_addr, *osc_data):
     global timedata
@@ -106,8 +84,17 @@ def clear_timedata(unused_addr, *osc_data):
 def receive_parameter_controls(unused_addr, *osc_data):
     '''Message handler. This is called when we receive an OSC message'''
     # set control parameters, like score weights etc
-    global benni_weight, nd_sum_weight, ratio_dev_weight, ratio_dev_abs_max_weight, grid_dev_weight, evidence_weight, autocorr_weight, minimum_delta_time
-    benni_weight, nd_sum_weight, ratio_dev_weight, ratio_dev_abs_max_weight, grid_dev_weight, evidence_weight, autocorr_weight, minimum_delta_time = osc_data
+    global weights
+    benni, nd_sum, ratio_dev, ratio_dev_abs_max, grid_dev, evidence, autocorr, minimum_delta_time = osc_data
+    weights['benni_weight'] = benni
+    weights['nd_sum_weight'] = nd_sum
+    weights['ratio_dev_weight'] = ratio_dev
+    weights['ratio_dev_abs_max_weight'] = ratio_dev_abs_max
+    weights['grid_dev_weight'] = grid_dev
+    weights['evidence_weight'] = evidence
+    weights['autocorr_weight'] = autocorr
+    weights['minimum_delta_time'] = minimum_delta_time
+
     logging.debug('receive_parameter_controls {}'.format(osc_data))
 
 def mm_generate(unused_addr, *osc_data):
@@ -150,7 +137,7 @@ def mm_print(unused_addr, *osc_data):
         for key, value in m.markov_stm.items():
             print(key, value[mm_max_order:mm_datasize+mm_max_order])
 
-if __name__ == "__main__": # if we run this module as main we will start the server
+def start_server():
     osc_io.dispatcher.map("/csound_timevalues", receive_timevalues) # here we assign the function to be called when we receive OSC on this address
     osc_io.dispatcher.map("/csound_analyze_trig", analyze) # 
     osc_io.dispatcher.map("/csound_parametercontrols", receive_parameter_controls) # 
@@ -159,3 +146,5 @@ if __name__ == "__main__": # if we run this module as main we will start the ser
     osc_io.dispatcher.map("/csound_markov_print", mm_print) # 
     osc_io.asyncio.run(osc_io.run_osc_server()) # run the OSC server and client
 
+if __name__ == "__main__": # if we run this module as main we will start the server
+    start_server()
