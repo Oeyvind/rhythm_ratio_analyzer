@@ -45,7 +45,7 @@ button bounds(610, 150, 40, 20), text("dwnbeat sync"), channel("downbeat_sync"),
 nslider bounds(655, 150, 40, 25), channel("downbeat_sync_strength"), range(0, 1, 0.5), fontSize(14)
 label bounds(655, 175, 70, 18), text("sync_w"), fontSize(12), align("left")
 
-button bounds(710, 150, 40, 20), text("print stm"), channel("mm_print"), colour:0("green"), colour:1("red"), latched(0)
+button bounds(710, 150, 40, 20), text("print stm"), channel("pl_print"), colour:0("green"), colour:1("red"), latched(0)
 
 csoundoutput bounds(5, 200, 690, 295)
 </Cabbage>
@@ -92,8 +92,8 @@ instr 1
   if ktrig_generate_stop > 0 then
     event "i", -109, 0, .1
   endif
-  ; print markov stm
-  kprint chnget "mm_print"
+  ; print probabilistic logic stm
+  kprint chnget "pl_print"
   kprint_on trigger kprint, 0.5, 0
   if kprint_on > 0 then
     event "i", 110, 0, .1
@@ -311,10 +311,10 @@ instr 109
   if ktrig > 0 then
     knext_event_time += round(kratio*iclock_resolution)/iclock_resolution 
     event "i", inoise_instr, 0, 0.1
-    OSCsend kcount, "127.0.0.1", 9901, "/csound_markov_gen", "ffffffff", korder, kdimension, ktemperature, kindex, kratio, krequest_ratio, krequest_weight, kupdate
+    OSCsend kcount, "127.0.0.1", 9901, "/csound_prob_gen", "ffffffff", korder, kdimension, ktemperature, kindex, kratio, krequest_ratio, krequest_weight, kupdate
   endif
   nextmsg:
-    kmess OSClisten gihandle, "python_markov_gen", "ff", kindex, kratio ; receive OSC data from Python
+    kmess OSClisten gihandle, "python_prob_gen", "ff", kindex, kratio ; receive OSC data from Python
     if kmess == 0 goto done
     kgoto nextmsg ; make sure we read all messages in the network buffer
   done:
@@ -335,9 +335,9 @@ instr 109
   krequest_ratio = kratio_to_next_downbeat ; in case we want to request a ratio that will sync to next downbeat 
 endin
 
-; print markov stm
+; print prob logic stm
 instr 110
-    OSCsend 1, "127.0.0.1", 9901, "/csound_markov_print", "f", 1
+    OSCsend 1, "127.0.0.1", 9901, "/csound_prob_print", "f", 1
 endin
 
 ; downbeat instr

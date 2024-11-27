@@ -12,10 +12,11 @@ Can be thought of as a "multidimensional variable order markov chain generator".
 """
 
 import numpy as np 
+np.set_printoptions(suppress=True)
 np.set_printoptions(precision=2)
 
 class Probabilistic_encoder:
-    # the basic core functionality of registering the order of which symbols appear
+    # the basic core functionality of registering the order in which symbols appear
 
     def __init__(self, size=100, max_order=2, name='noname'): 
         self.stm = {} # state transition matrix in the form key:index_container, where the value contains an array of ones and zeros indicating presence
@@ -65,18 +66,35 @@ class Probabilistic_encoder:
 class Probabilistic_logic:
     # coordinate several queries (different orders, and different dimensions/parameters) to the Probabilistic encoder
 
-    def __init__(self, data=None, d_size2=2, max_size=100, max_order=2):
+    def __init__(self, corpus, pnum_corpus, pnum_prob, d_size2=2, max_size=100, max_order=2, hack=1):
         self.maxsize = max_size # allocate more space than we need, we will add more data later
         self.max_order = max_order
         print('max order', self.max_order)
-        # need to think about how to organize parameters, and variable order per parameter
-        # what is called markov now should be called "ratio" and "ratio_alt", add data for velocity and downbeat
-        #self.parms = ['markov1', 'markov2', 'markov1_2D', 'markov2_2D', 'request'] # just to start somewhere
-        #self.parms = parms
-        self.parms = ['markov1', 'markov2', 'markov1_2D', 'markov2_2D', 'request'] # just to start somewhere
-        self.numparms = len(self.parms)
+        self.pnum_prob = pnum_prob # dict of (parameter name : index) of dimensions in the prob logic
+        self.numparms = len(self.pnum_prob.keys())
         self.weights = np.zeros(self.numparms)
         self.temperature = 1 # 1 is default (no temperature influence)
+
+        # set data and allocate data containers
+        self.current_datasize = 0
+        self.corpus = corpus
+        self.pnum_corpus = pnum_corpus
+        self.indices = self.corpus[:self.current_datasize, self.pnum_corpus['index']]
+        self.indx_container = np.zeros(self.maxsize*self.numparms)
+        self.indx_container = np.reshape(self.indx_container, (self.maxsize,self.numparms))
+        self.indices_prob_temp = np.zeros(self.maxsize+self.max_order)
+        self.prob = np.zeros(self.maxsize)
+
+        '''
+        pnum_prob = {
+          'ratio_best': 0, # 'zeroeth order' just means give us all indices where the value occurs
+          'ratio_best_1order': 1, # first order markovian lookup
+          'ratio_best_2order': 2,
+          'ratio_2nd_best': 5,
+          'ratio_2nd_best_1order': 6,
+          'ratio_2nd_best_2order': 7,
+          'phrase_num': 10} # the rest is placeholders, to be implemented
+        '''
 
         # instantiate analyzer classes
         self.m_1ord = Probabilistic_encoder(size=self.maxsize, max_order=self.max_order, name='1ord')
@@ -84,46 +102,19 @@ class Probabilistic_logic:
         self.prob_history = [None, None]
         self.no_prob_history = [None, None]
 
-        # set data and allocate data containers
-        if type(data) == np.ndarray:
-            self.data = data
-            self.d_size2 = np.shape(data)[0]
+        # ugly, temporary
+        if hack == 1:
+            self.hacknames = ['index', 'val1', 'val2']
         else:
-            self.d_size2 = d_size2
-            self.data = np.zeros(self.maxsize*self.d_size2)
-            self.data = np.reshape(self.data, (self.d_size2, self.maxsize))
-        
-        self.current_datasize = 0
-        self.indices = []
-        self.indx_container = np.zeros(self.maxsize*self.numparms)
-        self.indx_container = np.reshape(self.indx_container, (self.maxsize,self.numparms))
-        # rewrite alternatives as views of indx_container
-        #self.flat_probabilities = np.ones(self.current_datasize)
-        self.alternatives_prob_temp = np.zeros(self.maxsize+self.max_order)
-        self.prob = np.zeros(self.maxsize)
-                
-    def analyze_all(self):
-        # analyze all data item by item
-        for i in range(self.current_datasize):
-            self.m_1ord.analyze(self.data[0][i], i)
-            self.m_1ord_2D.analyze(self.data[1][i], i)
-            self.indices.append(i)
-        print('**** **** done analyzing **** ****')
+            self.hacknames = ['index', 'ratio_best', 'ratio_2nd_best']
 
-    def add_and_analyze(self, item, i=None):
-        # if we do not give an index, we build on after the last current item and increment the datasize counter
-        # item must have the same size as self.numparms
-        if not i:
-            i = self.current_datasize
-            self.indices.append(i)
-            self.current_datasize += 1
-        self.data[:,i] = item
-        self.m_1ord.analyze(self.data[0][i], i)
-        self.m_1ord_2D.analyze(self.data[1][i], i)
 
-    def set_data(self, data):
-        self.data = data
-        self.current_datasize = np.shape(data)[1]
+    
+    def analyze_single_event(self, i):
+        self.m_1ord.analyze(self.corpus[i, self.pnum_corpus[self.hacknames[1]]], i)
+        self.m_1ord_2D.analyze(self.corpus[i, self.pnum_corpus[self.hacknames[2]]], i)
+        self.current_datasize += 1
+        self.indices = self.corpus[:self.current_datasize, self.pnum_corpus['index']]
 
     def set_weights(self, weights):
         self.weights = weights
@@ -143,19 +134,19 @@ class Probabilistic_logic:
             i = self.prob_history[-2] # if we have recorded history
         else:
             i = next_item_index-1 # generate history from where we are
-        next_item_2ord = self.data[0][i]
-        next_item_2ord_2D = self.data[1][i]
-            
+        next_item_2ord = self.corpus[i, self.pnum_corpus[self.hacknames[1]]]
+        next_item_2ord_2D = self.corpus[i, self.pnum_corpus[self.hacknames[2]]]
+
         # get alternatives from Probabilistic encoder
         #print('q:', next_item_1ord, next_item_1ord_2D,next_item_2ord,next_item_2ord_2D)
-        self.alternatives_prob_temp = self.m_1ord.next_items(next_item_1ord)[2:self.current_datasize+2]
-        self.indx_container[:self.current_datasize, 0] = self.alternatives_prob_temp[:self.current_datasize]
-        self.alternatives_prob_temp = self.m_1ord.next_items(next_item_2ord)[1:self.current_datasize+1]
-        self.indx_container[:self.current_datasize, 1] = self.alternatives_prob_temp[:self.current_datasize]
-        self.alternatives_prob_temp = self.m_1ord_2D.next_items(next_item_1ord_2D)[2:self.current_datasize+2]
-        self.indx_container[:self.current_datasize, 2] = self.alternatives_prob_temp[:self.current_datasize]
-        self.alternatives_prob_temp = self.m_1ord_2D.next_items(next_item_2ord_2D)[1:self.current_datasize+1]
-        self.indx_container[:self.current_datasize, 3] = self.alternatives_prob_temp[:self.current_datasize]
+        self.indices_prob_temp = self.m_1ord.next_items(next_item_1ord)[2:self.current_datasize+2]
+        self.indx_container[:self.current_datasize, 0] = self.indices_prob_temp[:self.current_datasize]
+        self.indices_prob_temp = self.m_1ord.next_items(next_item_2ord)[1:self.current_datasize+1]
+        self.indx_container[:self.current_datasize, 1] = self.indices_prob_temp[:self.current_datasize]
+        self.indices_prob_temp = self.m_1ord_2D.next_items(next_item_1ord_2D)[2:self.current_datasize+2]
+        self.indx_container[:self.current_datasize, 2] = self.indices_prob_temp[:self.current_datasize]
+        self.indices_prob_temp = self.m_1ord_2D.next_items(next_item_2ord_2D)[1:self.current_datasize+1]
+        self.indx_container[:self.current_datasize, 3] = self.indices_prob_temp[:self.current_datasize]
         # if we request a specific item, handle this here 
         if request_next_item:
             # in case we request a value that is not exactly equal to a key in the stm, we first find the closest match
@@ -176,95 +167,59 @@ class Probabilistic_logic:
             sumprob = 0
         if sumprob > 0:
             self.prob = self.prob/sumprob #normalize sum to 1
-            #print('prob', self.prob, self.indices)
             next_item_index = np.random.choice(self.indices,p=self.prob)
         else:
             print(f'Prob encoder zero probability from query {query}, choose one at random')
             next_item_index = np.random.choice(self.indices)
+        next_item_index = int(next_item_index)
 
         # update history
-        next_item_1ord = self.data[0][next_item_index]
-        next_item_1ord_2D = self.data[1][next_item_index]
-        self.prob_history = self.prob_history[1:]+self.prob_history[:1] # roll the list one item back
+        next_item_1ord = self.corpus[next_item_index, self.pnum_corpus[self.hacknames[1]]]
+        next_item_1ord_2D = self.corpus[next_item_index, self.pnum_corpus[self.hacknames[2]]]
+        self.prob_history = self.prob_history[1:] + self.prob_history[:1] # roll the list one item back
         self.prob_history[-1] = next_item_index
         return [next_item_index, None, 0, next_item_1ord, next_item_1ord_2D]
-
-class MarkovManager:
-    # manage Markov process registration and analysis
-
-    def __init__(self, mh):
-        
-        self.mh = mh  
-        self.mm_query = [0, None, 0, None, None] # initial markov query. 
-        # query format: [next_item_index, request_next_item, request_weight, next_item_1ord, next_item_1ord_2D]      
-
-    def add_data_chunk(self, newdata, best, next_best):
-        datasize = len(newdata[0])
-        dimensions = 2 # set max dimensions here for now
-        data = np.empty((dimensions,datasize),dtype='float')
-        for i in range(datasize):
-            ratio_float1 = newdata[best][i][0]/newdata[best][i][1]
-            ratio_float2 = newdata[next_best][i][0]/newdata[next_best][i][1]
-            data[0,i] = ratio_float1
-            data[1,i] = ratio_float2
-        
-        #analyze variable markov order in 2 dimensions
-        #mh = mm.MarkovHelper(data=None, d_size2=2, max_size=100, max_order=mm_max_order)
-        self.mh.set_data(data)
-        self.mh.analyze_vmo_vdim()
 
 # test
 if __name__ == '__main__' :
     # example with 2D data
-    #data = np.array([[1,2,3,4,1,2,3,4,1,2,3,1,2,3,1,2,3,4,5,1],
-    #                 ['A','A','A','A','A','A','A','A','B','B','B','B','B','B','B','B','B','B','B','B']])
-    data = np.array([[1,2,2,1,3,4,5, 3,4,5,1,2],
-                     [1,1,1,1,1,1,1, 2,2,2,2,2]], dtype='float')
-    datasize = np.shape(data)[1]
-    d_size2 = np.shape(data)[0]
-    max_order = 2
-    #analyze variable markov order in 2 dimensions
-    nodata = None
-    pl = Probabilistic_logic(nodata, d_size2=d_size2, max_size=datasize, max_order=max_order)
-    analyze_all = True
-    if analyze_all:
-        pl.set_data(data)
-        print('data\n', pl.data)
-        pl.analyze_all()
-    else:
-        for i in range(np.shape(data)[1]):
-            pl.add_and_analyze(data[:,i])
-        print('data\n', mh.data)
+    pnum_corpus = {
+        'index': 0, # register indices for data points currently in use
+        'val1' : 1, 
+        'val2': 2}
+    # corpus is the main data container for events
+    nparms_corpus = len(pnum_corpus.keys())
+    pnum_prob = {'val1_1order': 0, 
+                 'val1_2order': 1, 
+                 'val2_1order': 2, 
+                 'val2_2order': 3}
+
+    max_events = 20
+    corpus = np.zeros((max_events,nparms_corpus), dtype=np.float32) # float32 faster than int or float64
+    list_val1 = [1,2,2,1,3,4,5, 3,4,5,1,2]
+    list_val2 = [1,1,1,1,1,1,1, 2,2,2,2,2]
+    for i in range(len(list_val1)):
+        corpus[i,pnum_corpus['val1']] = list_val1[i]
+        corpus[i,pnum_corpus['val2']] = list_val2[i]
+
+    pl = Probabilistic_logic(corpus, pnum_corpus, pnum_prob, d_size2=nparms_corpus, max_size=max_events, max_order=2, hack=1)
+    for i in range(len(list_val1)):
+        pl.corpus[i,pnum_corpus['index']] = i
+        pl.analyze_single_event(i)
     print('done analyzing')
     
     #generate
-    order = 2
-    dimensions = 2
-    #coefs = (order, dimensions)
-    weights = [1,1,1,1,0] #1ord, 2ord, 1ord2D, 2ord2D, request
-    '''
-    # cumbersome hack for now
-    order, dimension = coefs # the markov order and the number of dimensions to take into account
-    if order == 0:
-        self.weights[:3] = 0
-    if order == 1:
-        self.weights[0] = 1
-    if order == 2:
-        self.weights[:1] = 1
-    if dimension == 2:
-        self.weights[2:4] = 1
-    self.weights[5] = request_weight
-    '''
+    weights = [1,1,1,0.5] #1ord, 2ord, 1ord2D, 2ord2D
     temperature = 0.2 # low (<1.0) is deternimistic, high (>1.0) is more random
     start_index = 0#np.random.choice(indices)
-    next_item_1ord = data[start_index][0]
+    next_item_1ord = corpus[start_index,pnum_corpus[pl.hacknames[1]]]
     # for debug only
     print('stm 1ord')
     for key, value in pl.m_1ord.stm.items():
-        print(key, value[2:datasize+max_order])
+        print(key, value[2:pl.current_datasize+pl.max_order])
     print('stm 2ord')
     for key, value in pl.m_1ord_2D.stm.items():
-        print(key, value[2:datasize+max_order])
+        print(key, value[2:pl.current_datasize+pl.max_order])
     
     # query
     print(f'The first item is {next_item_1ord} at index {start_index}')
@@ -272,9 +227,8 @@ if __name__ == '__main__' :
     query = [start_index, None, 0, next_item_1ord, next_item_1ord_2D]
     i = 0
     while i < 10:
-        #print(f'query {m_query}')
         query = pl.generate(query, weights, temperature) #query probabilistic encoders for next event and update query for next iteration
         next_item_index = query[0]
-        print(f'        the next item is  {data[0][next_item_index]} at index {next_item_index}')
+        print(f"the next item is  {corpus[next_item_index,pnum_corpus[pl.hacknames[1]]]} at index {next_item_index}, prob {pl.prob}")
         i += 1
     print(f'generated {i} items')

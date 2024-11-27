@@ -17,10 +17,9 @@ import logging
 #logging.basicConfig(filename="logging.log", filemode='w', level=logging.DEBUG)
 logging.basicConfig(level=logging.DEBUG)
 
-
 class Osc_server():
 
-    def __init__(self, corpus, pnum_corpus, ratio_analyzer, mm):
+    def __init__(self, corpus, pnum_corpus, ratio_analyzer, pl_instance):
         self.corpus = corpus # the main data container for events
         self.pnum_corpus = pnum_corpus # dict for parameter_name:index in corpus
         self.pending_analysis = [] # indices for events not yet enelyzed
@@ -28,9 +27,11 @@ class Osc_server():
         self.previous_timestamp = -1
         self.phrase_number = 0
         
-        self.mh = mm.MarkovHelper(data=None, d_size2=2, max_size=100, max_order=2)
-        self.mm = mm.MarkovManager(self.mh)
+        self.pl = pl_instance
         self.ra = ratio_analyzer
+
+        # temporary!
+        self.query = [0, None, 0, None, None] # initial probabilistic query. 
 
     def receive_timevalues(self, unused_addr, *osc_data):
         '''Message handler. This is called when we receive an OSC message'''
@@ -59,7 +60,6 @@ class Osc_server():
         if rank > 0:
             start, end = self.pending_analysis[0], self.pending_analysis[-1]
             timedata = self.corpus[start:end+1,self.pnum_corpus['timestamp']]
-            print(timedata)
             self.phrase_number += 1
             ratios_reduced, ranked_unique_representations, selected, trigseq, ticktempo_bpm, tempo_tendency, pulseposition = self.ra.analyze(timedata, rank)
             ratios_list = ratios_reduced[selected].tolist()
@@ -72,13 +72,11 @@ class Osc_server():
                 osc_io.sendOSC("python_triggerdata", [i, trigseq[i]]) # send OSC back to Csound
             returnmsg = [ticktempo_bpm,tempo_tendency,float(pulseposition)]
             osc_io.sendOSC("python_other", returnmsg) # send OSC back to Csound
+            
 
-            # markov model "training"
+            # store the rhythm fractions as float for each event in the corpus
             best = ranked_unique_representations[0]
             next_best = ranked_unique_representations[1]
-            self.mm.add_data_chunk(ratios_reduced, best, next_best)
-            
-            # store the rhythm fractions as float for each event in the corpus
             for i in range(len(self.pending_analysis)-1): 
                 indx = self.pending_analysis[i]
                 self.corpus[indx,self.pnum_corpus['index']] = indx
@@ -87,11 +85,50 @@ class Osc_server():
                 self.corpus[indx,self.pnum_corpus['ratio_2nd_best']] = ratios_reduced[next_best,i,0]/ratios_reduced[next_best,i,1] # ratio as float
                 self.corpus[indx,self.pnum_corpus['deviation_2nd_best']] = ratios_reduced[next_best,i,2] # deviation
                 self.corpus[indx,self.pnum_corpus['phrase_num']] = self.phrase_number
-            self.corpus[indx+1,self.pnum_corpus['index']] = indx+1 # temporarily close the phrase...
-            self.corpus[indx+1,self.pnum_corpus['ratio_best']] = 1 # ...rewrite data for this event later if we do streaming analysis ...
-            self.corpus[indx+1,self.pnum_corpus['phrase_num']] = self.phrase_number # ... chunk by chunk over a larger contiguous phrase
-            print(f'corpus \n{self.corpus[self.pending_analysis[0]:self.pending_analysis[-1]+1]}')
+                # probabilistic model encoding
+                self.pl.analyze_single_event(i)
+            #self.corpus[indx+1,self.pnum_corpus['index']] = indx+1 # 
+            #self.corpus[indx+1,self.pnum_corpus['ratio_best']] = 1 # temporarily close the phrase, rewrite data for this event later if we do streaming analysis ...
+            #self.corpus[indx+1,self.pnum_corpus['phrase_num']] = self.phrase_number # ... chunk by chunk over a larger contiguous phrase
             self.pending_analysis = [] # clear
+
+    def pl_generate(self, unused_addr, *osc_data):
+        '''Message handler. This is called when we receive an OSC message'''
+        order, dimension, temperature, index, ratio, request_item, request_weight, update = osc_data
+        if request_item < 0:
+            request_item = None
+        if update > 0:
+            self.query[0] = int(index) 
+            self.query[1] = request_item 
+            self.query[2] = request_weight
+            # query format: [next_item_index, request_next_item, request_weight, next_item_1ord, next_item_1ord_2D]
+        print('***pl_query', self.query)
+
+        weights = np.zeros(self.pl.numparms) 
+        # cumbersome hack for now, also not including weights for other params (amp, phrase, etc)
+        if order == 0:
+            weights[:3] = 0
+        if order == 1:
+            weights[0] = 1
+        if order == 2:
+            weights[:2] = 1
+        if dimension == 2:
+            weights[2:4] = 1
+        weights[4] = request_weight
+
+        self.query = self.pl.generate(self.query, weights, temperature) #query probabilistic models for next event and update query for next iteration
+        next_item_index = self.query[0]
+        returnmsg = [int(next_item_index), float(self.corpus[next_item_index, self.pnum_corpus['ratio_best']])]
+        #print('returnmsg', returnmsg)
+        osc_io.sendOSC("python_prob_gen", returnmsg) # send OSC back to Csound
+
+    def pl_print(self, unused_addr, *osc_data):
+        '''Message handler. This is called when we receive an OSC message'''
+        print('pl_data', self.corpus)
+        for p in [self.pl.m_1ord, self.pl.m_1ord_2D]:
+            print(p, p.name)
+            for key, value in p.stm.items():
+                print(key, value[p.max_order:p.datasize+m.max_order])
 
     def clear_timedata(self, unused_addr, *osc_data):
         print('CLEAR DATA NOT IMPLEMENTED YET, but resetting phrase number')
@@ -111,50 +148,12 @@ class Osc_server():
         self.ra.set_weights(osc_data)
         logging.debug('receive_parameter_controls {}'.format(osc_data))
 
-    def mm_generate(self, unused_addr, *osc_data):
-        '''Message handler. This is called when we receive an OSC message'''
-        order, dimension, temperature, index, ratio, request_item, request_weight, update = osc_data
-        if request_item < 0:
-            request_item = None
-        if update > 0:
-            self.mm.mm_query[0] = int(index) 
-            self.mm.mm_query[1] = request_item 
-            self.mm.mm_query[2] = request_weight
-            # query format: [next_item_index, request_next_item, request_weight, next_item_1ord, next_item_1ord_2D]
-        print('***mm_query', self.mm.mm_query)
-
-        weights = np.zeros(5) # TEMPORARY, was order, dimension
-        # cumbersome hack for now
-        if order == 0:
-            weights[:3] = 0
-        if order == 1:
-            weights[0] = 1
-        if order == 2:
-            weights[:2] = 1
-        if dimension == 2:
-            weights[2:4] = 1
-        weights[4] = request_weight
-
-        self.mm.mm_query = self.mh.generate_vmo_vdim(self.mm.mm_query, weights, temperature) #query markov models for next event and update query for next iteration
-        next_item_index = self.mm.mm_query[0]
-        returnmsg = [int(next_item_index), float(self.mh.data[0][next_item_index])]
-        #print('returnmsg', returnmsg)
-        osc_io.sendOSC("python_markov_gen", returnmsg) # send OSC back to Csound
-
-    def mm_print(self, unused_addr, *osc_data):
-        '''Message handler. This is called when we receive an OSC message'''
-        print('mm_data', self.mm_data)
-        for m in [self.mh.m_1ord, self.mh.m_1ord_2D]:
-            print(m, m.name)
-            for key, value in m.markov_stm.items():
-                print(key, value[m.max_order:m.datasize+m.max_order])
-
     def start_server(self):
         osc_io.dispatcher.map("/csound_timevalues", self.receive_timevalues) # here we assign the function to be called when we receive OSC on this address
         osc_io.dispatcher.map("/csound_analyze_trig", self.analyze) # 
         osc_io.dispatcher.map("/csound_parametercontrols", self.receive_parameter_controls) # 
         osc_io.dispatcher.map("/csound_clear", self.clear_timedata) # 
-        osc_io.dispatcher.map("/csound_markov_gen", self.mm_generate) # 
-        osc_io.dispatcher.map("/csound_markov_print", self.mm_print) # 
+        osc_io.dispatcher.map("/csound_prob_gen", self.pl_generate) # 
+        osc_io.dispatcher.map("/csound_prob_print", self.pl_print) # 
         osc_io.asyncio.run(osc_io.run_osc_server()) # run the OSC server and client
 
