@@ -66,14 +66,26 @@ class Probabilistic_encoder:
 class Probabilistic_logic:
     # coordinate several queries (different orders, and different dimensions/parameters) to the Probabilistic encoder
 
-    def __init__(self, corpus, pnum_corpus, pnum_prob, d_size2=2, max_size=100, max_order=2, hack=1):
+    def __init__(self, corpus, pnum_corpus, prob_parms, d_size2=2, max_size=100, max_order=2, hack=1):
         self.maxsize = max_size # allocate more space than we need, we will add more data later
         self.max_order = max_order
         print('max order', self.max_order)
-        self.pnum_prob = pnum_prob # dict of (parameter name : index) of dimensions in the prob logic
-        self.numparms = len(self.pnum_prob.keys())
+        
+        # get number of parameters and instantiate analyzer classes
+        self.prob_parms = prob_parms
+        numparms = 0
+        for parm in self.prob_parms.keys():
+            numparms += (self.prob_parms[parm][0]+1) # 1 for each order, plus the "request value"
+            pe = Probabilistic_encoder(size=self.maxsize, max_order=self.max_order, name=parm)
+            self.prob_parms[parm][1] = pe
+        self.numparms = numparms
+        print('number of parameters in probabilistic logic:', self.numparms)
+        
+        self.prob_history = []
+        for i in range(self.max_order): self.prob_history.append(None)
+        self.no_prob_history = self.prob_history.copy()
         self.weights = np.zeros(self.numparms)
-        self.temperature = 1 # 1 is default (no temperature influence)
+        self.temperature_coef = 1 # 1 is default (no temperature influence)
 
         # set data and allocate data containers
         self.current_datasize = 0
@@ -85,22 +97,6 @@ class Probabilistic_logic:
         self.indices_prob_temp = np.zeros(self.maxsize+self.max_order)
         self.prob = np.zeros(self.maxsize)
 
-        '''
-        pnum_prob = {
-          'ratio_best': 0, # 'zeroeth order' just means give us all indices where the value occurs
-          'ratio_best_1order': 1, # first order markovian lookup
-          'ratio_best_2order': 2,
-          'ratio_2nd_best': 5,
-          'ratio_2nd_best_1order': 6,
-          'ratio_2nd_best_2order': 7,
-          'phrase_num': 10} # the rest is placeholders, to be implemented
-        '''
-
-        # instantiate analyzer classes
-        self.m_1ord = Probabilistic_encoder(size=self.maxsize, max_order=self.max_order, name='1ord')
-        self.m_1ord_2D = Probabilistic_encoder(size=self.maxsize, max_order=self.max_order, name='1ord_2D')
-        self.prob_history = [None, None]
-        self.no_prob_history = [None, None]
 
         # ugly, temporary
         if hack == 1:
@@ -109,10 +105,10 @@ class Probabilistic_logic:
             self.hacknames = ['index', 'ratio_best', 'ratio_2nd_best']
 
 
-    
     def analyze_single_event(self, i):
-        self.m_1ord.analyze(self.corpus[i, self.pnum_corpus[self.hacknames[1]]], i)
-        self.m_1ord_2D.analyze(self.corpus[i, self.pnum_corpus[self.hacknames[2]]], i)
+        for parm in self.prob_parms.keys():
+            pe = self.prob_parms[parm][1]
+            pe.analyze(self.corpus[i, self.pnum_corpus[parm]], i)
         self.current_datasize += 1
         self.indices = self.corpus[:self.current_datasize, self.pnum_corpus['index']]
 
@@ -120,65 +116,68 @@ class Probabilistic_logic:
         self.weights = weights
 
     def set_temperature(self, temperature):
-        if temperature < 0.01 : temperature = 0.01
-        self.temperature = 1/temperature
+        if temperature < 0.001 : temperature = 0.001
+        self.temperature_coef = 1/temperature
+       
+    def update_history(self, history, new_item):
+        history = history[1:]+history[:1] #rotate
+        history[-1] = int(new_item) # add most recent INDEX last in list
+        for i in range(len(history)-2): # not process the last (newest)
+            if not history[i]:
+                if history[i+1]:
+                    history[i] = history[i+1]-1 # if there is a gap in the history, smooth out
+        return history
 
-    def generate(self, query, weights, temperature):
-        next_item_index, request_next_item, request_weight, next_item_1ord, next_item_1ord_2D = query
-        self.set_weights(weights)
-        self.set_temperature(temperature)
-
+    def generate(self, query):
+        next_item_index, request_next_item = query
+        
         # need to update and keep track of previous events for higher orders
-        self.prob_history[-1] = next_item_index
-        if self.prob_history[-2]:
-            i = self.prob_history[-2] # if we have recorded history
-        else:
-            i = next_item_index-1 # generate history from where we are
-        next_item_2ord = self.corpus[i, self.pnum_corpus[self.hacknames[1]]]
-        next_item_2ord_2D = self.corpus[i, self.pnum_corpus[self.hacknames[2]]]
+        self.prob_history = self.update_history(self.prob_history, next_item_index)
 
         # get alternatives from Probabilistic encoder
-        #print('q:', next_item_1ord, next_item_1ord_2D,next_item_2ord,next_item_2ord_2D)
-        self.indices_prob_temp = self.m_1ord.next_items(next_item_1ord)[2:self.current_datasize+2]
-        self.indx_container[:self.current_datasize, 0] = self.indices_prob_temp[:self.current_datasize]
-        self.indices_prob_temp = self.m_1ord.next_items(next_item_2ord)[1:self.current_datasize+1]
-        self.indx_container[:self.current_datasize, 1] = self.indices_prob_temp[:self.current_datasize]
-        self.indices_prob_temp = self.m_1ord_2D.next_items(next_item_1ord_2D)[2:self.current_datasize+2]
-        self.indx_container[:self.current_datasize, 2] = self.indices_prob_temp[:self.current_datasize]
-        self.indices_prob_temp = self.m_1ord_2D.next_items(next_item_2ord_2D)[1:self.current_datasize+1]
-        self.indx_container[:self.current_datasize, 3] = self.indices_prob_temp[:self.current_datasize]
+        for parm in self.prob_parms.keys():
+            pe = self.prob_parms[parm][1]
+            for ord in range(1,self.prob_parms[parm][0]+1): # will skip for specific request (order 0)
+                w_index = self.prob_parms[parm][2][ord] #prob weight index
+                if self.weights[w_index] != 0:
+                    offset = self.max_order+1-ord
+                    if not self.prob_history[-ord]:
+                        query_item = None
+                    else:
+                        query_item = self.corpus[self.prob_history[-ord], self.pnum_corpus[parm]]
+                    #print(f'query item {query_item}, history {self.prob_history}, -ord {-ord}, pnum {self.pnum_corpus[parm]}')
+                    self.indices_prob_temp = pe.next_items(query_item)[offset:self.current_datasize+offset]
+                    self.indx_container[:self.current_datasize, w_index] = self.indices_prob_temp[:self.current_datasize]
+                #else: print(f'skipping {parm} order {ord}')
+
         # if we request a specific item, handle this here 
-        if request_next_item:
+        if request_next_item[0]:
+            parm, value, weight = request_next_item
+            w_index = self.prob_parms[parm][2][0] #prob weight index for "zero" order (value request)
+            self.weights[w_index] = weight # might want to reset this to previous value?
+            pe = self.prob_parms[parm][1]
             # in case we request a value that is not exactly equal to a key in the stm, we first find the closest match
-            keys = np.asarray(list(self.m_1ord.stm.keys()))
-            request_next_item_closest = keys[np.abs(request_next_item-keys).argmin()]
-            print(f'* * * * * * requested value {request_next_item_closest} with weight {request_weight}')
-            request = self.m_1ord.next_items(request_next_item_closest)[3:self.current_datasize+3]
-            self.indx_container[:self.current_datasize, 4] = request
+            keys = np.asarray(list(pe.stm.keys()))
+            request_next_item_closest = keys[np.abs(value-keys).argmin()]
+            offset = self.max_order+1
+            request = pe.next_items(request_next_item_closest)[offset:self.current_datasize+offset]
+            #print(f'* * * * * * requested value {request_next_item_closest} with weight {self.weights[w_index]}')
+            self.indx_container[:self.current_datasize, w_index] = request
         
         # Scale by weights and sum: dot product indx_container and weight. Then adjust temperature
         #print(f'prob \n {self.indx_container[:self.current_datasize, :self.numparms]}')
         self.prob = np.dot(self.indx_container[:self.current_datasize, :self.numparms], self.weights)
         if np.amax(self.prob) > 0:
             self.prob /= np.amax(self.prob) # normalize
-            self.prob = np.power(self.prob, self.temperature) # temperature adjustment
+            self.prob = np.power(self.prob, self.temperature_coef) # temperature adjustment
             sumprob = np.sum(self.prob)
-        else:
-            sumprob = 0
-        if sumprob > 0:
             self.prob = self.prob/sumprob #normalize sum to 1
             next_item_index = np.random.choice(self.indices,p=self.prob)
         else:
             print(f'Prob encoder zero probability from query {query}, choose one at random')
             next_item_index = np.random.choice(self.indices)
         next_item_index = int(next_item_index)
-
-        # update history
-        next_item_1ord = self.corpus[next_item_index, self.pnum_corpus[self.hacknames[1]]]
-        next_item_1ord_2D = self.corpus[next_item_index, self.pnum_corpus[self.hacknames[2]]]
-        self.prob_history = self.prob_history[1:] + self.prob_history[:1] # roll the list one item back
-        self.prob_history[-1] = next_item_index
-        return [next_item_index, None, 0, next_item_1ord, next_item_1ord_2D]
+        return [next_item_index, [None,0]]
 
 # test
 if __name__ == '__main__' :
@@ -189,10 +188,13 @@ if __name__ == '__main__' :
         'val2': 2}
     # corpus is the main data container for events
     nparms_corpus = len(pnum_corpus.keys())
-    pnum_prob = {'val1_1order': 0, 
-                 'val1_2order': 1, 
-                 'val2_1order': 2, 
-                 'val2_2order': 3}
+    # parameter names and max_order in the probabilistic logic module
+    # zero order just means give us all indices where the value occurs
+    # higher orders similar to markov order
+    # the second item in the values is the analyzer instance for that parameter
+    # the third is a list of indices used for probability calculation, corresponds to weight indices
+    prob_parms = {'val1': [2, None, [0,1,2]],
+                 'val2': [2, None, [3,4,5]]}
 
     max_events = 20
     corpus = np.zeros((max_events,nparms_corpus), dtype=np.float32) # float32 faster than int or float64
@@ -202,33 +204,34 @@ if __name__ == '__main__' :
         corpus[i,pnum_corpus['val1']] = list_val1[i]
         corpus[i,pnum_corpus['val2']] = list_val2[i]
 
-    pl = Probabilistic_logic(corpus, pnum_corpus, pnum_prob, d_size2=nparms_corpus, max_size=max_events, max_order=2, hack=1)
+    pl = Probabilistic_logic(corpus, pnum_corpus, prob_parms, d_size2=nparms_corpus, max_size=max_events, max_order=2, hack=1)
     for i in range(len(list_val1)):
         pl.corpus[i,pnum_corpus['index']] = i
         pl.analyze_single_event(i)
     print('done analyzing')
     
     #generate
-    weights = [1,1,1,0.5] #1ord, 2ord, 1ord2D, 2ord2D
-    temperature = 0.2 # low (<1.0) is deternimistic, high (>1.0) is more random
+    pl.weights[1] = 0
+    pl.set_temperature(0.2) # low (<1.0) is deterministic, high (>1.0) is more random
     start_index = 0#np.random.choice(indices)
-    next_item_1ord = corpus[start_index,pnum_corpus[pl.hacknames[1]]]
+    next_item = corpus[start_index,pnum_corpus['val1']]
     # for debug only
-    print('stm 1ord')
-    for key, value in pl.m_1ord.stm.items():
-        print(key, value[2:pl.current_datasize+pl.max_order])
-    print('stm 2ord')
-    for key, value in pl.m_1ord_2D.stm.items():
-        print(key, value[2:pl.current_datasize+pl.max_order])
+    for parm in prob_parms.keys():
+        pe = prob_parms[parm][1]
+        # FIX HERE
+        print(f'stm for {parm}')
+        for key, value in pe.stm.items():
+            print(key, value[2:pl.current_datasize+pl.max_order])
     
     # query
-    print(f'The first item is {next_item_1ord} at index {start_index}')
-    next_item_1ord_2D = None
-    query = [start_index, None, 0, next_item_1ord, next_item_1ord_2D]
+    print(f'The first item is {next_item} at index {start_index}')
+    request_value = 3
+    query = [start_index, ['val1', request_value, 1]]
     i = 0
     while i < 10:
-        query = pl.generate(query, weights, temperature) #query probabilistic encoders for next event and update query for next iteration
+        query = pl.generate(query) #query probabilistic encoders for next event and update query for next iteration
         next_item_index = query[0]
-        print(f"the next item is  {corpus[next_item_index,pnum_corpus[pl.hacknames[1]]]} at index {next_item_index}, prob {pl.prob}")
+        query[1] = ['val1', request_value, 1]
+        print(f"the next item is  {corpus[next_item_index,pnum_corpus['val1']]} at index {next_item_index}, prob {pl.prob}")
         i += 1
     print(f'generated {i} items')

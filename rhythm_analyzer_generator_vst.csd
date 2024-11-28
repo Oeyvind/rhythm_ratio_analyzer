@@ -295,8 +295,6 @@ instr 109
   ;kratio_set chnget "ratio_set"
   ;kindex_set chnget "index_set"
   ;kupdate changed kratio_set, kindex_set
-  kupdate init 0
-  kupdate = kdownbeat_sync ; temporary
   kindex init 0
   krequest_ratio init -1
   krequest_weight = kdownbeat_sync_strength ; may not necessary to rename/patch this, if it will only be used for that purpose
@@ -311,7 +309,7 @@ instr 109
   if ktrig > 0 then
     knext_event_time += round(kratio*iclock_resolution)/iclock_resolution 
     event "i", inoise_instr, 0, 0.1
-    OSCsend kcount, "127.0.0.1", 9901, "/csound_prob_gen", "ffffffff", korder, kdimension, ktemperature, kindex, kratio, krequest_ratio, krequest_weight, kupdate
+    OSCsend kcount, "127.0.0.1", 9901, "/csound_prob_gen", "fff", kindex, krequest_ratio, krequest_weight
   endif
   nextmsg:
     kmess OSClisten gihandle, "python_prob_gen", "ff", kindex, kratio ; receive OSC data from Python
@@ -332,7 +330,7 @@ instr 109
   endif
   */
   kratio_to_next_downbeat = knext_downbeat_time-knext_event_time
-  krequest_ratio = kratio_to_next_downbeat ; in case we want to request a ratio that will sync to next downbeat 
+  krequest_ratio = kdownbeat_sync > 0 ? kratio_to_next_downbeat : -1 ; in case we want to request a ratio that will sync to next downbeat 
 endin
 
 ; print prob logic stm

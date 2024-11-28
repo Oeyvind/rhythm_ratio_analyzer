@@ -22,9 +22,70 @@
 
 import numpy as np
 
+history = [0,0,0,0]
+def update_history(history,new_item):
+  history = history[1:]+history[:1] #rotate
+  history[-1] = new_item
+  for i in range(len(history)-2): # not process the last (newest)
+    if not history[i]:
+      if history[i+1] > 0:
+        history[i] = history[i+1]-1
+  return history
+
+for i in range(5):
+  history = update_history(history,i)
+  print(history)
+history[2] = None
+print(history)
+for i in range(2):
+  history = update_history(history,i+10)
+  print(history)
+'''
 # profiling tests
 import cProfile
-maxweights = 100
+
+# rotate list vs array
+l = [0,0,0,0]
+a = np.zeros(4)
+
+# fastest and simplest
+def rotate_list(l, new):
+  l[-1] = new
+  return l[1:]+l[:1]
+
+def insert_pop_list(l, new):
+  l.insert(new,l.pop())
+  return l
+
+def roll_array(a, new):
+  a[-1] = new
+  return np.roll(a,-1)
+
+num = 100000
+
+def test_list():
+  l = [0,0,0,0]
+  for i in range(num):
+    l=rotate_list(l,i)
+  print(l)
+  
+def test_list_pop():
+  l = [0,0,0,0]
+  for i in range(num):
+    l=insert_pop_list(l,i)
+  print(l)
+
+def test_array():
+  a = np.zeros(4)
+  for i in range(num):
+    a=roll_array(a,i)
+  print(a)
+
+cProfile.run('test_list()')
+cProfile.run('test_list_pop()')
+
+'''
+'''maxweights = 100
 datasize = 100000
 weights = np.ones(maxweights)
 data = np.random.rand(datasize*maxweights)
@@ -49,7 +110,7 @@ cProfile.run('allocate(datasize, maxweights)')
 cProfile.run('dot(d,w)')
 print(data[0][0])
 print(d[0][0])
-
+'''
 '''
 def multiply_array(a,scale):
   test = a*scale

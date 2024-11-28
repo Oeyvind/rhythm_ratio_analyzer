@@ -28,6 +28,9 @@ class Osc_server():
         self.phrase_number = 0
         
         self.pl = pl_instance
+        self.pl.weights[1] = 1 # first order for best ratio
+        self.pl.weights[2] = 1 # 2nd order for best ratio
+        self.pl.set_temperature(0.2) # < 1.0 is more deterministic
         self.ra = ratio_analyzer
 
         # temporary!
@@ -94,29 +97,16 @@ class Osc_server():
 
     def pl_generate(self, unused_addr, *osc_data):
         '''Message handler. This is called when we receive an OSC message'''
-        order, dimension, temperature, index, ratio, request_item, request_weight, update = osc_data
+        #order, dimension, temperature, index, ratio, request_item, request_weight, update = osc_data
+        index, request_item, request_weight = osc_data
         if request_item < 0:
-            request_item = None
-        if update > 0:
-            self.query[0] = int(index) 
-            self.query[1] = request_item 
-            self.query[2] = request_weight
-            # query format: [next_item_index, request_next_item, request_weight, next_item_1ord, next_item_1ord_2D]
+            request = [None, 0, 0]
+        else:
+            request = ['ratio_best', request_item, request_weight] # FIX/update
+        self.query = [index, request]
         print('***pl_query', self.query)
 
-        weights = np.zeros(self.pl.numparms) 
-        # cumbersome hack for now, also not including weights for other params (amp, phrase, etc)
-        if order == 0:
-            weights[:3] = 0
-        if order == 1:
-            weights[0] = 1
-        if order == 2:
-            weights[:2] = 1
-        if dimension == 2:
-            weights[2:4] = 1
-        weights[4] = request_weight
-
-        self.query = self.pl.generate(self.query, weights, temperature) #query probabilistic models for next event and update query for next iteration
+        self.query = self.pl.generate(self.query) #query probabilistic models for next event and update query for next iteration
         next_item_index = self.query[0]
         returnmsg = [int(next_item_index), float(self.corpus[next_item_index, self.pnum_corpus['ratio_best']])]
         #print('returnmsg', returnmsg)

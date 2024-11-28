@@ -28,8 +28,14 @@ pnum_corpus = {
 nparms_corpus = len(pnum_corpus.keys())
 corpus = np.zeros((max_events,nparms_corpus), dtype=np.float32) # float32 faster than int or float64
 
-# parameter names and indices in the probabilistic logic module
-# smaller test set
+# parameter names and max_order in the probabilistic logic module
+# zero order just means give us all indices where the value occurs
+# higher orders similar to markov order
+prob_parms = {
+  'ratio_best': [2, None, [0,1,2]],
+  'ratio_2nd_best': [2, None, [3,4,5]]}
+
+'''# test set
 pnum_prob = {
   'ratio_best': 0, # 'zeroeth order' just means give us all indices where the value occurs
   'ratio_best_1order': 1, # first order markovian lookup
@@ -38,7 +44,7 @@ pnum_prob = {
   'ratio_2nd_best_1order': 4,
   'ratio_2nd_best_2order': 5,
   'phrase_num': 6} # the rest is placeholders, to be implemented
-
+'''
 
 # full set
 '''
