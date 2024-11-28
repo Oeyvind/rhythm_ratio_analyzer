@@ -34,7 +34,7 @@ class Osc_server():
         self.ra = ratio_analyzer
 
         # temporary!
-        self.query = [0, None, 0, None, None] # initial probabilistic query. 
+        self.query = [0, [None, 0, 0]] # initial probabilistic query. 
 
     def receive_timevalues(self, unused_addr, *osc_data):
         '''Message handler. This is called when we receive an OSC message'''
@@ -76,7 +76,6 @@ class Osc_server():
             returnmsg = [ticktempo_bpm,tempo_tendency,float(pulseposition)]
             osc_io.sendOSC("python_other", returnmsg) # send OSC back to Csound
             
-
             # store the rhythm fractions as float for each event in the corpus
             best = ranked_unique_representations[0]
             next_best = ranked_unique_representations[1]
@@ -90,9 +89,6 @@ class Osc_server():
                 self.corpus[indx,self.pnum_corpus['phrase_num']] = self.phrase_number
                 # probabilistic model encoding
                 self.pl.analyze_single_event(i)
-            #self.corpus[indx+1,self.pnum_corpus['index']] = indx+1 # 
-            #self.corpus[indx+1,self.pnum_corpus['ratio_best']] = 1 # temporarily close the phrase, rewrite data for this event later if we do streaming analysis ...
-            #self.corpus[indx+1,self.pnum_corpus['phrase_num']] = self.phrase_number # ... chunk by chunk over a larger contiguous phrase
             self.pending_analysis = [] # clear
 
     def pl_generate(self, unused_addr, *osc_data):

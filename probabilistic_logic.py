@@ -97,14 +97,6 @@ class Probabilistic_logic:
         self.indices_prob_temp = np.zeros(self.maxsize+self.max_order)
         self.prob = np.zeros(self.maxsize)
 
-
-        # ugly, temporary
-        if hack == 1:
-            self.hacknames = ['index', 'val1', 'val2']
-        else:
-            self.hacknames = ['index', 'ratio_best', 'ratio_2nd_best']
-
-
     def analyze_single_event(self, i):
         for parm in self.prob_parms.keys():
             pe = self.prob_parms[parm][1]
@@ -165,7 +157,6 @@ class Probabilistic_logic:
             self.indx_container[:self.current_datasize, w_index] = request
         
         # Scale by weights and sum: dot product indx_container and weight. Then adjust temperature
-        #print(f'prob \n {self.indx_container[:self.current_datasize, :self.numparms]}')
         self.prob = np.dot(self.indx_container[:self.current_datasize, :self.numparms], self.weights)
         if np.amax(self.prob) > 0:
             self.prob /= np.amax(self.prob) # normalize
