@@ -33,12 +33,12 @@ label bounds(180, 175, 100, 18), text("pulsepos"), fontSize(12), align("left")
 
 button bounds(300, 150, 70, 20), text("generate"), channel("generate"), colour:0("green"), colour:1("red")
 nslider bounds(380, 150, 40, 25), channel("gen_tempo_bpm"), range(1, 3000, 60), fontSize(14)
-nslider bounds(440, 150, 40, 25), channel("gen_order"), range(0, 2, 2, 1, 0.5), fontSize(14)
-nslider bounds(500, 150, 40, 25), channel("gen_dimension"), range(1, 2, 2, 1, 1), fontSize(14)
+nslider bounds(440, 150, 40, 25), channel("gen_r1_order"), range(0, 4, 2, 1, 0.5), fontSize(14)
+nslider bounds(500, 150, 40, 25), channel("gen_r2_order"), range(0, 4, 2, 1, 0.5), fontSize(14)
 nslider bounds(560, 150, 40, 25), channel("gen_temperature"), range(0.01, 10, 0.2, 1, 0.01), fontSize(14)
 label bounds(380, 175, 70, 18), text("g_tempo"), fontSize(12), align("left")
-label bounds(440, 175, 70, 18), text("g_order"), fontSize(12), align("left")
-label bounds(500, 175, 70, 18), text("g_dim"), fontSize(12), align("left")
+label bounds(440, 175, 70, 18), text("g_r1_ord"), fontSize(12), align("left")
+label bounds(500, 175, 70, 18), text("g_r2_ord"), fontSize(12), align("left")
 label bounds(560, 175, 70, 18), text("g_temp"), fontSize(12), align("left")
 
 button bounds(610, 150, 40, 20), text("dwnbeat sync"), channel("downbeat_sync"), colour:0("green"), colour:1("red"), latched(1)
@@ -194,14 +194,20 @@ instr 31
   kgrid_dev_weight chnget "grid_dev_weight"
   kevidence_weight chnget "evidence_weight"
   kautocorr_weight chnget "autocorr_weight"
-  
+
+  kratio1_order chnget "gen_r1_order"
+  kratio2_order chnget "gen_r2_order"
+  ktemperature chnget "gen_temperature"
+
   OSCsend changed(kbenni_weight, knd_weight, kratio_dev_weight, 
                   kratio_dev_abs_max_weight, kgrid_dev_weight, 
-                  kevidence_weight, kautocorr_weight), 
-                  "127.0.0.1", 9901, "/csound_parametercontrols", "fffffff", 
+                  kevidence_weight, kautocorr_weight, kratio1_order, 
+                  kratio2_order, ktemperature), 
+                  "127.0.0.1", 9901, "/csound_parametercontrols", "ffffffffff", 
                   kbenni_weight, knd_weight, kratio_dev_weight, 
                   kratio_dev_abs_max_weight, kgrid_dev_weight, 
-                  kevidence_weight, kautocorr_weight
+                  kevidence_weight, kautocorr_weight, kratio1_order, 
+                  kratio2_order, ktemperature
 
   ; receive and process rhythm ratio data from Python
   knum init 1

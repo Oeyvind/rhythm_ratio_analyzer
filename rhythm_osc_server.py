@@ -131,7 +131,19 @@ class Osc_server():
     def receive_parameter_controls(self, unused_addr, *osc_data):
         '''Message handler. This is called when we receive an OSC message'''
         # set control parameters, like score weights etc
-        self.ra.set_weights(osc_data)
+        kbenni_weight, knd_weight, kratio_dev_weight, \
+            kratio_dev_abs_max_weight, kgrid_dev_weight, \
+            kevidence_weight, kautocorr_weight, kratio1_order, \
+            kratio2_order, ktemperature = osc_data
+        
+        ratio_analyzer_weights = [kbenni_weight, knd_weight, kratio_dev_weight, \
+                                  kratio_dev_abs_max_weight, kgrid_dev_weight, \
+                                  kevidence_weight, kautocorr_weight]
+        self.ra.set_weights(ratio_analyzer_weights)
+        
+        self.pl.set_weights_pname('ratio_best', kratio1_order)         
+        self.pl.set_weights_pname('ratio_2nd_best', kratio2_order) 
+        self.pl.set_temperature(ktemperature)        
         logging.debug('receive_parameter_controls {}'.format(osc_data))
 
     def start_server(self):

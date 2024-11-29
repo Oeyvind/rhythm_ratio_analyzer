@@ -107,9 +107,23 @@ class Probabilistic_logic:
     def set_weights(self, weights):
         self.weights = weights
 
+    def set_weights_pname(self, pname, order):
+        # set weights according to parameter name and desired order
+        if pname in self.prob_parms.keys():
+            max_order = self.prob_parms[pname][0]
+            if order <= max_order:
+                for i in range(1, max_order+1):
+                    w_index = self.prob_parms[pname][2][0] + i
+                    w = np.clip(1+order-i, 0, 1)
+                    self.weights[w_index] = w
+                print(f'prob weights set to {self.weights}')
+            else: print(f'max order for {pname} exceeded: WARNING no change in weights applied')
+        else: print(f'{pname} not in prob_parms: WARNING no change in weights applied')
+
     def set_temperature(self, temperature):
         if temperature < 0.001 : temperature = 0.001
         self.temperature_coef = 1/temperature
+        print(f'PL temperature set to {temperature}')
        
     def update_history(self, history, new_item):
         history = history[1:]+history[:1] #rotate
@@ -202,7 +216,7 @@ if __name__ == '__main__' :
     print('done analyzing')
     
     #generate
-    pl.weights[1] = 0
+    pl.set_weights_pname('val1', 1.5)
     pl.set_temperature(0.2) # low (<1.0) is deterministic, high (>1.0) is more random
     start_index = 0#np.random.choice(indices)
     next_item = corpus[start_index,pnum_corpus['val1']]
@@ -216,13 +230,15 @@ if __name__ == '__main__' :
     
     # query
     print(f'The first item is {next_item} at index {start_index}')
-    request_value = 3
-    query = [start_index, ['val1', request_value, 1]]
+    request_value = None
+    if request_value: query = [start_index, ['val1', request_value, 1]]
+    else: query = [start_index, [None, 0, 0]]
+
     i = 0
     while i < 10:
         query = pl.generate(query) #query probabilistic encoders for next event and update query for next iteration
         next_item_index = query[0]
-        query[1] = ['val1', request_value, 1]
+        if request_value: query[1] = ['val1', request_value, 1]
         print(f"the next item is  {corpus[next_item_index,pnum_corpus['val1']]} at index {next_item_index}, prob {pl.prob}")
         i += 1
     print(f'generated {i} items')
