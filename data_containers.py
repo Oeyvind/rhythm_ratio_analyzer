@@ -7,6 +7,7 @@ Data containers for rhythm analysis and probabilistic logic
 
 import numpy as np 
 np.set_printoptions(precision=2)
+import sys
 
 max_events = 100 # 100 for test, 10.000 for small scale production
 
@@ -42,12 +43,19 @@ prob_parms_description = {
 i = 0
 prob_parms = {}
 for key,value in prob_parms_description.items():
-  indices = []
-  for j in range(value+1):
-    indices.append(i)
-    i += 1
-  prob_parms[key] = [value, None, indices]
+  if key in pnum_corpus.keys():
+    indices = []
+    for j in range(value+1):
+      indices.append(i)
+      i += 1
+    prob_parms[key] = [value, None, indices]
+  else:
+    print(f'ERROR: parameter name {key} not in corpus, check datacontainers.py ...terminating program')
+    sys.exit()
 
+print('* prob parms and weight indices:')
+for key,value in prob_parms.items():
+  print(f'{key}: {value}')
 
 '''
 # test set
