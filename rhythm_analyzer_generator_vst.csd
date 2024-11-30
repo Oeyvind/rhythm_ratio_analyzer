@@ -160,7 +160,7 @@ instr 31
   
   ; send time data to Python
   if ktrig > 0 then
-    OSCsend kindex+1, "127.0.0.1", 9901, "/csound_timevalues", "ff", kindex, ktimenow
+    OSCsend kindex+1, "127.0.0.1", 9901, "/client_timevalues", "ff", kindex, ktimenow
     Stimevalues cabbageGetValue "time_series"
     kstrlen strlenk Stimevalues
     if kstrlen < 1 then
@@ -180,9 +180,9 @@ instr 31
   ; send analyze trigger to Python
   kanalyzetrig init 0
   kanalyzetrig += (changed(krank,kcalc)+krec_trig_off)
-  OSCsend kanalyzetrig, "127.0.0.1", 9901, "/csound_analyze_trig", "i", krank
+  OSCsend kanalyzetrig, "127.0.0.1", 9901, "/client_analyze_trig", "i", krank
   ; clear timedata in Python
-  OSCsend changed(kclear), "127.0.0.1", 9901, "/csound_clear", "i", kclear
+  OSCsend changed(kclear), "127.0.0.1", 9901, "/client_clear", "i", kclear
   kindex = changed(kclear) > 0 ? 0 : kindex
   puts "reset index", changed(kclear)
 
@@ -203,7 +203,7 @@ instr 31
                   kratio_dev_abs_max_weight, kgrid_dev_weight, 
                   kevidence_weight, kautocorr_weight, kratio1_order, 
                   kratio2_order, ktemperature), 
-                  "127.0.0.1", 9901, "/csound_parametercontrols", "ffffffffff", 
+                  "127.0.0.1", 9901, "/client_parametercontrols", "ffffffffff", 
                   kbenni_weight, knd_weight, kratio_dev_weight, 
                   kratio_dev_abs_max_weight, kgrid_dev_weight, 
                   kevidence_weight, kautocorr_weight, kratio1_order, 
@@ -315,7 +315,7 @@ instr 109
   if ktrig > 0 then
     knext_event_time += round(kratio*iclock_resolution)/iclock_resolution 
     event "i", inoise_instr, 0, 0.1
-    OSCsend kcount, "127.0.0.1", 9901, "/csound_prob_gen", "fff", kindex, krequest_ratio, krequest_weight
+    OSCsend kcount, "127.0.0.1", 9901, "/client_prob_gen", "fff", kindex, krequest_ratio, krequest_weight
   endif
   nextmsg:
     kmess OSClisten gihandle, "python_prob_gen", "ff", kindex, kratio ; receive OSC data from Python
@@ -341,7 +341,7 @@ endin
 
 ; print prob logic stm
 instr 110
-    OSCsend 1, "127.0.0.1", 9901, "/csound_prob_print", "f", 1
+    OSCsend 1, "127.0.0.1", 9901, "/client_prob_print", "f", 1
 endin
 
 ; downbeat instr

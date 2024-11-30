@@ -2,7 +2,7 @@
 # -*- coding: latin-1 -*-
 
 """
-OSC server, communication between Csound and Python
+OSC server, communication between Client (e.g. Csound) and Python
 
 @author: Oyvind Brandtsegg
 @contact: obrandts@gmail.com
@@ -51,11 +51,11 @@ class Osc_server():
                 self.pending_analysis.append(index)
             else:
                 logging.debug('skipped double trig event: {}, {}'.format(index, timenow))
-                osc_io.sendOSC("python_skipindex", index) # send OSC back to Csound
+                osc_io.sendOSC("python_skipindex", index) # send OSC back to client
 
     def analyze(self, unused_addr, *osc_data):
         '''Message handler. This is called when we receive an OSC message'''
-        # trigger analysis and send result back to Csound
+        # trigger analysis and send result back to client
         rank = osc_data[0]
         if len(self.pending_analysis) < 2:
             print('WARNING: NOT ENOUGH DATA TO ANALYZE')
@@ -67,14 +67,14 @@ class Osc_server():
             ratios_reduced, ranked_unique_representations, selected, trigseq, ticktempo_bpm, tempo_tendency, pulseposition = self.ra.analyze(timedata, rank)
             ratios_list = ratios_reduced[selected].tolist()
             for i in range(len(ratios_list)):
-                returnmsg = [ratios_list[i][0], ratios_list[i][1], ratios_list[i][2]] #pack the values that we want to send back to Csound via OSC
-                osc_io.sendOSC("python_rhythmdata", returnmsg) # send OSC back to Csound
+                returnmsg = [ratios_list[i][0], ratios_list[i][1], ratios_list[i][2]] #pack the values that we want to send back to client via OSC
+                osc_io.sendOSC("python_rhythmdata", returnmsg) # send OSC back to client
                 returnmsg = [-1, 1, 0] #pack terminator
-                osc_io.sendOSC("python_rhythmdata", returnmsg) # send OSC back to Csound
+                osc_io.sendOSC("python_rhythmdata", returnmsg) # send OSC back to client
             for i in range(len(trigseq)):
-                osc_io.sendOSC("python_triggerdata", [i, trigseq[i]]) # send OSC back to Csound
+                osc_io.sendOSC("python_triggerdata", [i, trigseq[i]]) # send OSC back to client
             returnmsg = [ticktempo_bpm,tempo_tendency,float(pulseposition)]
-            osc_io.sendOSC("python_other", returnmsg) # send OSC back to Csound
+            osc_io.sendOSC("python_other", returnmsg) # send OSC back to client
             
             # store the rhythm fractions as float for each event in the corpus
             best = ranked_unique_representations[0]
@@ -106,7 +106,7 @@ class Osc_server():
         next_item_index = self.query[0]
         returnmsg = [int(next_item_index), float(self.corpus[next_item_index, self.pnum_corpus['ratio_best']])]
         #print('returnmsg', returnmsg)
-        osc_io.sendOSC("python_prob_gen", returnmsg) # send OSC back to Csound
+        osc_io.sendOSC("python_prob_gen", returnmsg) # send OSC back to client
 
     def pl_print(self, unused_addr, *osc_data):
         '''Message handler. This is called when we receive an OSC message'''
@@ -147,11 +147,11 @@ class Osc_server():
         logging.debug('receive_parameter_controls {}'.format(osc_data))
 
     def start_server(self):
-        osc_io.dispatcher.map("/csound_timevalues", self.receive_timevalues) # here we assign the function to be called when we receive OSC on this address
-        osc_io.dispatcher.map("/csound_analyze_trig", self.analyze) # 
-        osc_io.dispatcher.map("/csound_parametercontrols", self.receive_parameter_controls) # 
-        osc_io.dispatcher.map("/csound_clear", self.clear_timedata) # 
-        osc_io.dispatcher.map("/csound_prob_gen", self.pl_generate) # 
-        osc_io.dispatcher.map("/csound_prob_print", self.pl_print) # 
+        osc_io.dispatcher.map("/client_timevalues", self.receive_timevalues) # here we assign the function to be called when we receive OSC on this address
+        osc_io.dispatcher.map("/client_analyze_trig", self.analyze) # 
+        osc_io.dispatcher.map("/client_parametercontrols", self.receive_parameter_controls) # 
+        osc_io.dispatcher.map("/client_clear", self.clear_timedata) # 
+        osc_io.dispatcher.map("/client_prob_gen", self.pl_generate) # 
+        osc_io.dispatcher.map("/client_prob_print", self.pl_print) # 
         osc_io.asyncio.run(osc_io.run_osc_server()) # run the OSC server and client
 

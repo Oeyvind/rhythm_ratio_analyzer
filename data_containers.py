@@ -2,7 +2,7 @@
 # -*- coding: latin-1 -*-
 
 """ 
-Data containers for rhythm analysis and probabilistic logic
+Data containers for event corpus and probabilistic logic
 """
 
 import numpy as np 

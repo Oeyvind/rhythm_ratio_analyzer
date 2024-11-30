@@ -1,11 +1,25 @@
 # rhythm_ratio_analyzer
 Analyze a time series in terms of rational relationships between delta times. Generate new rhythms based on analysis.
-
-Description of the rhythm ratio analyzer process
+The program runs as a server, and we can use a VST plugin or other external program as a client.
+Communication between client and server over OSC.
 
 Øyvind Brandtsegg & Daniel Formo, NTNU. 
 Developed 2016-2024
 
+The files:  
+**main.py** - the main python file, run this to start everything
+**data_containers.py** - data containers for event corpus and probabilistic logic
+**ratio_analyzer.py** - the ratio analyzer methods  
+**rhythm_osc_server.py** - osc communication (with e.g. a vst plugin), forward calls to ratio_analyzer and probabilistic logic
+**osc_io.py** - loaded by rhythm_osc_server.py to handle osc communication  
+**rhythm_analyzer_vst.csd** - a simple test VST plugin, taking midi note inputs, communicates with rhythm_osc_server.py for the analysis. Export this as a plugin from Cabbage.  
+**rhythm_ratio_analyzer_test.rpp** - Test project for Reaper, with midi sequences and the rhythm_analyzer_vst vst plugin (OSX users might need to delete and add the plugin for Reaper to find it)  
+
+To use:  
+python main.py  
+Then load the plugin "rhythm_analyzer_vst" in a DAW, hit "record" and send midi notes to it. When you stop recording, analysis will be initiated. hit "play" to hear the best analysis suggestion. The "rank" dropdown will give access to next best suggestions.  Hit "generate" to use the probabilistic logic to generate a steram of events based on analysis of recorded events.
+
+Description of the rhythm ratio analyzer process:
 The basic idea is to analyze a time series in terms of rational relationships between delta times. Rational expressions (ratios) are found by comparing one delta time to all other delta times in the sequence, representing the whole sequence as a series of ratios. Each of the delta times can be used as the reference delta, against which all other deltas are compared to form ratios. Thus, a number of competing theories/suggestions co-exist as possible rational representations of the sequence. The competing suggestions are then evaluated according to criteria for suitability. The score value thus attained for each suggestion is used to rank them. From the rational representation of the time series, one can deduce pulse and meter, which represent larger scale patterns in the series.
 
 Process overview:
@@ -25,18 +39,29 @@ e.	Autocorrelation: If a suggestion of a rational approximation sequence has hig
 9.	A suggested pulse for the rhythmic sequence is suggested by taking the index of the maximum autocorrelation value
 10.	Tempo tendency (increasing or decreasing over the length of the sequence) is calculated by taking the inverse of the sum of all ratio deviations in sequence (the best suggestion for rational approximation of the sequence)
 
-
-The files:  
-**ratio_analyzer.py** - the ratio analyzer methods  
-**rhythm_osc_server.py** - osc communication (with e.g. a vst plugin), gives access to the functions in ratio_analyzer.py  
-**osc_io.py** - loaded by rhythm_osc_server.py to handle osc communication  
-**rhythm_analyzer_vst.csd** - a simple test VST plugin, taking midi note inputs, communicates with rhythm_osc_server.py for the analysis. Export this as a plugin from Cabbage.  
-**rhythm_ratio_analyzer_test.rpp** - Test project for Reaper, with midi sequences and the rhythm_analyzer_vst vst plugin (OSX users might need to delete and add the plugin for Reaper to find it)  
-**simple_markovian_rhythm_player.csd** - a simple markovian rhythm player (not yet connected to the analysis, just uses text input for the ratios)  
-
-To use:  
-python rhythm_osc_server.py  
-Then load the plugin "rhythm_analyzer_vst" in a DAW, hit "record" and send midi notes to it. When you stop recording, analysis will be initiated. hit "play" to hear the best analysis suggestion. The "rank" dropdown will give access to next best suggestions.  
+Description of daata containers:
+The main data container is the corpus (in data_containers.py). This numpy array contains index, timestamp, rhythm ratio, and other parameters associated with each event. A pointer to this corpus is passed to the modules that need access to it. 
+A dictionary (pnum_corpus) is used to associate parameter names with indices in the corpus.  
+Beware that if any module then changes the data for an event, it will have effect globally, as the central corpus will be modified. Any module that need to process and modify the data from the corpus must consider if it needs to make a copy of the relevant data to prevent such global effects.  
+There is also a similar dictionary for the dimensions (the different event parameters considered) of the probabilistic logic modules. This dictionary (prob_parms) has the format   
+parameter_name: [order, prob_encoder instance, [list of prob logic indices]]
+The prob_parms dictionary is created automatically from user data given in prob_parms_description
 
 
+Description of the probabilistic logic:
+The probabilistic logic depends on classification/quantization of event values to produce a small set of symbols (quantized event values) for probabilistic encoding. The encoder simply records the index at which each symbol appear. It uses and index container with size=max_events and records a 1 for each index where the symbol occurs. To generate e.g. first order markovian sequences, we query the encoder with a symbol, and offset the index container by one. For hogher order markov lookups, query with the appropriate symbol from history and offset the index container acording to the markov order. We can ask for a specific symbol in the same manner, using an offset of zero. All queries result in an index container, these are then scaled according to a weight vector and summed using an effective dot matrix operation. This results in a probability distribution, which can be additionally shaped with a temperature coefficient (low temperature is more deterministic, similar to other machine learning and neural network techniques). The probability distribution is then used to select the next event for generation.
+
+OSC communication:
+The server receives OSC messages on port 9901 and sends OSC messages to the client on port 9999.
+This can be edited in osc_io.py, at the top of the script (approx line 20)
+
+The client uses these OSC channels:
+"/client_timevalues" - for recording event time stamps
+"/client_analyze_trig" - trigger analysis of recorded events
+"/client_parametercontrols" - set various parameters
+"/client_clear" - clear recorded data
+"/client_prob_gen" - query to generate one new event with the probabilistic logic
+"/client_prob_print" - print state transition matrices for the probabilistic logic module
+
+The message format might change during development. Look at the relevant methods in rhythm_osc_server to find how many values each method expects.
 
