@@ -1,40 +1,68 @@
 <Cabbage>
-form size(800, 500), caption("Rhythm Analyzer"), pluginId("rtm1"), guiMode("queue"), colour(30,40,40)
+form size(600, 410), caption("Rhythm Analyzer"), pluginId("rtm1"), guiMode("queue"), colour(46,45,52)
 
 ; recording and analysis
-button bounds(5, 5, 70, 20), text("record","recording"), channel("record_enable"), colour:0("green"), colour:1("red")
-button bounds(90, 5, 60, 20), text("clear"), channel("clear"), colour:0("green"), colour:1("red"), latched(0)
-button bounds(170, 5, 70, 20), text("play_last_prase"), channel("play_last_phrase"), colour:0("green"), colour:1("red")
-nslider bounds(245, 35, 40, 25), text("tempo_last_phrase"), channel("tempo_bps_last_phrase"), range(0.1, 100, 1), fontSize(14)
-nslider bounds(90, 35, 50, 22), channel("tempo_tendency"), range(-10, 10, 0), fontSize(14)
-label bounds(90, 60, 100, 18), text("tpo_tendency"), fontSize(12), align("left")
+button bounds(5, 5, 70, 50), text("record","recording"), channel("record_enable"), colour:0("green"), colour:1("red")
 
-nslider bounds(300, 5, 40, 25), text("benni"), channel("benni_weight"), range(0, 1, 1), fontSize(14)
-nslider bounds(350, 5, 40, 25), text("n+d"), channel("nd_weight"), range(0, 1, 1), fontSize(14)
-nslider bounds(400, 5, 40, 25), text("r_dev"), channel("ratio_dev_weight"), range(0, 1, 1), fontSize(14)
-nslider bounds(450, 5, 40, 25), text("r_maxdev"), channel("ratio_dev_abs_max_weight"), range(0, 1, 1), fontSize(14)
-nslider bounds(500, 5, 40, 25), text("grid"), channel("grid_dev_weight"), range(0, 1, 1), fontSize(14)
-nslider bounds(550, 5, 40, 25), text("evidence"), channel("evidence_weight"), range(0, 1, 1), fontSize(14)
-nslider bounds(600, 5, 40, 25), text("acorr"), channel("autocorr_weight"), range(0, 1, 1), fontSize(14)
+groupbox bounds(85, 5, 160, 50), text("last recorded phrase"), colour(45,25,25){
+  button bounds(10, 25, 70, 20), text("play"), channel("play_last_phrase"), colour:0("green"), colour:1("red")
+  button bounds(90, 25, 60, 20), text("clear"), channel("clear_last_phrase"), colour:0("green"), colour:1("red"), latched(0)
+}
+groupbox bounds(248, 5, 215, 50), colour(45,25,25){ ; , text("phrase data")
+label bounds(14, 2, 80, 18), text("tempo"), fontSize(12), align("left")
+nslider bounds(10, 25, 50, 22), channel("tempo_bps_last_phrase"), range(0.1, 100, 1), fontSize(14)
+label bounds(70, 2, 80, 18), text("tendency"), fontSize(12), align("left")
+nslider bounds(70, 25, 50, 22), channel("tempo_tendency"), range(-10, 10, 0), fontSize(14)
+label bounds(138, 2, 80, 18), text("num_events"), fontSize(12), align("left")
+nslider bounds(143, 25, 50, 22), channel("phrase_num_events"), range(-10, 10, 0), fontSize(14)
+}
 
-; generate events with prob logic
-button bounds(300, 150, 70, 20), text("generate"), channel("generate"), colour:0("green"), colour:1("red")
-nslider bounds(380, 150, 40, 25), channel("gen_tempo_bpm"), range(1, 3000, 60), fontSize(14)
-nslider bounds(440, 150, 40, 25), channel("gen_r1_order"), range(0, 4, 2, 1, 0.5), fontSize(14)
-nslider bounds(500, 150, 40, 25), channel("gen_r2_order"), range(0, 4, 2, 1, 0.5), fontSize(14)
-nslider bounds(560, 150, 40, 25), channel("gen_temperature"), range(0.01, 10, 0.2, 1, 0.01), fontSize(14)
-label bounds(380, 175, 70, 18), text("g_tempo"), fontSize(12), align("left")
-label bounds(440, 175, 70, 18), text("g_r1_ord"), fontSize(12), align("left")
-label bounds(500, 175, 70, 18), text("g_r2_ord"), fontSize(12), align("left")
-label bounds(560, 175, 70, 18), text("g_temp"), fontSize(12), align("left")
+groupbox bounds(5, 60, 235, 65), text("last recorded event"), colour(20,30,45){
+  nslider bounds(5,25,50,20), channel("timestamp_last_event"), fontSize(14)
+  label bounds(5,45,50,20), text("time"), fontSize(12)
+  nslider bounds(60,25,50,20), channel("index_last_event"), fontSize(14), range(0,127,0,1,1)
+  label bounds(60,45,50,20), text("index_last_event"), fontSize(12)
+  nslider bounds(115,25,50,20), channel("notenum_last_event"), fontSize(14), range(0,127,0,1,1)
+  label bounds(115,45,50,20), text("num"), fontSize(12)
+  nslider bounds(170,25,50,20), channel("velocity_last_event"), fontSize(14), range(0,127,0,1,1)
+  label bounds(170,45,50,20), text("velocity"), fontSize(12)
+}
 
-button bounds(610, 150, 40, 20), text("dwnbeat sync"), channel("downbeat_sync"), colour:0("green"), colour:1("red"), latched(1)
-nslider bounds(655, 150, 40, 25), channel("downbeat_sync_strength"), range(0, 1, 0.5), fontSize(14)
-label bounds(655, 175, 70, 18), text("sync_w"), fontSize(12), align("left")
+groupbox bounds(245, 60, 350, 65), text("rhythm analysis weights"), colour(20,30,45){
+nslider bounds(5, 25, 40, 20), channel("benni_weight"), range(0, 1, 1), fontSize(14)
+label bounds(5, 45, 40, 20), text("benni"), fontSize(12)
+nslider bounds(50, 25, 40, 20), channel("nd_weight"), range(0, 1, 1), fontSize(14)
+label bounds(50, 45, 40, 20), text("n+d"), fontSize(12)
+nslider bounds(100, 25, 40, 20), channel("ratio_dev_weight"), range(0, 1, 1), fontSize(14)
+label bounds(100, 45, 40, 20), text("r_dev"), fontSize(12)
+nslider bounds(150, 25, 40, 20), channel("ratio_dev_abs_max_weight"), range(0, 1, 1), fontSize(14)
+label bounds(150, 45, 40, 20), text("r_maxdev"), fontSize(12)
+nslider bounds(200, 25, 40, 20), channel("grid_dev_weight"), range(0, 1, 1), fontSize(14)
+label bounds(200, 45, 40, 20), text("grid"), fontSize(12)
+nslider bounds(250, 25, 40, 20), channel("evidence_weight"), range(0, 1, 1), fontSize(14)
+label bounds(250, 45, 40, 20), text("evidence"), fontSize(12)
+nslider bounds(300, 25, 40, 20), channel("autocorr_weight"), range(0, 1, 1), fontSize(14)
+label bounds(300, 45, 40, 20), text("acorr"), fontSize(12)
+}
+
+groupbox bounds(5, 135, 590, 65), text("generate events with prob logic"), colour(25,45,30){
+button bounds(10, 25, 70, 30), text("generate"), channel("generate"), colour:0("green"), colour:1("red")
+nslider bounds(95, 25, 40, 25), channel("gen_tempo_bpm"), range(1, 3000, 60), fontSize(14)
+label bounds(95, 45, 60, 18), text("g_tempo"), fontSize(12), align("left")
+nslider bounds(155, 25, 40, 25), channel("gen_r1_order"), range(0, 4, 2, 1, 0.5), fontSize(14)
+label bounds(155, 45, 60, 18), text("g_r1_ord"), fontSize(12), align("left")
+nslider bounds(220, 25, 40, 25), channel("gen_r2_order"), range(0, 4, 2, 1, 0.5), fontSize(14)
+label bounds(220, 45, 60, 18), text("g_r2_ord"), fontSize(12), align("left")
+nslider bounds(285, 25, 40, 25), channel("gen_temperature"), range(0.01, 10, 0.2, 1, 0.01), fontSize(14)
+label bounds(285, 45, 60, 18), text("g_temp"), fontSize(12), align("left")
+
+button bounds(375, 25, 50, 30), text("dwnbeat sync"), channel("downbeat_sync"), colour:0("green"), colour:1("red"), latched(1)
+nslider bounds(430, 25, 40, 25), channel("downbeat_sync_strength"), range(0, 1, 0.5), fontSize(14)
+label bounds(430, 45, 70, 18), text("sync_w"), fontSize(12), align("left")
 ; debug
-button bounds(710, 150, 40, 20), text("print stm"), channel("pl_print"), colour:0("green"), colour:1("red"), latched(0)
-
-csoundoutput bounds(5, 200, 690, 295)
+button bounds(500, 25, 50, 30), text("print stm"), channel("pl_print"), colour:0("green"), colour:1("red"), latched(0)
+}
+csoundoutput bounds(5, 205, 560, 200)
 </Cabbage>
 
 <CsoundSynthesizer>
@@ -89,7 +117,8 @@ endin
 
 ; rhythm recording instr, triggered by midi input
 instr 2
-  print p1, p2, p3
+  inum notnum
+  ivel veloc
   iprevious_event_time chnget "previous_event_time"
   chnset p2, "previous_event_time"
   imin_delta_time chnget "minimum_delta_time"
@@ -97,6 +126,12 @@ instr 2
     ktrig init 1
     chnset ktrig, "new_event_trig"
     ktrig = 0
+  endif
+  irecord_enable chnget "record_enable"
+  if irecord_enable > 0 then
+    cabbageSetValue "velocity_last_event", ivel
+    cabbageSetValue "notenum_last_event", inum
+    cabbageSetValue "timestamp_last_event", p2
   endif
 endin
 
@@ -150,6 +185,9 @@ instr 31
     if kskipindex == 0 goto done_skipindex
     kgoto skipindex ; jump back to the OSC listen line, to see if there are more messages waiting in the network buffer
   done_skipindex:
+  if krecord_enable > 0 then
+    cabbageSetValue "index_last_event", kindex
+  endif
 
   ; send analyze trigger to Python
   kanalyzetrig init 0
