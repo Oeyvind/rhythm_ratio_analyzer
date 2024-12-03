@@ -237,7 +237,7 @@ def find_duplicate_representations(ratios):
         duplicate_list.remove([])
     return duplicate_list
 
-def analyze(t, rank):
+def analyze(t, rank=1):
     """Do the full ratio analysis"""
     timedata = t.tolist()
     benni_weight, nd_sum_weight, ratio_dev_weight, ratio_dev_abs_max_weight, grid_dev_weight, evidence_weight, autocorr_weight = weights # global weights
@@ -263,9 +263,8 @@ def analyze(t, rank):
     ratios_reduced = simplify_ratios(ratios_reduced)
     duplicates = find_duplicate_representations(ratios_reduced)
     ranked_unique_representations = get_ranked_unique_representations(duplicates, scores)
-    # new ranking
+    # isolate the selected (best) representation
     selected = ranked_unique_representations[rank-1] # select the unique representation ranked from the lowest score
-
     ticktempo_Hz = (1/ratios_commondiv[selected,0,-1])*ratios_commondiv[selected,0,1]
     ticktempo_bpm = ticktempo_Hz*60
     trigseq = make_trigger_sequence(ratios_commondiv[selected,:,:2])
@@ -274,7 +273,7 @@ def analyze(t, rank):
     tempo_tendency = ratio_deviations[selected]*-1 # invert deviation to adjust tempo
     
     # return
-    return ratios_reduced, ranked_unique_representations, selected, trigseq, ticktempo_bpm, tempo_tendency, pulseposition
+    return ratios_reduced, ranked_unique_representations, trigseq, ticktempo_bpm, tempo_tendency, pulseposition
 
 if __name__ == '__main__':
     # example rhythms

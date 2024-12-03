@@ -1,10 +1,13 @@
 <Cabbage>
 form size(800, 500), caption("Rhythm Analyzer"), pluginId("rtm1"), guiMode("queue"), colour(30,40,40)
 
+; recording and analysis
 button bounds(5, 5, 70, 20), text("record","recording"), channel("record_enable"), colour:0("green"), colour:1("red")
 button bounds(90, 5, 60, 20), text("clear"), channel("clear"), colour:0("green"), colour:1("red"), latched(0)
-button bounds(170, 5, 70, 20), text("play"), channel("play"), colour:0("green"), colour:1("red")
-nslider bounds(245, 5, 40, 25), text("tempo"), channel("tempo_bps"), range(0.1, 100, 1), fontSize(14)
+button bounds(170, 5, 70, 20), text("play_last_prase"), channel("play_last_phrase"), colour:0("green"), colour:1("red")
+nslider bounds(245, 35, 40, 25), text("tempo_last_phrase"), channel("tempo_bps_last_phrase"), range(0.1, 100, 1), fontSize(14)
+nslider bounds(90, 35, 50, 22), channel("tempo_tendency"), range(-10, 10, 0), fontSize(14)
+label bounds(90, 60, 100, 18), text("tpo_tendency"), fontSize(12), align("left")
 
 nslider bounds(300, 5, 40, 25), text("benni"), channel("benni_weight"), range(0, 1, 1), fontSize(14)
 nslider bounds(350, 5, 40, 25), text("n+d"), channel("nd_weight"), range(0, 1, 1), fontSize(14)
@@ -13,24 +16,8 @@ nslider bounds(450, 5, 40, 25), text("r_maxdev"), channel("ratio_dev_abs_max_wei
 nslider bounds(500, 5, 40, 25), text("grid"), channel("grid_dev_weight"), range(0, 1, 1), fontSize(14)
 nslider bounds(550, 5, 40, 25), text("evidence"), channel("evidence_weight"), range(0, 1, 1), fontSize(14)
 nslider bounds(600, 5, 40, 25), text("acorr"), channel("autocorr_weight"), range(0, 1, 1), fontSize(14)
-button bounds(650, 5, 40, 20), text("calc"), channel("calc"), colour:0("green"), colour:1("red"), latched(0)
-combobox channel("rank"), bounds(700, 5, 60, 20), text("1", "2", "3", "4", "5", "6", "7", "8"), value(1)
-label bounds(760, 5, 60, 20), text("Rank"), fontSize(12), align("left")
 
-label bounds(5, 40, 80, 20), text("Time Series"), fontSize(12), align("left")
-texteditor bounds(85, 40, 710, 20), channel("time_series"), fontSize(15), colour("black"), fontColour("white"), caretColour("white")
-label bounds(5, 70, 80, 20), text("Rhythm Ratios"), fontSize(12), align("left")
-texteditor bounds(85, 70, 710, 20), channel("rhythm_ratios"), fontSize(15), colour("black"), fontColour("white"), caretColour("white")
-label bounds(5, 100, 80, 20), text("Deviations"), fontSize(12), align("left")
-texteditor bounds(85, 100, 710, 20), channel("deviations"), fontSize(15), colour("black"), fontColour("white"), caretColour("white")
-
-nslider bounds(5, 150, 50, 22), channel("ticktempo_bpm"), range(10, 5000, 100), fontSize(14)
-nslider bounds(90, 150, 50, 22), channel("tempo_tendency"), range(-10, 10, 0), fontSize(14)
-nslider bounds(180, 150, 50, 22), channel("pulseposition"), range(0, 20, 0, 1, 1), fontSize(14)
-label bounds(5, 175, 100, 18), text("ticktpo_bpm"), fontSize(12), align("left")
-label bounds(90, 175, 100, 18), text("tpo_tendency"), fontSize(12), align("left")
-label bounds(180, 175, 100, 18), text("pulsepos"), fontSize(12), align("left")
-
+; generate events with prob logic
 button bounds(300, 150, 70, 20), text("generate"), channel("generate"), colour:0("green"), colour:1("red")
 nslider bounds(380, 150, 40, 25), channel("gen_tempo_bpm"), range(1, 3000, 60), fontSize(14)
 nslider bounds(440, 150, 40, 25), channel("gen_r1_order"), range(0, 4, 2, 1, 0.5), fontSize(14)
@@ -44,7 +31,7 @@ label bounds(560, 175, 70, 18), text("g_temp"), fontSize(12), align("left")
 button bounds(610, 150, 40, 20), text("dwnbeat sync"), channel("downbeat_sync"), colour:0("green"), colour:1("red"), latched(1)
 nslider bounds(655, 150, 40, 25), channel("downbeat_sync_strength"), range(0, 1, 0.5), fontSize(14)
 label bounds(655, 175, 70, 18), text("sync_w"), fontSize(12), align("left")
-
+; debug
 button bounds(710, 150, 40, 20), text("print stm"), channel("pl_print"), colour:0("green"), colour:1("red"), latched(0)
 
 csoundoutput bounds(5, 200, 690, 295)
@@ -73,7 +60,7 @@ gihandle OSCinit 9999 ; set the network port number where we will receive OSC da
 
 ; GUI handling
 instr 1
-  kplay chnget "play"
+  kplay chnget "play_last_phrase"
   ktrig_play trigger kplay, 0.5, 0
   ktrig_stop trigger kplay, 0.5, 1
   if ktrig_play > 0 then
@@ -108,14 +95,14 @@ instr 2
   imin_delta_time chnget "minimum_delta_time"
   if p2 > iprevious_event_time + (imin_delta_time/1000) then
     ktrig init 1
-    chnset ktrig, "trig"
+    chnset ktrig, "new_event_trig"
     ktrig = 0
   endif
 endin
 
 ; play trigger rhythm
 instr 3
-  ktempo chnget "tempo_bps"
+  ktempo chnget "tempo_bps_last_phrase"
   itrig_length chnget "triggerseq_length"
   Striglength sprintf "triggerseq length %i", itrig_length
   puts Striglength, 1
@@ -139,48 +126,36 @@ endin
 ; Csound to Python communication, analyzer
 instr 31
 
-  ktrig chnget "trig"
+  knew_event_trig chnget "new_event_trig"
   krecord_enable chnget "record_enable"
+  krec_trig_on trigger krecord_enable, 0.5, 0 
+  krec_trig_off trigger krecord_enable, 0.5, 1 ; stop recording, trigger the analysis process in Python 
   kclear chnget "clear"
-  krank chnget "rank"
-  kcalc chnget "calc" ; force calculation without record or rank
 
   ktime timeinsts
   ; initialize variables that will be used in the communication with Python
   kindex init 0
   ktimenow init 0
-  ktimenow = ktrig > 0 ? ktime : ktimenow
+  ktimenow = knew_event_trig > 0 ? ktime : ktimenow
   
-  krec_trig_on trigger krecord_enable, 0.5, 0 
-  krec_trig_off trigger krecord_enable, 0.5, 1 ; we use this as a "string termination", to trigger the analysis process in Python 
-
-  if krec_trig_on > 0 then
-    cabbageSet changed(kindex+1), "time_series", "text", ""
-  endif
   
   ; send time data to Python
-  if ktrig > 0 then
+  if knew_event_trig > 0 then
     OSCsend kindex+1, "127.0.0.1", 9901, "/client_timevalues", "ff", kindex, ktimenow
-    Stimevalues cabbageGetValue "time_series"
-    kstrlen strlenk Stimevalues
-    if kstrlen < 1 then
-      Stimevalues1 sprintfk "%.1f", ktimenow
-    else
-      Stimevalues1 sprintfk "%s, %.1f", Stimevalues, ktimenow
-    endif
-    cabbageSet changed(kindex+1), "time_series", "text", Stimevalues1
     kindex += 1
-    skipindex:
-      kskipindex OSClisten gihandle, "python_skipindex", "i", kindex  ; if Python skipped this index, update our index
-      if kskipindex == 0 goto done_skipindex
-      kgoto skipindex ; jump back to the OSC listen line, to see if there are more messages waiting in the network buffer
-    done_skipindex:
   endif
+  ; if Python skips an index (due to invalid data), we update our index counter so it is equal to the index counter in Python
+  skipindex:
+    kskipindex OSClisten gihandle, "python_skipindex", "i", kindex  ; if Python skipped this index, update our index
+    if kskipindex == 0 goto done_skipindex
+    kgoto skipindex ; jump back to the OSC listen line, to see if there are more messages waiting in the network buffer
+  done_skipindex:
 
   ; send analyze trigger to Python
   kanalyzetrig init 0
-  kanalyzetrig += (changed(krank,kcalc)+krec_trig_off)
-  OSCsend kanalyzetrig, "127.0.0.1", 9901, "/client_analyze_trig", "i", krank
+  kanalyzetrig += krec_trig_off
+  k_unused = 1
+  OSCsend kanalyzetrig, "127.0.0.1", 9901, "/client_analyze_trig", "i", k_unused
   ; clear timedata in Python
   OSCsend changed(kclear), "127.0.0.1", 9901, "/client_clear", "i", kclear
   kindex = changed(kclear) > 0 ? 0 : kindex
@@ -194,52 +169,23 @@ instr 31
   kgrid_dev_weight chnget "grid_dev_weight"
   kevidence_weight chnget "evidence_weight"
   kautocorr_weight chnget "autocorr_weight"
-
   kratio1_order chnget "gen_r1_order"
   kratio2_order chnget "gen_r2_order"
   ktemperature chnget "gen_temperature"
+  kparm_update = changed(kbenni_weight, knd_weight, kratio_dev_weight, 
+                      kratio_dev_abs_max_weight, kgrid_dev_weight, 
+                      kevidence_weight, kautocorr_weight, kratio1_order, 
+                      kratio2_order, ktemperature)
+  OSCsend kparm_update, "127.0.0.1", 9901, "/client_parametercontrols", "ffffffffff", 
+                      kbenni_weight, knd_weight, kratio_dev_weight, 
+                      kratio_dev_abs_max_weight, kgrid_dev_weight, 
+                      kevidence_weight, kautocorr_weight, kratio1_order, 
+                      kratio2_order, ktemperature
 
-  OSCsend changed(kbenni_weight, knd_weight, kratio_dev_weight, 
-                  kratio_dev_abs_max_weight, kgrid_dev_weight, 
-                  kevidence_weight, kautocorr_weight, kratio1_order, 
-                  kratio2_order, ktemperature), 
-                  "127.0.0.1", 9901, "/client_parametercontrols", "ffffffffff", 
-                  kbenni_weight, knd_weight, kratio_dev_weight, 
-                  kratio_dev_abs_max_weight, kgrid_dev_weight, 
-                  kevidence_weight, kautocorr_weight, kratio1_order, 
-                  kratio2_order, ktemperature
-
-  ; receive and process rhythm ratio data from Python
-  knum init 1
-  kdenom init 1
-  kdeviation init 0
-  kreceive_counter init 0
-  Srhythmstring = "" ; just init, we reset them after updating the gui
-  Sdevstring = "" 
-  nextmsg_rhythm: 
-  kmess_rhythm OSClisten gihandle, "python_rhythmdata", "iif", knum, kdenom, kdeviation ; receive OSC data from Python
-  if kmess_rhythm == 0 goto done_rhythm
-  kreceive_counter += 1
-  if knum != -1 then
-    Srhythmstring strcatk Srhythmstring, sprintfk("%i/%i, ", knum, kdenom)
-    Sdevstring strcatk Sdevstring, sprintfk("%.2f, ", kdeviation)    
-  else  
-    kstrlen_r strlenk Srhythmstring
-    Srhythmstring strsubk Srhythmstring, 0, kstrlen_r-2
-    kstrlen_d strlenk Sdevstring
-    Sdevstring strsubk Sdevstring, 0, kstrlen_d-2
-    cabbageSet changed(Srhythmstring), "rhythm_ratios", "text", Srhythmstring
-    cabbageSet changed(Sdevstring), "deviations", "text", Sdevstring
-    Srhythmstring strcpyk ""
-    Sdevstring strcpyk ""
-  endif
-  kgoto nextmsg_rhythm ; jump back to the OSC listen line, to see if there are more messages waiting in the network buffer
-  done_rhythm:
-
-  ; receive trigger string from Python
+  ; receive trigger string from Python (only for playback of last recorded phrase)
   ktrig_sig init 0
   ktrig_index init 0
-  if krec_trig_off+changed(krank)+kclear > 0 then
+  if krec_trig_off+kclear > 0 then
     tablecopy gitrig_ftab, gitrig_ftab_empty  ; clear trig table
     ktrig_index = 0
     chnset ktrig_index, "triggerseq_length"
@@ -258,11 +204,9 @@ instr 31
   kpulseposition init 1
   nextmsg_other:
   kmess_other OSClisten gihandle, "python_other", "fff", kticktempo_bpm,ktempo_tendency,kpulseposition ; receive OSC data from Python
-  cabbageSetValue "ticktempo_bpm", kticktempo_bpm, changed(kmess_other)
-  cabbageSetValue "tempo_bps", kticktempo_bpm/60, changed(kmess_other)
+  cabbageSetValue "tempo_bps_last_phrase", kticktempo_bpm/60, changed(kmess_other)
   cabbageSetValue "gen_tempo_bpm", kticktempo_bpm/kpulseposition, changed(kmess_other)
   cabbageSetValue "tempo_tendency", ktempo_tendency, changed(kmess_other)
-  cabbageSetValue "pulseposition", kpulseposition, changed(kmess_other)
   if kmess_other == 0 goto done_other
   kgoto nextmsg_other ; jump back to the OSC listen line, to see if there are more messages waiting in the network buffer
   done_other:
@@ -309,10 +253,10 @@ instr 109
   kratio init 1
   knext_event_time init 0
   kget_event = (kbeat_clock > knext_event_time) ? 1 : 0 ; if current time is greater than the time for the next event, then activate
-  ktrig trigger kget_event, 0.5, 0
+  kget_event_trig trigger kget_event, 0.5, 0
   kcount init 0
-  kcount += ktrig
-  if ktrig > 0 then
+  kcount += kget_event_trig
+  if kget_event_trig > 0 then
     knext_event_time += round(kratio*iclock_resolution)/iclock_resolution 
     event "i", inoise_instr, 0, 0.1
     OSCsend kcount, "127.0.0.1", 9901, "/client_prob_gen", "fff", kindex, krequest_ratio, krequest_weight
@@ -323,18 +267,6 @@ instr 109
     kgoto nextmsg ; make sure we read all messages in the network buffer
   done:
   
-  ;kratio_to_next_downbeat = limit((knext_downbeat_time-knext_event_time_unsync)/kbeat_duration, 0, 99) ; remaining this ratio until next downbeat
-  ;kratio_to_next_downbeat = round(kratio_to_next_downbeat*imax_resolution)/imax_resolution ; quantize to get rid of numerical error accumulation
-  ;Sdebug sprintfk "time %.3f next downbeat %f ratio %f, ratio_to_down %f", ktime, knext_downbeat_time, kratio, kratio_to_next_downbeat
-  ;puts Sdebug, ktime
-  
-  /*
-  if (kratio-kratio_to_next_downbeat) < -itolerance then ; happens before the next downbeat
-    knext_event_time = knext_event_time_unsync ; keep going
-  else  ; happens (on or after) the next downbeat
-    knext_event_time = knext_downbeat_time + ((kratio-kratio_to_next_downbeat)*kbeat_duration)
-  endif
-  */
   kratio_to_next_downbeat = knext_downbeat_time-knext_event_time
   krequest_ratio = kdownbeat_sync > 0 ? kratio_to_next_downbeat : -1 ; in case we want to request a ratio that will sync to next downbeat 
 endin

@@ -56,40 +56,36 @@ class Osc_server():
     def analyze(self, unused_addr, *osc_data):
         '''Message handler. This is called when we receive an OSC message'''
         # trigger analysis and send result back to client
-        rank = osc_data[0]
+        print('osc server analyze triggered')
+        not_used = osc_data[0]
         if len(self.pending_analysis) < 2:
             print('WARNING: NOT ENOUGH DATA TO ANALYZE')
             return
-        if rank > 0:
-            start, end = self.pending_analysis[0], self.pending_analysis[-1]
-            timedata = self.corpus[start:end+1,self.pnum_corpus['timestamp']]
-            self.phrase_number += 1
-            ratios_reduced, ranked_unique_representations, selected, trigseq, ticktempo_bpm, tempo_tendency, pulseposition = self.ra.analyze(timedata, rank)
-            ratios_list = ratios_reduced[selected].tolist()
-            for i in range(len(ratios_list)):
-                returnmsg = [ratios_list[i][0], ratios_list[i][1], ratios_list[i][2]] #pack the values that we want to send back to client via OSC
-                osc_io.sendOSC("python_rhythmdata", returnmsg) # send OSC back to client
-                returnmsg = [-1, 1, 0] #pack terminator
-                osc_io.sendOSC("python_rhythmdata", returnmsg) # send OSC back to client
-            for i in range(len(trigseq)):
-                osc_io.sendOSC("python_triggerdata", [i, trigseq[i]]) # send OSC back to client
-            returnmsg = [ticktempo_bpm,tempo_tendency,float(pulseposition)]
-            osc_io.sendOSC("python_other", returnmsg) # send OSC back to client
-            
-            # store the rhythm fractions as float for each event in the corpus
-            best = ranked_unique_representations[0]
-            next_best = ranked_unique_representations[1]
-            for i in range(len(self.pending_analysis)-1): 
-                indx = self.pending_analysis[i]
-                self.corpus[indx,self.pnum_corpus['index']] = indx
-                self.corpus[indx,self.pnum_corpus['ratio_best']] = ratios_reduced[best,i,0]/ratios_reduced[best,i,1] # ratio as float
-                self.corpus[indx,self.pnum_corpus['deviation_best']] = ratios_reduced[best,i,2] # deviation
-                self.corpus[indx,self.pnum_corpus['ratio_2nd_best']] = ratios_reduced[next_best,i,0]/ratios_reduced[next_best,i,1] # ratio as float
-                self.corpus[indx,self.pnum_corpus['deviation_2nd_best']] = ratios_reduced[next_best,i,2] # deviation
-                self.corpus[indx,self.pnum_corpus['phrase_num']] = self.phrase_number
-                # probabilistic model encoding
-                self.pl.analyze_single_event(i)
-            self.pending_analysis = [] # clear
+        
+        start, end = self.pending_analysis[0], self.pending_analysis[-1]
+        timedata = self.corpus[start:end+1,self.pnum_corpus['timestamp']]
+        self.phrase_number += 1
+        ratios_reduced, ranked_unique_representations, trigseq, ticktempo_bpm, tempo_tendency, pulseposition = self.ra.analyze(timedata)
+        for i in range(len(trigseq)):
+            osc_io.sendOSC("python_triggerdata", [i, trigseq[i]]) # send OSC back to client
+        returnmsg = [ticktempo_bpm,tempo_tendency,float(pulseposition)]
+        osc_io.sendOSC("python_other", returnmsg) # send OSC back to client
+        
+        # store the rhythm fractions as float for each event in the corpus
+        best = ranked_unique_representations[0]
+        next_best = ranked_unique_representations[1]
+        for i in range(len(self.pending_analysis)-1): 
+            indx = self.pending_analysis[i]
+            self.corpus[indx,self.pnum_corpus['index']] = indx
+            print(f'best {best}, ratio: {ratios_reduced[best,i,0]/ratios_reduced[best,i,1]}')
+            self.corpus[indx,self.pnum_corpus['ratio_best']] = ratios_reduced[best,i,0]/ratios_reduced[best,i,1] # ratio as float
+            self.corpus[indx,self.pnum_corpus['deviation_best']] = ratios_reduced[best,i,2] # deviation
+            self.corpus[indx,self.pnum_corpus['ratio_2nd_best']] = ratios_reduced[next_best,i,0]/ratios_reduced[next_best,i,1] # ratio as float
+            self.corpus[indx,self.pnum_corpus['deviation_2nd_best']] = ratios_reduced[next_best,i,2] # deviation
+            self.corpus[indx,self.pnum_corpus['phrase_num']] = self.phrase_number
+            # probabilistic model encoding
+            self.pl.analyze_single_event(i)
+        self.pending_analysis = [] # clear
 
     def pl_generate(self, unused_addr, *osc_data):
         '''Message handler. This is called when we receive an OSC message'''
