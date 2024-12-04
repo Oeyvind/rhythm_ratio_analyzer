@@ -19,12 +19,16 @@ logging.basicConfig(level=logging.DEBUG)
 
 class Osc_server():
 
-    def __init__(self, corpus, pnum_corpus, ratio_analyzer, pl_instance):
-        self.corpus = corpus # the main data container for events
-        self.pnum_corpus = pnum_corpus # dict for parameter_name:index in corpus
+    def __init__(self, dc, ratio_analyzer, pl_instance):
+        self.dc = dc # data container
+        self.corpus = dc.corpus # the main data container for events
+        self.pnum_corpus = dc.pnum_corpus # dict for parameter_name:index in corpus
         self.pending_analysis = [] # indices for events not yet enelyzed
+        self.last_analyzed_phrase = [] # indices for events in the last analyzed phrase
         self.minimum_delta_time = 50
         self.previous_timestamp = -1
+        self.previous_notenum = -1
+        self.previous_velocity = -1
         self.phrase_number = 0
         
         self.pl = pl_instance
@@ -36,18 +40,28 @@ class Osc_server():
         # temporary!
         self.query = [0, [None, 0, 0]] # initial probabilistic query. 
 
-    def receive_timevalues(self, unused_addr, *osc_data):
+    def receive_eventdata(self, unused_addr, *osc_data):
         '''Message handler. This is called when we receive an OSC message'''
-        index, timenow = osc_data # unpack the OSC data, must have the same number of variables as we have items in the data
+        index, timenow, notenum, velocity = osc_data # unpack the OSC data, must have the same number of variables as we have items in the data
         index = int(index)
-        logging.debug('received: {}, {}'.format(index, timenow))
+        logging.debug(f'received: {index}, {timenow:.2f}, {notenum}, {velocity}')
         # put events in analysis queue
         if index == 0:
             self.corpus[index, self.pnum_corpus['timestamp']] = timenow
+            self.corpus[index, self.pnum_corpus['notenum']] = notenum
+            self.corpus[index, self.pnum_corpus['velocity']] = velocity
             self.pending_analysis.append(index)
         else:
             if timenow > (self.corpus[index-1, self.pnum_corpus['timestamp']] + (self.minimum_delta_time/1000)):
                 self.corpus[index,self.pnum_corpus['timestamp']] = timenow
+                self.corpus[index, self.pnum_corpus['notenum']] = notenum
+                self.corpus[index, self.pnum_corpus['velocity']] = velocity
+                if self.previous_notenum > -1:
+                    self.corpus[index, self.pnum_corpus['notenum_relative']] = notenum-self.previous_notenum
+                    self.previous_notenum = notenum
+                if self.previous_velocity > -1:
+                    self.corpus[index, self.pnum_corpus['velocity_relative']] = velocity-self.previous_velocity
+                    self.previous_velocity = velocity
                 self.pending_analysis.append(index)
             else:
                 logging.debug('skipped double trig event: {}, {}'.format(index, timenow))
@@ -56,19 +70,20 @@ class Osc_server():
     def analyze(self, unused_addr, *osc_data):
         '''Message handler. This is called when we receive an OSC message'''
         # trigger analysis and send result back to client
-        print('osc server analyze triggered')
         not_used = osc_data[0]
         if len(self.pending_analysis) < 2:
             print('WARNING: NOT ENOUGH DATA TO ANALYZE')
             return
-        
+        self.last_analyzed_phrase = self.pending_analysis # keep it so we can delete it if clear_last_phrase is called
         start, end = self.pending_analysis[0], self.pending_analysis[-1]
         timedata = self.corpus[start:end+1,self.pnum_corpus['timestamp']]
+        print('timedata', timedata)
         self.phrase_number += 1
         ratios_reduced, ranked_unique_representations, trigseq, ticktempo_bpm, tempo_tendency, pulseposition = self.ra.analyze(timedata)
         for i in range(len(trigseq)):
             osc_io.sendOSC("python_triggerdata", [i, trigseq[i]]) # send OSC back to client
-        returnmsg = [ticktempo_bpm,tempo_tendency,float(pulseposition)]
+        print('len:',float(len(self.pending_analysis)))
+        returnmsg = [ticktempo_bpm, tempo_tendency, float(pulseposition), float(len(self.pending_analysis))]
         osc_io.sendOSC("python_other", returnmsg) # send OSC back to client
         
         # store the rhythm fractions as float for each event in the corpus
@@ -77,14 +92,14 @@ class Osc_server():
         for i in range(len(self.pending_analysis)-1): 
             indx = self.pending_analysis[i]
             self.corpus[indx,self.pnum_corpus['index']] = indx
-            print(f'best {best}, ratio: {ratios_reduced[best,i,0]/ratios_reduced[best,i,1]}')
             self.corpus[indx,self.pnum_corpus['ratio_best']] = ratios_reduced[best,i,0]/ratios_reduced[best,i,1] # ratio as float
             self.corpus[indx,self.pnum_corpus['deviation_best']] = ratios_reduced[best,i,2] # deviation
             self.corpus[indx,self.pnum_corpus['ratio_2nd_best']] = ratios_reduced[next_best,i,0]/ratios_reduced[next_best,i,1] # ratio as float
             self.corpus[indx,self.pnum_corpus['deviation_2nd_best']] = ratios_reduced[next_best,i,2] # deviation
             self.corpus[indx,self.pnum_corpus['phrase_num']] = self.phrase_number
             # probabilistic model encoding
-            self.pl.analyze_single_event(i)
+            print('analyze_debug', self.corpus[indx,self.pnum_corpus['ratio_best']])
+            self.pl.analyze_single_event(indx)
         self.pending_analysis = [] # clear
 
     def pl_generate(self, unused_addr, *osc_data):
@@ -100,29 +115,41 @@ class Osc_server():
 
         self.query = self.pl.generate(self.query) #query probabilistic models for next event and update query for next iteration
         next_item_index = self.query[0]
-        returnmsg = [int(next_item_index), float(self.corpus[next_item_index, self.pnum_corpus['ratio_best']])]
-        #print('returnmsg', returnmsg)
+        returnmsg = [int(next_item_index), 
+                     float(self.corpus[next_item_index, self.pnum_corpus['ratio_best']]),
+                     float(self.corpus[next_item_index, self.pnum_corpus['notenum']]),
+                     float(self.corpus[next_item_index, self.pnum_corpus['velocity']])]
         osc_io.sendOSC("python_prob_gen", returnmsg) # send OSC back to client
 
     def pl_print(self, unused_addr, *osc_data):
         '''Message handler. This is called when we receive an OSC message'''
         print('pl_data', self.corpus)
-        for p in [self.pl.m_1ord, self.pl.m_1ord_2D]:
-            print(p, p.name)
-            for key, value in p.stm.items():
-                print(key, value[p.max_order:p.datasize+m.max_order])
+        for parm in self.dc.prob_parms.keys():
+            pe = self.dc.prob_parms[parm][1]
+            print(pe, pe.name)
+            for key, value in pe.stm.items():
+                print(key, value[pe.max_order:pe.size+pe.max_order])
 
-    def clear_timedata(self, unused_addr, *osc_data):
-        print('CLEAR DATA NOT IMPLEMENTED YET, but resetting phrase number')
-        self.phrase_number = 0
-        # clear the whole corpus? clear a range of indices?
-        # clear probabilistic encoder for the indices we want to clear
-        '''
-        self.timedata = []
-        for m in [self.mh.m_1ord, self.mh.m_1ord_2D]:
-            m.clear()
-        print('clear timeseries and probabilistic encoder')
-        '''
+    def eventdata_admin(self, unused_addr, *osc_data):
+        clear_last_phrase, clear_all, save_all = osc_data
+        if clear_last_phrase > 0:
+            print('Clear last recorded phrase')
+            for i in self.last_analyzed_phrase:
+                self.dc.clear_corpus_item(i)
+            self.phrase_number -= 1
+            if self.phrase_number < 0: 
+                self.phrase_number = 0
+        if clear_all > 0:
+            print('CLEAR CORPUS')
+            self.dc.clear_corpus()
+            self.pending_analysis = []
+            self.phrase_number = 0
+            self.pl.clear_all()
+            self.previous_notenum = -1
+            self.previous_velocity = -1
+        if save_all > 0:
+            self.dc.save_corpus()
+            self.pl.save_all()
 
     def receive_parameter_controls(self, unused_addr, *osc_data):
         '''Message handler. This is called when we receive an OSC message'''
@@ -143,10 +170,10 @@ class Osc_server():
         logging.debug('receive_parameter_controls {}'.format(osc_data))
 
     def start_server(self):
-        osc_io.dispatcher.map("/client_timevalues", self.receive_timevalues) # here we assign the function to be called when we receive OSC on this address
+        osc_io.dispatcher.map("/client_eventdata", self.receive_eventdata) # here we assign the function to be called when we receive OSC on this address
         osc_io.dispatcher.map("/client_analyze_trig", self.analyze) # 
         osc_io.dispatcher.map("/client_parametercontrols", self.receive_parameter_controls) # 
-        osc_io.dispatcher.map("/client_clear", self.clear_timedata) # 
+        osc_io.dispatcher.map("/client_memory", self.eventdata_admin) # 
         osc_io.dispatcher.map("/client_prob_gen", self.pl_generate) # 
         osc_io.dispatcher.map("/client_prob_print", self.pl_print) # 
         osc_io.asyncio.run(osc_io.run_osc_server()) # run the OSC server and client

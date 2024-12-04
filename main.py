@@ -18,5 +18,5 @@ import osc_server
 pl = probabilistic_logic.Probabilistic_logic(dc.corpus, dc.pnum_corpus, dc.prob_parms, d_size2=2, max_size=100, max_order=4, hack=2)
 
 # instantiate and start osc server
-server = osc_server.Osc_server(dc.corpus, dc.pnum_corpus, ratio_analyzer, pl)
+server = osc_server.Osc_server(dc, ratio_analyzer, pl)
 server.start_server()

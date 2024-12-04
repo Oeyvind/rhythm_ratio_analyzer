@@ -14,14 +14,16 @@ Can be thought of as a "multidimensional variable order markov chain generator".
 import numpy as np 
 np.set_printoptions(suppress=True)
 np.set_printoptions(precision=2)
+import json
 
 class Probabilistic_encoder:
     # the basic core functionality of registering the order in which symbols appear
 
     def __init__(self, size=100, max_order=2, name='noname'): 
         self.stm = {} # state transition matrix in the form key:index_container, where the value contains an array of ones and zeros indicating presence
+        self.size = size
         self.max_order = max_order # we use this to pad the index_container, so we later can use array views for higher order lookup
-        self.empty_index_container = np.zeros(size+max_order, dtype=np.float32) 
+        self.empty_index_container = np.zeros(self.size+max_order, dtype=np.float32) 
         self.wraparound_index_container = np.copy(self.empty_index_container)
         self.wraparound_index_container[max_order] = 1 # to use for avoiding dead ends
         self.previous_item = None 
@@ -100,6 +102,7 @@ class Probabilistic_logic:
     def analyze_single_event(self, i):
         for parm in self.prob_parms.keys():
             pe = self.prob_parms[parm][1]
+            print(f'pe.analyze: {self.corpus[i, self.pnum_corpus[parm]]}')
             pe.analyze(self.corpus[i, self.pnum_corpus[parm]], i)
         self.current_datasize += 1
         self.indices = self.corpus[:self.current_datasize, self.pnum_corpus['index']]
@@ -183,6 +186,36 @@ class Probabilistic_logic:
             next_item_index = np.random.choice(self.indices)
         next_item_index = int(next_item_index)
         return [next_item_index, [None,0]]
+
+    def clear_all(self):
+        # clear all prob encoder's stm
+        print('clear all prob encoder stm')
+        for parm in self.prob_parms.keys():
+            pe = self.prob_parms[parm][1]
+            pe.clear()
+    
+    def save_all(self):
+        # save all prob encoders to file
+        print('attempt prob encoder save to file')
+        print('NOT IMPLEMENTED, need to convert stm keys to float')
+        return
+        data = []
+        for parm in self.prob_parms.keys():
+            pe = self.prob_parms[parm][1]
+            data.append(pe.stm)
+        with open("prob_encoders.json", "w") as fp:
+            json.dump(data, fp)  
+        
+    def read_all(self):
+        # read all prob encoders from file
+        print('attempt prob encoder read from file')
+        with open("prob_encoders.json", "r") as fp:
+            data = json.load(fp)  
+        i = 0
+        for parm in self.prob_parms.keys():
+            pe = self.prob_parms[parm][1]
+            pe.stm = data[i]
+            i += 1
 
 # test
 if __name__ == '__main__' :

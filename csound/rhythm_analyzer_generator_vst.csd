@@ -1,5 +1,5 @@
 <Cabbage>
-form size(600, 410), caption("Rhythm Analyzer"), pluginId("rtm1"), guiMode("queue"), colour(46,45,52)
+form size(605, 410), caption("Rhythm Analyzer"), pluginId("rtm1"), guiMode("queue"), colour(46,45,52)
 
 ; recording and analysis
 button bounds(5, 5, 70, 50), text("record","recording"), channel("record_enable"), colour:0("green"), colour:1("red")
@@ -10,25 +10,28 @@ groupbox bounds(85, 5, 160, 50), text("last recorded phrase"), colour(45,25,25){
 }
 groupbox bounds(248, 5, 215, 50), colour(45,25,25){ ; , text("phrase data")
 label bounds(14, 2, 80, 18), text("tempo"), fontSize(12), align("left")
-nslider bounds(10, 25, 50, 22), channel("tempo_bps_last_phrase"), range(0.1, 100, 1), fontSize(14)
+nslider bounds(10, 25, 50, 22), channel("tempo_bps_last_phrase"), range(1, 2999, 1), fontSize(14)
 label bounds(70, 2, 80, 18), text("tendency"), fontSize(12), align("left")
 nslider bounds(70, 25, 50, 22), channel("tempo_tendency"), range(-10, 10, 0), fontSize(14)
-label bounds(138, 2, 80, 18), text("num_events"), fontSize(12), align("left")
-nslider bounds(143, 25, 50, 22), channel("phrase_num_events"), range(-10, 10, 0), fontSize(14)
+label bounds(138, 2, 80, 18), text("phrase_len"), fontSize(12), align("left")
+nslider bounds(143, 25, 50, 22), channel("phrase_len"), range(0, 999, 0, 1, 1), fontSize(14)
 }
 
-groupbox bounds(5, 60, 235, 65), text("last recorded event"), colour(20,30,45){
-  nslider bounds(5,25,50,20), channel("timestamp_last_event"), fontSize(14)
+button bounds(467, 5, 70, 23), text("clear_all","clearing"), channel("clear_all"), colour:0("green"), colour:1("red"), latched(0)
+button bounds(467, 30, 70, 23), text("save_all","saving"), channel("save_all"), colour:0("green"), colour:1("red"), latched(0)
+
+groupbox bounds(5, 60, 240, 65), text("last recorded event"), colour(20,30,45){
+  nslider bounds(5,25,60,20), channel("timestamp_last_event"), fontSize(14), range(0,99999999, 0, 1, 0.1)
   label bounds(5,45,50,20), text("time"), fontSize(12)
-  nslider bounds(60,25,50,20), channel("index_last_event"), fontSize(14), range(0,127,0,1,1)
-  label bounds(60,45,50,20), text("index_last_event"), fontSize(12)
-  nslider bounds(115,25,50,20), channel("notenum_last_event"), fontSize(14), range(0,127,0,1,1)
-  label bounds(115,45,50,20), text("num"), fontSize(12)
-  nslider bounds(170,25,50,20), channel("velocity_last_event"), fontSize(14), range(0,127,0,1,1)
-  label bounds(170,45,50,20), text("velocity"), fontSize(12)
+  nslider bounds(70,25,50,20), channel("index_last_event"), fontSize(14), range(0,9999,0,1,1)
+  label bounds(70,45,50,20), text("index_last_event"), fontSize(12)
+  nslider bounds(125,25,50,20), channel("notenum_last_event"), fontSize(14), range(0,127,0,1,1)
+  label bounds(125,45,50,20), text("num"), fontSize(12)
+  nslider bounds(180,25,50,20), channel("velocity_last_event"), fontSize(14), range(0,127,0,1,1)
+  label bounds(180,45,50,20), text("velocity"), fontSize(12)
 }
 
-groupbox bounds(245, 60, 350, 65), text("rhythm analysis weights"), colour(20,30,45){
+groupbox bounds(250, 60, 350, 65), text("rhythm analysis weights"), colour(20,30,45){
 nslider bounds(5, 25, 40, 20), channel("benni_weight"), range(0, 1, 1), fontSize(14)
 label bounds(5, 45, 40, 20), text("benni"), fontSize(12)
 nslider bounds(50, 25, 40, 20), channel("nd_weight"), range(0, 1, 1), fontSize(14)
@@ -47,7 +50,7 @@ label bounds(300, 45, 40, 20), text("acorr"), fontSize(12)
 
 groupbox bounds(5, 135, 590, 65), text("generate events with prob logic"), colour(25,45,30){
 button bounds(10, 25, 70, 30), text("generate"), channel("generate"), colour:0("green"), colour:1("red")
-nslider bounds(95, 25, 40, 25), channel("gen_tempo_bpm"), range(1, 3000, 60), fontSize(14)
+nslider bounds(95, 25, 40, 25), channel("gen_tempo_bpm"), range(1, 2999, 60), fontSize(14)
 label bounds(95, 45, 60, 18), text("g_tempo"), fontSize(12), align("left")
 nslider bounds(155, 25, 40, 25), channel("gen_r1_order"), range(0, 4, 2, 1, 0.5), fontSize(14)
 label bounds(155, 45, 60, 18), text("g_r1_ord"), fontSize(12), align("left")
@@ -118,7 +121,9 @@ endin
 ; rhythm recording instr, triggered by midi input
 instr 2
   inum notnum
+  chnset inum, "notenum"
   ivel veloc
+  chnset ivel, "velocity"
   iprevious_event_time chnget "previous_event_time"
   chnset p2, "previous_event_time"
   imin_delta_time chnget "minimum_delta_time"
@@ -137,7 +142,7 @@ endin
 
 ; play trigger rhythm
 instr 3
-  ktempo chnget "tempo_bps_last_phrase"
+  ktempo chnget "tempo_triggerseq"
   itrig_length chnget "triggerseq_length"
   Striglength sprintf "triggerseq length %i", itrig_length
   puts Striglength, 1
@@ -162,10 +167,14 @@ endin
 instr 31
 
   knew_event_trig chnget "new_event_trig"
+  knotenum chnget "notenum"
+  kvelocity chnget "velocity"
   krecord_enable chnget "record_enable"
   krec_trig_on trigger krecord_enable, 0.5, 0 
   krec_trig_off trigger krecord_enable, 0.5, 1 ; stop recording, trigger the analysis process in Python 
-  kclear chnget "clear"
+  kclear_last_phrase chnget "clear_last_phrase"
+  kclear_all chnget "clear_all"
+  ksave_all chnget "save_all"
 
   ktime timeinsts
   ; initialize variables that will be used in the communication with Python
@@ -176,7 +185,7 @@ instr 31
   
   ; send time data to Python
   if knew_event_trig > 0 then
-    OSCsend kindex+1, "127.0.0.1", 9901, "/client_timevalues", "ff", kindex, ktimenow
+    OSCsend kindex+1, "127.0.0.1", 9901, "/client_eventdata", "ffff", kindex, ktimenow, knotenum, kvelocity
     kindex += 1
   endif
   ; if Python skips an index (due to invalid data), we update our index counter so it is equal to the index counter in Python
@@ -192,13 +201,9 @@ instr 31
   ; send analyze trigger to Python
   kanalyzetrig init 0
   kanalyzetrig += krec_trig_off
-  k_unused = 1
-  OSCsend kanalyzetrig, "127.0.0.1", 9901, "/client_analyze_trig", "i", k_unused
-  ; clear timedata in Python
-  OSCsend changed(kclear), "127.0.0.1", 9901, "/client_clear", "i", kclear
-  kindex = changed(kclear) > 0 ? 0 : kindex
-  puts "reset index", changed(kclear)
-
+  k_ = 1
+  OSCsend kanalyzetrig, "127.0.0.1", 9901, "/client_analyze_trig", "i", k_
+  
   ; send other parameter controls to Python
   kbenni_weight chnget "benni_weight"
   knd_weight chnget "nd_weight"
@@ -223,7 +228,7 @@ instr 31
   ; receive trigger string from Python (only for playback of last recorded phrase)
   ktrig_sig init 0
   ktrig_index init 0
-  if krec_trig_off+kclear > 0 then
+  if krec_trig_off+kclear_last_phrase+kclear_all > 0 then
     tablecopy gitrig_ftab, gitrig_ftab_empty  ; clear trig table
     ktrig_index = 0
     chnset ktrig_index, "triggerseq_length"
@@ -240,14 +245,28 @@ instr 31
   kticktempo_bpm init 60
   ktempo_tendency init 0
   kpulseposition init 1
+  kphraselen init 0
   nextmsg_other:
-  kmess_other OSClisten gihandle, "python_other", "fff", kticktempo_bpm,ktempo_tendency,kpulseposition ; receive OSC data from Python
-  cabbageSetValue "tempo_bps_last_phrase", kticktempo_bpm/60, changed(kmess_other)
-  cabbageSetValue "gen_tempo_bpm", kticktempo_bpm/kpulseposition, changed(kmess_other)
-  cabbageSetValue "tempo_tendency", ktempo_tendency, changed(kmess_other)
+  kmess_other OSClisten gihandle, "python_other", "ffff", kticktempo_bpm,ktempo_tendency,kpulseposition,kphraselen ; receive OSC data from Python
+  chnset kticktempo_bpm/60, "tempo_triggerseq"
+  ktempo_bpm = kticktempo_bpm/kpulseposition
+  cabbageSetValue "tempo_bps_last_phrase", ktempo_bpm, changed(ktempo_bpm)
+  cabbageSetValue "gen_tempo_bpm", ktempo_bpm, changed(ktempo_bpm)
+  cabbageSetValue "tempo_tendency", ktempo_tendency, changed(ktempo_tendency)
+  cabbageSetValue "phrase_len", kphraselen, changed(kphraselen)
   if kmess_other == 0 goto done_other
   kgoto nextmsg_other ; jump back to the OSC listen line, to see if there are more messages waiting in the network buffer
   done_other:
+
+  ; clear timedata in Python
+  kmem_trig = changed(kclear_last_phrase, kclear_all, ksave_all)
+  kmem_trig_count init 0
+  kmem_trig_count += kmem_trig
+  OSCsend kmem_trig_count, "127.0.0.1", 9901, "/client_memory", "iii", kclear_last_phrase, kclear_all, ksave_all
+  kindex = changed(kclear_all) > 0 ? 0 : kindex
+  kclear_phrase_trig trigger kclear_last_phrase, 0.5, 0
+  kindex = kclear_phrase_trig > 0 ? kindex-kphraselen : kindex
+  puts "reset index", changed(kclear_last_phrase, kclear_all)
 
 endin
 
@@ -280,27 +299,26 @@ instr 109
     event "i", idownbeat_instr, 0, 0.3
   endif
 
-  ;kratio_set chnget "ratio_set"
-  ;kindex_set chnget "index_set"
-  ;kupdate changed kratio_set, kindex_set
   kindex init 0
   krequest_ratio init -1
   krequest_weight = kdownbeat_sync_strength ; may not necessary to rename/patch this, if it will only be used for that purpose
-  inoise_instr = 120
+  igen_instr = 121
   ; event trig
-  kratio init 1
+  kgen_ratio init 1
+  kgen_notenum init 0
+  kgen_velocity init 0
   knext_event_time init 0
   kget_event = (kbeat_clock > knext_event_time) ? 1 : 0 ; if current time is greater than the time for the next event, then activate
   kget_event_trig trigger kget_event, 0.5, 0
   kcount init 0
   kcount += kget_event_trig
   if kget_event_trig > 0 then
-    knext_event_time += round(kratio*iclock_resolution)/iclock_resolution 
-    event "i", inoise_instr, 0, 0.1
+    knext_event_time += round(kgen_ratio*iclock_resolution)/iclock_resolution 
+    event "i", igen_instr, 0, 0.5, kgen_notenum, kgen_velocity
     OSCsend kcount, "127.0.0.1", 9901, "/client_prob_gen", "fff", kindex, krequest_ratio, krequest_weight
   endif
   nextmsg:
-    kmess OSClisten gihandle, "python_prob_gen", "ff", kindex, kratio ; receive OSC data from Python
+    kmess OSClisten gihandle, "python_prob_gen", "ffff", kindex, kgen_ratio, kgen_notenum, kgen_velocity ; receive OSC data from Python
     if kmess == 0 goto done
     kgoto nextmsg ; make sure we read all messages in the network buffer
   done:
@@ -332,6 +350,18 @@ instr 120
   anoise *= aenv
   anoise *= iamp
   outs anoise*0, anoise
+endin
+
+; prob gen event player
+instr 121
+  iamp = ampdbfs(-6)
+  inote = p4
+  ivel = p5
+  aenv expon 1, p3, 0.0001
+  a1 oscili ivel/127, cpsmidinn(inote)
+  a1 *= aenv
+  a1 *= iamp
+  outs a1, a1
 endin
 
 </CsInstruments>

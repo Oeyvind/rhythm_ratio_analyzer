@@ -21,14 +21,35 @@ pnum_corpus = {
   'deviation_2nd_best' : 5,
   'phrase_num': 6, # the rest is placeholders, to be implemented
   'downbeat_trig': 7,
-  'amp': 8,
-  'amp_relative': 9,
-  'pitch': 10,
-  'pitch_relative': 11
+  'velocity': 8,
+  'velocity_relative': 9,
+  'notenum': 10,
+  'notenum_relative': 11
 }
 # corpus is the main data container for events
 nparms_corpus = len(pnum_corpus.keys())
 corpus = np.zeros((max_events,nparms_corpus), dtype=np.float32) # float32 faster than int or float64
+
+def clear_corpus_item(index):
+  # clear one event from corpus 
+  global corpus
+  corpus[index] = np.zeros(nparms_corpus)
+  print(f'corpus clear item {corpus[index]}')
+
+def clear_corpus():
+  # reset the whole corpus to zeros
+  global corpus
+  corpus = np.zeros((max_events,nparms_corpus), dtype=np.float32) # float32 faster than int or float64
+
+def save_corpus():
+  # save corpus to file
+  global corpus
+  np.save('saved_corpus.npy', corpus)
+
+def load_corpus():
+  # save corpus to file
+  global corpus
+  corpus = np.load('saved_corpus.npy')
 
 # parameter names and max_order in the probabilistic logic module
 # zero order just means give us all indices where the value occurs
