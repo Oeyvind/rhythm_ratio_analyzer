@@ -5,8 +5,9 @@ form size(605, 410), caption("Rhythm Analyzer"), pluginId("rtm1"), guiMode("queu
 button bounds(5, 5, 70, 50), text("record","recording"), channel("record_enable"), colour:0("green"), colour:1("red")
 
 groupbox bounds(85, 5, 160, 50), text("last recorded phrase"), colour(45,25,25){
-  button bounds(10, 25, 70, 20), text("play"), channel("play_last_phrase"), colour:0("green"), colour:1("red")
-  button bounds(90, 25, 60, 20), text("clear"), channel("clear_last_phrase"), colour:0("green"), colour:1("red"), latched(0)
+  button bounds(8, 25, 45, 20), text("play"), channel("play_last_phrase"), colour:0("green"), colour:1("red")
+  button bounds(57, 25, 45, 20), text("print"), channel("print_last_phrase"), colour:0("green"), colour:1("red"), latched(0)
+  button bounds(106, 25, 45, 20), text("clear"), channel("clear_last_phrase"), colour:0("green"), colour:1("red"), latched(0)
 }
 groupbox bounds(248, 5, 215, 50), colour(45,25,25){ ; , text("phrase data")
 label bounds(14, 2, 80, 18), text("tempo"), fontSize(12), align("left")
@@ -59,11 +60,12 @@ label bounds(220, 45, 60, 18), text("g_r2_ord"), fontSize(12), align("left")
 nslider bounds(285, 25, 40, 25), channel("gen_temperature"), range(0.01, 10, 0.2, 1, 0.01), fontSize(14)
 label bounds(285, 45, 60, 18), text("g_temp"), fontSize(12), align("left")
 
-button bounds(375, 25, 50, 30), text("dwnbeat sync"), channel("downbeat_sync"), colour:0("green"), colour:1("red"), latched(1)
-nslider bounds(430, 25, 40, 25), channel("downbeat_sync_strength"), range(0, 1, 0.5), fontSize(14)
-label bounds(430, 45, 70, 18), text("sync_w"), fontSize(12), align("left")
+button bounds(350, 25, 45, 30), text("metro"), channel("gen_metro_on"), colour:0("green"), colour:1("red"), latched(1)
+button bounds(400, 25, 50, 30), text("dwnbeat sync"), channel("downbeat_sync"), colour:0("green"), colour:1("red"), latched(1)
+nslider bounds(455, 25, 40, 25), channel("downbeat_sync_strength"), range(0, 1, 0.5), fontSize(14)
+label bounds(455, 45, 60, 18), text("sync_w"), fontSize(12), align("left")
 ; debug
-button bounds(500, 25, 50, 30), text("print stm"), channel("pl_print"), colour:0("green"), colour:1("red"), latched(0)
+button bounds(520, 25, 50, 30), text("print stm"), channel("pl_print"), colour:0("green"), colour:1("red"), latched(0)
 }
 csoundoutput bounds(5, 205, 560, 200)
 </Cabbage>
@@ -71,7 +73,6 @@ csoundoutput bounds(5, 205, 560, 200)
 <CsoundSynthesizer>
 <CsOptions>
 -n -d -m0 -+rtmidi=NULL -M0 -Q0
-;-n -+rtmidi=NULL -M0 -Q0
 </CsOptions>
 
 <CsInstruments>
@@ -111,10 +112,11 @@ instr 1
     event "i", -109, 0, .1
   endif
   ; print probabilistic logic stm
-  kprint chnget "pl_print"
-  kprint_on trigger kprint, 0.5, 0
+  kprint_stm chnget "pl_print"
+  kprint_last chnget "print_last_phrase"
+  kprint_on trigger kprint_stm+kprint_last, 0.5, 0
   if kprint_on > 0 then
-    event "i", 110, 0, .1
+    event "i", 110, 0, .1, kprint_stm+(kprint_last*2) ; print code 1 or 2
   endif
 endin
 
@@ -280,6 +282,7 @@ instr 109
   kdownbeat_sync chnget "downbeat_sync"
   kdownbeat_sync_strength chnget "downbeat_sync_strength"
   ktemperature chnget "gen_temperature"
+  kmetro_on chnget "gen_metro_on"
 
   ; beat clock
   kclock_counter init 0
@@ -296,14 +299,16 @@ instr 109
     cabbageSetValue "downbeat_sync", kzero
     knext_downbeat_time += 1
     idownbeat_instr = 119
-    event "i", idownbeat_instr, 0, 0.3
+    if kmetro_on > 0 then
+      event "i", idownbeat_instr, 0, 0.3
+    endif
   endif
 
-  kindex init 0
   krequest_ratio init -1
   krequest_weight = kdownbeat_sync_strength ; may not necessary to rename/patch this, if it will only be used for that purpose
   igen_instr = 121
   ; event trig
+  kgen_index init 0
   kgen_ratio init 1
   kgen_notenum init 0
   kgen_velocity init 0
@@ -315,10 +320,10 @@ instr 109
   if kget_event_trig > 0 then
     knext_event_time += round(kgen_ratio*iclock_resolution)/iclock_resolution 
     event "i", igen_instr, 0, 0.5, kgen_notenum, kgen_velocity
-    OSCsend kcount, "127.0.0.1", 9901, "/client_prob_gen", "fff", kindex, krequest_ratio, krequest_weight
+    OSCsend kcount, "127.0.0.1", 9901, "/client_prob_gen", "fff", kgen_index, krequest_ratio, krequest_weight
   endif
   nextmsg:
-    kmess OSClisten gihandle, "python_prob_gen", "ffff", kindex, kgen_ratio, kgen_notenum, kgen_velocity ; receive OSC data from Python
+    kmess OSClisten gihandle, "python_prob_gen", "ffff", kgen_index, kgen_ratio, kgen_notenum, kgen_velocity ; receive OSC data from Python
     if kmess == 0 goto done
     kgoto nextmsg ; make sure we read all messages in the network buffer
   done:
@@ -327,9 +332,10 @@ instr 109
   krequest_ratio = kdownbeat_sync > 0 ? kratio_to_next_downbeat : -1 ; in case we want to request a ratio that will sync to next downbeat 
 endin
 
-; print prob logic stm
+; print stuff on server
 instr 110
-    OSCsend 1, "127.0.0.1", 9901, "/client_prob_print", "f", 1
+    iprint = p4 ; 1= prob logic stm, 2=print last phrase ratios
+    OSCsend 1, "127.0.0.1", 9901, "/client_print", "f", iprint
 endin
 
 ; downbeat instr
@@ -362,6 +368,10 @@ instr 121
   a1 *= aenv
   a1 *= iamp
   outs a1, a1
+  ; midi out
+  ichan = 1
+  noteondur ichan, inote, ivel, p3
+
 endin
 
 </CsInstruments>

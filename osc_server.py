@@ -121,14 +121,23 @@ class Osc_server():
                      float(self.corpus[next_item_index, self.pnum_corpus['velocity']])]
         osc_io.sendOSC("python_prob_gen", returnmsg) # send OSC back to client
 
-    def pl_print(self, unused_addr, *osc_data):
+    def printstuff(self, unused_addr, *osc_data):
         '''Message handler. This is called when we receive an OSC message'''
-        print('pl_data', self.corpus)
-        for parm in self.dc.prob_parms.keys():
-            pe = self.dc.prob_parms[parm][1]
-            print(pe, pe.name)
-            for key, value in pe.stm.items():
-                print(key, value[pe.max_order:pe.size+pe.max_order])
+        printcode = int(osc_data[0])
+        if printcode == 1:
+            for parm in self.dc.prob_parms.keys():
+                pe = self.dc.prob_parms[parm][1]
+                print(pe, pe.name)
+                for key, value in pe.stm.items():
+                    print(key, value[pe.max_order:pe.size+pe.max_order])
+        elif printcode == 2:
+            print('last_phrase: indx, ratio1, ratio2')
+            print(self.pnum_corpus['index'], self.pnum_corpus['ratio_best'], self.pnum_corpus['ratio_2nd_best'], self.last_analyzed_phrase)
+            parmindxs = [self.pnum_corpus['index'], self.pnum_corpus['ratio_best'], self.pnum_corpus['ratio_2nd_best']]
+            for i in self.last_analyzed_phrase[:-1]:
+                print(self.corpus[[i,i,i],parmindxs])
+        else:
+            print(f'unknown print code: {printcode}')
 
     def eventdata_admin(self, unused_addr, *osc_data):
         clear_last_phrase, clear_all, save_all = osc_data
@@ -175,6 +184,6 @@ class Osc_server():
         osc_io.dispatcher.map("/client_parametercontrols", self.receive_parameter_controls) # 
         osc_io.dispatcher.map("/client_memory", self.eventdata_admin) # 
         osc_io.dispatcher.map("/client_prob_gen", self.pl_generate) # 
-        osc_io.dispatcher.map("/client_prob_print", self.pl_print) # 
+        osc_io.dispatcher.map("/client_print", self.printstuff) # 
         osc_io.asyncio.run(osc_io.run_osc_server()) # run the OSC server and client
 
