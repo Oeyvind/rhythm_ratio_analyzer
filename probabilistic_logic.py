@@ -34,7 +34,7 @@ class Probabilistic_encoder:
             self.previous_item = item
             return
         else: # all next items are analyzed, stored as possible successors to the previous note
-            print('Analyze:', self.name, self.previous_item, index, item)
+            #print('Analyze:', self.name, self.previous_item, index, item)
             if self.previous_item not in self.stm.keys():
                 index_container = np.copy(self.empty_index_container)
                 index_container[index+self.max_order] = 1
@@ -102,7 +102,7 @@ class Probabilistic_logic:
     def analyze_single_event(self, i):
         for parm in self.prob_parms.keys():
             pe = self.prob_parms[parm][1]
-            print(f'pe.analyze: {self.corpus[i, self.pnum_corpus[parm]]}')
+            #print(f'pe.analyze: {self.corpus[i, self.pnum_corpus[parm]]}')
             pe.analyze(self.corpus[i, self.pnum_corpus[parm]], i)
         self.current_datasize += 1
         self.indices = self.corpus[:self.current_datasize, self.pnum_corpus['index']]

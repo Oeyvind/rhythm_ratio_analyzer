@@ -42,30 +42,33 @@ class Osc_server():
 
     def receive_eventdata(self, unused_addr, *osc_data):
         '''Message handler. This is called when we receive an OSC message'''
-        index, timenow, notenum, velocity = osc_data # unpack the OSC data, must have the same number of variables as we have items in the data
+        index, timenow, on_off, notenum, velocity = osc_data # unpack the OSC data, must have the same number of variables as we have items in the data
         index = int(index)
-        logging.debug(f'received: {index}, {timenow:.2f}, {notenum}, {velocity}')
-        # put events in analysis queue
-        if index == 0:
-            self.corpus[index, self.pnum_corpus['timestamp']] = timenow
-            self.corpus[index, self.pnum_corpus['notenum']] = notenum
-            self.corpus[index, self.pnum_corpus['velocity']] = velocity
-            self.pending_analysis.append(index)
-        else:
-            if timenow > (self.corpus[index-1, self.pnum_corpus['timestamp']] + (self.minimum_delta_time/1000)):
-                self.corpus[index,self.pnum_corpus['timestamp']] = timenow
+        logging.debug(f'received: {index}, {timenow:.2f}, {on_off}, {notenum}, {velocity}')
+        if on_off == 0:
+            self.corpus[index, self.pnum_corpus['time_off']] = timenow
+        if on_off == 1:
+            # put events in analysis queue
+            if index == 0:
+                self.corpus[index, self.pnum_corpus['timestamp']] = timenow
                 self.corpus[index, self.pnum_corpus['notenum']] = notenum
                 self.corpus[index, self.pnum_corpus['velocity']] = velocity
-                if self.previous_notenum > -1:
-                    self.corpus[index, self.pnum_corpus['notenum_relative']] = notenum-self.previous_notenum
-                    self.previous_notenum = notenum
-                if self.previous_velocity > -1:
-                    self.corpus[index, self.pnum_corpus['velocity_relative']] = velocity-self.previous_velocity
-                    self.previous_velocity = velocity
                 self.pending_analysis.append(index)
             else:
-                logging.debug('skipped double trig event: {}, {}'.format(index, timenow))
-                osc_io.sendOSC("python_skipindex", index) # send OSC back to client
+                if timenow > (self.corpus[index-1, self.pnum_corpus['timestamp']] + (self.minimum_delta_time/1000)):
+                    self.corpus[index,self.pnum_corpus['timestamp']] = timenow
+                    self.corpus[index, self.pnum_corpus['notenum']] = notenum
+                    self.corpus[index, self.pnum_corpus['velocity']] = velocity
+                    if self.previous_notenum > -1:
+                        self.corpus[index, self.pnum_corpus['notenum_relative']] = notenum-self.previous_notenum
+                        self.previous_notenum = notenum
+                    if self.previous_velocity > -1:
+                        self.corpus[index, self.pnum_corpus['velocity_relative']] = velocity-self.previous_velocity
+                        self.previous_velocity = velocity
+                    self.pending_analysis.append(index)
+                else:
+                    logging.debug('skipped double trig event: {}, {}'.format(index, timenow))
+                    osc_io.sendOSC("python_skipindex", index) # send OSC back to client
 
     def analyze(self, unused_addr, *osc_data):
         '''Message handler. This is called when we receive an OSC message'''
@@ -98,7 +101,6 @@ class Osc_server():
             self.corpus[indx,self.pnum_corpus['deviation_2nd_best']] = ratios_reduced[next_best,i,2] # deviation
             self.corpus[indx,self.pnum_corpus['phrase_num']] = self.phrase_number
             # probabilistic model encoding
-            print('analyze_debug', self.corpus[indx,self.pnum_corpus['ratio_best']])
             self.pl.analyze_single_event(indx)
         self.pending_analysis = [] # clear
 
@@ -115,8 +117,16 @@ class Osc_server():
 
         self.query = self.pl.generate(self.query) #query probabilistic models for next event and update query for next iteration
         next_item_index = self.query[0]
+        print(self.corpus[next_item_index, self.pnum_corpus["ratio_best"]], 
+              self.corpus[next_item_index, self.pnum_corpus["notenum"]], 
+              self.corpus[next_item_index, self.pnum_corpus["timestamp"]], 
+              self.corpus[next_item_index, self.pnum_corpus["time_off"]])
+        event_duration = (self.corpus[next_item_index, self.pnum_corpus['time_off']] - 
+                          self.corpus[next_item_index, self.pnum_corpus['timestamp']]) * \
+                          self.corpus[next_item_index, self.pnum_corpus['ratio_best']]
         returnmsg = [int(next_item_index), 
                      float(self.corpus[next_item_index, self.pnum_corpus['ratio_best']]),
+                     float(event_duration),
                      float(self.corpus[next_item_index, self.pnum_corpus['notenum']]),
                      float(self.corpus[next_item_index, self.pnum_corpus['velocity']])]
         osc_io.sendOSC("python_prob_gen", returnmsg) # send OSC back to client

@@ -14,17 +14,18 @@ max_events = 100 # 100 for test, 10.000 for small scale production
 # parameter names and their indices in the corpus
 pnum_corpus = {
   'index': 0, # register indices for data points currently in use
-  'timestamp' : 1,
-  'ratio_best': 2, # best unique rational approx, as float
-  'deviation_best' : 3,
-  'ratio_2nd_best': 4,
-  'deviation_2nd_best' : 5,
-  'phrase_num': 6, # the rest is placeholders, to be implemented
-  'downbeat_trig': 7,
-  'velocity': 8,
-  'velocity_relative': 9,
-  'notenum': 10,
-  'notenum_relative': 11
+  'timestamp' : 1, # time of note on 
+  'time_off' : 2, # time of note off
+  'ratio_best': 3, # best unique rational approx, as float
+  'deviation_best' : 4,
+  'ratio_2nd_best': 5,
+  'deviation_2nd_best' : 6,
+  'phrase_num': 7, # the rest is placeholders, to be implemented
+  'downbeat_trig': 8,
+  'velocity': 9,
+  'velocity_relative': 10,
+  'notenum': 11,
+  'notenum_relative': 12
 }
 # corpus is the main data container for events
 nparms_corpus = len(pnum_corpus.keys())

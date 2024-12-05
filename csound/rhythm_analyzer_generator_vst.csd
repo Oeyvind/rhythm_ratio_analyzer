@@ -84,6 +84,7 @@ nchnls = 2
 
 massign -1, 2
 pgmassign 0, -1 ; ignore program change
+gkNote_index[] init 127 ; holds indices or each notenum (last time that notenum appeared, it had index N). For polyphny control in recordding.
 
 gitrig_ftab ftgen 0, 0, 4096, 2, 0
 gitrig_ftab_empty ftgen 0, 0, 4096, 2, 0
@@ -95,11 +96,12 @@ instr 1
   kplay chnget "play_last_phrase"
   ktrig_play trigger kplay, 0.5, 0
   ktrig_stop trigger kplay, 0.5, 1
+  itriggerseq_instr = 5
   if ktrig_play > 0 then
-    event "i", 3, 0, -1
+    event "i", itriggerseq_instr, 0, -1
   endif
   if ktrig_stop > 0 then
-    event "i", -3, 0, .1
+    event "i", -itriggerseq_instr, 0, .1
   endif
   ; generator
   kgenerate chnget "generate"
@@ -123,27 +125,29 @@ endin
 ; rhythm recording instr, triggered by midi input
 instr 2
   inum notnum
-  chnset inum, "notenum"
   ivel veloc
-  chnset ivel, "velocity"
-  iprevious_event_time chnget "previous_event_time"
-  chnset p2, "previous_event_time"
-  imin_delta_time chnget "minimum_delta_time"
-  if p2 > iprevious_event_time + (imin_delta_time/1000) then
-    ktrig init 1
-    chnset ktrig, "new_event_trig"
-    ktrig = 0
+  chnset k(inum), "notenum"
+  chnset k(ivel), "velocity"
+  ktrig_on init 1 ; do once
+  ktrig_on = 0
+  xtratim 2/kr
+  krelease release
+  krelease_trig trigger krelease, 0.5, 0
+  kactive active p1
+  if (kactive == 1) && (krelease > 0) then
+    kactive -= 1
   endif
-  irecord_enable chnget "record_enable"
-  if irecord_enable > 0 then
-    cabbageSetValue "velocity_last_event", ivel
-    cabbageSetValue "notenum_last_event", inum
-    cabbageSetValue "timestamp_last_event", p2
-  endif
+  k_prev init 0
+  kchange = kactive-k_prev
+  k_prev = kactive
+  kevent_trig_on = kchange > 0 ? 1 : 0
+  kevent_trig_off = kchange < 0 ? 1 : 0
+  chnset kevent_trig_on, "event_trig_on"
+  chnset kevent_trig_off, "event_trig_off"
 endin
 
 ; play trigger rhythm
-instr 3
+instr 5
   ktempo chnget "tempo_triggerseq"
   itrig_length chnget "triggerseq_length"
   Striglength sprintf "triggerseq length %i", itrig_length
@@ -167,37 +171,50 @@ endin
 ;*******************************
 ; Csound to Python communication, analyzer
 instr 31
-
-  knew_event_trig chnget "new_event_trig"
+  kevent_trig_on chnget "event_trig_on"
+  kevent_trig_off chnget "event_trig_off"
+  kevent_trig = (kevent_trig_on + kevent_trig_off) > 0 ? 1 : 0
+  kevent_onoff = kevent_trig_on > 0 ? 1 : 0
   knotenum chnget "notenum"
+  printk2 knotenum
   kvelocity chnget "velocity"
+
   krecord_enable chnget "record_enable"
-  krec_trig_on trigger krecord_enable, 0.5, 0 
   krec_trig_off trigger krecord_enable, 0.5, 1 ; stop recording, trigger the analysis process in Python 
   kclear_last_phrase chnget "clear_last_phrase"
   kclear_all chnget "clear_all"
   ksave_all chnget "save_all"
 
-  ktime timeinsts
-  ; initialize variables that will be used in the communication with Python
+  ktime timeinsts  
   kindex init 0
-  ktimenow init 0
-  ktimenow = knew_event_trig > 0 ? ktime : ktimenow
+  ;ktimenow init 0
+  ; ktimenow = kevent_trig > 0 ? ktime : ktimenow
   
-  
+
   ; send time data to Python
-  if knew_event_trig > 0 then
-    OSCsend kindex+1, "127.0.0.1", 9901, "/client_eventdata", "ffff", kindex, ktimenow, knotenum, kvelocity
-    kindex += 1
-  endif
-  ; if Python skips an index (due to invalid data), we update our index counter so it is equal to the index counter in Python
-  skipindex:
-    kskipindex OSClisten gihandle, "python_skipindex", "i", kindex  ; if Python skipped this index, update our index
-    if kskipindex == 0 goto done_skipindex
-    kgoto skipindex ; jump back to the OSC listen line, to see if there are more messages waiting in the network buffer
-  done_skipindex:
   if krecord_enable > 0 then
-    cabbageSetValue "index_last_event", kindex
+    kindex += kevent_trig_on
+    if kevent_trig_on > 0 then ; polyphony management in reording, keep same index for note on and off
+      gkNote_index[knotenum] = kindex
+    endif
+    if kevent_trig_off > 0 then
+      kindex = gkNote_index[knotenum] ; will only be active for note offs
+    endif
+    if kevent_trig > 0 then
+      OSCsend ktime, "127.0.0.1", 9901, "/client_eventdata", "fffff", kindex, ktime, kevent_onoff, knotenum, kvelocity
+    endif
+    ; if Python skips an index (due to invalid data), we update our index counter so it is equal to the index counter in Python
+    skipindex:
+      kskipindex OSClisten gihandle, "python_skipindex", "i", kindex  ; if Python skipped this index, update our index
+      if kskipindex == 0 goto done_skipindex
+      kgoto skipindex ; jump back to the OSC listen line, to see if there are more messages waiting in the network buffer
+    done_skipindex:
+    if kevent_trig_on > 0 then
+      cabbageSetValue "index_last_event", kindex
+      cabbageSetValue "velocity_last_event", kvelocity
+      cabbageSetValue "notenum_last_event", knotenum
+      cabbageSetValue "timestamp_last_event", ktime
+    endif
   endif
 
   ; send analyze trigger to Python
@@ -310,6 +327,7 @@ instr 109
   ; event trig
   kgen_index init 0
   kgen_ratio init 1
+  kgen_duration init 1
   kgen_notenum init 0
   kgen_velocity init 0
   knext_event_time init 0
@@ -319,11 +337,13 @@ instr 109
   kcount += kget_event_trig
   if kget_event_trig > 0 then
     knext_event_time += round(kgen_ratio*iclock_resolution)/iclock_resolution 
-    event "i", igen_instr, 0, 0.5, kgen_notenum, kgen_velocity
+    kdur = kgen_duration*(60/ktempo_bpm)
+    printk2 kgen_duration
+    event "i", igen_instr, 0, kdur, kgen_notenum, kgen_velocity
     OSCsend kcount, "127.0.0.1", 9901, "/client_prob_gen", "fff", kgen_index, krequest_ratio, krequest_weight
   endif
   nextmsg:
-    kmess OSClisten gihandle, "python_prob_gen", "ffff", kgen_index, kgen_ratio, kgen_notenum, kgen_velocity ; receive OSC data from Python
+    kmess OSClisten gihandle, "python_prob_gen", "fffff", kgen_index, kgen_ratio, kgen_duration, kgen_notenum, kgen_velocity ; receive OSC data from Python
     if kmess == 0 goto done
     kgoto nextmsg ; make sure we read all messages in the network buffer
   done:
@@ -340,7 +360,7 @@ endin
 
 ; downbeat instr
 instr 119
-  iamp = ampdbfs(-15)
+  iamp = ampdbfs(-5)
   aenv expon 1, p3, 0.0001
   a1 oscil 1, 440
   a1 *= aenv
