@@ -84,7 +84,7 @@ nchnls = 2
 
 massign -1, 2
 pgmassign 0, -1 ; ignore program change
-gkNote_index[] init 127 ; holds indices or each notenum (last time that notenum appeared, it had index N). For polyphny control in recordding.
+gkactivenote init 0; stores the note number of the active note, for polyphony control for rhythm analyzer
 
 gitrig_ftab ftgen 0, 0, 4096, 2, 0
 gitrig_ftab_empty ftgen 0, 0, 4096, 2, 0
@@ -125,25 +125,32 @@ endin
 ; rhythm recording instr, triggered by midi input
 instr 2
   inum notnum
+  chnset inum, "notenum"
   ivel veloc
-  chnset k(inum), "notenum"
-  chnset k(ivel), "velocity"
-  ktrig_on init 1 ; do once
-  ktrig_on = 0
-  xtratim 2/kr
-  krelease release
-  krelease_trig trigger krelease, 0.5, 0
-  kactive active p1
-  if (kactive == 1) && (krelease > 0) then
-    kactive -= 1
+  chnset ivel, "velocity"
+  inst_num = 3+(inum*0.001)
+  krelease lastcycle
+  iactive active 3
+  if iactive > 0 then
+    ifrac = i(gkactivenote)*0.001
+    event_i "i", -3-ifrac, 0, .1
+    chnset 1, "event_force_off"
   endif
-  k_prev init 0
-  kchange = kactive-k_prev
-  k_prev = kactive
-  kevent_trig_on = kchange > 0 ? 1 : 0
-  kevent_trig_off = kchange < 0 ? 1 : 0
-  chnset kevent_trig_on, "event_trig_on"
-  chnset kevent_trig_off, "event_trig_off"
+  event_i "i", inst_num, 0, -1, inum
+  if (krelease > 0) && (inum == gkactivenote) then 
+      event "i", -inst_num, 0, .1
+      chnset krelease, "event_off"
+  endif
+  
+endin
+
+instr 3
+  kon init 1
+  chnset kon, "event_on"
+  kon = 0
+  gkactivenote = p4
+  a1 oscil 0.1, cpsmidinn(p4)
+  outs a1, a1
 endin
 
 ; play trigger rhythm
@@ -171,12 +178,30 @@ endin
 ;*******************************
 ; Csound to Python communication, analyzer
 instr 31
-  kevent_trig_on chnget "event_trig_on"
-  kevent_trig_off chnget "event_trig_off"
-  kevent_trig = (kevent_trig_on + kevent_trig_off) > 0 ? 1 : 0
-  kevent_onoff = kevent_trig_on > 0 ? 1 : 0
+  ; event trig handling, making monophonic event on/off even if input has overlapping notes
+  kevent_on chnget "event_on"
+  kevent_off chnget "event_off"
+  kevent_force_off chnget "event_force_off" ; force off when we have overlapping notes in input
+  kzero = 0
+  chnset kzero, "event_off"
+  chnset kzero, "event_force_off"
+  kevent_trig = (kevent_on + kevent_off + kevent_force_off) > 0 ? 1 : 0
+  ksend_osc init 1
+  ksend_osc += kevent_trig ; need this to activate osc send
+  kevent_onoff = kevent_on ; if it is not on, it is an "off" event
+
+/*  
+  kprint_count init 0
+  kprint_count += (kevent_on +kevent_off +kevent_force_off)
+  ;printk2 kprint_count
+  kndx_test init 0
+  kndx_test += kevent_on
+  Sdebug sprintfk "ndx:%i on:%i, off:%i, forceoff:%i", kndx_test, kevent_on, kevent_off, kevent_force_off
+  ;kndx_test += kevent_force_off
+  puts Sdebug, kprint_count
+*/
+
   knotenum chnget "notenum"
-  printk2 knotenum
   kvelocity chnget "velocity"
 
   krecord_enable chnget "record_enable"
@@ -187,21 +212,13 @@ instr 31
 
   ktime timeinsts  
   kindex init 0
-  ;ktimenow init 0
-  ; ktimenow = kevent_trig > 0 ? ktime : ktimenow
   
-
   ; send time data to Python
   if krecord_enable > 0 then
-    kindex += kevent_trig_on
-    if kevent_trig_on > 0 then ; polyphony management in reording, keep same index for note on and off
-      gkNote_index[knotenum] = kindex
-    endif
-    if kevent_trig_off > 0 then
-      kindex = gkNote_index[knotenum] ; will only be active for note offs
-    endif
+    kindex += kevent_on
+    ;printk2 kindex, 10
     if kevent_trig > 0 then
-      OSCsend ktime, "127.0.0.1", 9901, "/client_eventdata", "fffff", kindex, ktime, kevent_onoff, knotenum, kvelocity
+      OSCsend ksend_osc, "127.0.0.1", 9901, "/client_eventdata", "fffff", kindex, ktime, kevent_onoff, knotenum, kvelocity
     endif
     ; if Python skips an index (due to invalid data), we update our index counter so it is equal to the index counter in Python
     skipindex:
@@ -209,7 +226,7 @@ instr 31
       if kskipindex == 0 goto done_skipindex
       kgoto skipindex ; jump back to the OSC listen line, to see if there are more messages waiting in the network buffer
     done_skipindex:
-    if kevent_trig_on > 0 then
+    if kevent_on > 0 then
       cabbageSetValue "index_last_event", kindex
       cabbageSetValue "velocity_last_event", kvelocity
       cabbageSetValue "notenum_last_event", knotenum
@@ -338,7 +355,6 @@ instr 109
   if kget_event_trig > 0 then
     knext_event_time += round(kgen_ratio*iclock_resolution)/iclock_resolution 
     kdur = kgen_duration*(60/ktempo_bpm)
-    printk2 kgen_duration
     event "i", igen_instr, 0, kdur, kgen_notenum, kgen_velocity
     OSCsend kcount, "127.0.0.1", 9901, "/client_prob_gen", "fff", kgen_index, krequest_ratio, krequest_weight
   endif

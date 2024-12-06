@@ -80,12 +80,12 @@ class Osc_server():
         self.last_analyzed_phrase = self.pending_analysis # keep it so we can delete it if clear_last_phrase is called
         start, end = self.pending_analysis[0], self.pending_analysis[-1]
         timedata = self.corpus[start:end+1,self.pnum_corpus['timestamp']]
-        print('timedata', timedata)
+        #print('timedata', timedata)
         self.phrase_number += 1
         ratios_reduced, ranked_unique_representations, trigseq, ticktempo_bpm, tempo_tendency, pulseposition = self.ra.analyze(timedata)
         for i in range(len(trigseq)):
             osc_io.sendOSC("python_triggerdata", [i, trigseq[i]]) # send OSC back to client
-        print('len:',float(len(self.pending_analysis)))
+        #print('len:',float(len(self.pending_analysis)))
         returnmsg = [ticktempo_bpm, tempo_tendency, float(pulseposition), float(len(self.pending_analysis))]
         osc_io.sendOSC("python_other", returnmsg) # send OSC back to client
         
@@ -98,8 +98,13 @@ class Osc_server():
             self.corpus[indx,self.pnum_corpus['ratio_best']] = ratios_reduced[best,i,0]/ratios_reduced[best,i,1] # ratio as float
             self.corpus[indx,self.pnum_corpus['deviation_best']] = ratios_reduced[best,i,2] # deviation
             self.corpus[indx,self.pnum_corpus['ratio_2nd_best']] = ratios_reduced[next_best,i,0]/ratios_reduced[next_best,i,1] # ratio as float
-            self.corpus[indx,self.pnum_corpus['deviation_2nd_best']] = ratios_reduced[next_best,i,2] # deviation
             self.corpus[indx,self.pnum_corpus['phrase_num']] = self.phrase_number
+            # event duration relative to time until next event
+            self.corpus[indx,self.pnum_corpus['duration']] = \
+                (self.corpus[indx,self.pnum_corpus['time_off']] \
+                - self.corpus[indx,self.pnum_corpus['timestamp']]) \
+                / (self.corpus[indx+1,self.pnum_corpus['timestamp']] \
+                - self.corpus[indx,self.pnum_corpus['timestamp']])
             # probabilistic model encoding
             self.pl.analyze_single_event(indx)
         self.pending_analysis = [] # clear
@@ -117,16 +122,18 @@ class Osc_server():
 
         self.query = self.pl.generate(self.query) #query probabilistic models for next event and update query for next iteration
         next_item_index = self.query[0]
+        #event_duration = (self.corpus[next_item_index, self.pnum_corpus['time_off']] - 
+        #                  self.corpus[next_item_index, self.pnum_corpus['timestamp']])
+        '''
         print(self.corpus[next_item_index, self.pnum_corpus["ratio_best"]], 
-              self.corpus[next_item_index, self.pnum_corpus["notenum"]], 
+              self.corpus[next_item_index, self.pnum_corpus["notenum"]],
+              event_duration, 
               self.corpus[next_item_index, self.pnum_corpus["timestamp"]], 
               self.corpus[next_item_index, self.pnum_corpus["time_off"]])
-        event_duration = (self.corpus[next_item_index, self.pnum_corpus['time_off']] - 
-                          self.corpus[next_item_index, self.pnum_corpus['timestamp']]) * \
-                          self.corpus[next_item_index, self.pnum_corpus['ratio_best']]
+        '''
         returnmsg = [int(next_item_index), 
                      float(self.corpus[next_item_index, self.pnum_corpus['ratio_best']]),
-                     float(event_duration),
+                     float(self.corpus[next_item_index, self.pnum_corpus['duration']]),
                      float(self.corpus[next_item_index, self.pnum_corpus['notenum']]),
                      float(self.corpus[next_item_index, self.pnum_corpus['velocity']])]
         osc_io.sendOSC("python_prob_gen", returnmsg) # send OSC back to client

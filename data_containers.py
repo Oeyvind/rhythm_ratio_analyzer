@@ -16,17 +16,18 @@ pnum_corpus = {
   'index': 0, # register indices for data points currently in use
   'timestamp' : 1, # time of note on 
   'time_off' : 2, # time of note off
-  'ratio_best': 3, # best unique rational approx, as float
-  'deviation_best' : 4,
-  'ratio_2nd_best': 5,
-  'deviation_2nd_best' : 6,
-  'phrase_num': 7, # the rest is placeholders, to be implemented
-  'downbeat_trig': 8,
+  'duration' : 3, # relative duration (time_off - timestamp) / (timestamp next event/timestamp this event)
+  'ratio_best': 4, # best unique rational approx, as float
+  'deviation_best' : 5,
+  'ratio_2nd_best': 6,
+  'phrase_num': 7, 
+  'downbeat_trig': 8, # to be implemented
   'velocity': 9,
-  'velocity_relative': 10,
+  'velocity_relative': 10, # to be implemented
   'notenum': 11,
-  'notenum_relative': 12
+  'notenum_relative': 12 # to be implemented
 }
+print('pnum_corpus keys', pnum_corpus.keys())
 # corpus is the main data container for events
 nparms_corpus = len(pnum_corpus.keys())
 corpus = np.zeros((max_events,nparms_corpus), dtype=np.float32) # float32 faster than int or float64
