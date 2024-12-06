@@ -102,7 +102,7 @@ class Probabilistic_logic:
     def analyze_single_event(self, i):
         for parm in self.prob_parms.keys():
             pe = self.prob_parms[parm][1]
-            #print(f'pe.analyze: {self.corpus[i, self.pnum_corpus[parm]]}')
+            print(f'pe.analyze: {pe.name}, {self.corpus[i, self.pnum_corpus[parm]]}')
             pe.analyze(self.corpus[i, self.pnum_corpus[parm]], i)
         self.current_datasize += 1
         self.indices = self.corpus[:self.current_datasize, self.pnum_corpus['index']]
@@ -144,6 +144,7 @@ class Probabilistic_logic:
         self.prob_history = self.update_history(self.prob_history, next_item_index)
 
         # get alternatives from Probabilistic encoder
+        print('prob_parm.keys', self.prob_parms.keys())
         for parm in self.prob_parms.keys():
             pe = self.prob_parms[parm][1]
             for ord in range(1,self.prob_parms[parm][0]+1): # will skip for specific request (order 0)
@@ -156,6 +157,7 @@ class Probabilistic_logic:
                         query_item = self.corpus[self.prob_history[-ord], self.pnum_corpus[parm]]
                     #print(f'query item {query_item}, history {self.prob_history}, -ord {-ord}, pnum {self.pnum_corpus[parm]}')
                     self.indices_prob_temp = pe.next_items(query_item)[offset:self.current_datasize+offset]
+                    print(f'ic {pe.name} \ {self.indices_prob_temp}')
                     self.indx_container[:self.current_datasize, w_index] = self.indices_prob_temp[:self.current_datasize]
                 #else: print(f'skipping {parm} order {ord}')
 

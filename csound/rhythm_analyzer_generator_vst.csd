@@ -1,5 +1,5 @@
 <Cabbage>
-form size(605, 410), caption("Rhythm Analyzer"), pluginId("rtm1"), guiMode("queue"), colour(46,45,52)
+form size(605, 460), caption("Rhythm Analyzer"), pluginId("rtm1"), guiMode("queue"), colour(46,45,52)
 
 ; recording and analysis
 button bounds(5, 5, 70, 50), text("record","recording"), channel("record_enable"), colour:0("green"), colour:1("red")
@@ -49,16 +49,25 @@ nslider bounds(300, 25, 40, 20), channel("autocorr_weight"), range(0, 1, 1), fon
 label bounds(300, 45, 40, 20), text("acorr"), fontSize(12)
 }
 
-groupbox bounds(5, 135, 590, 65), text("generate events with prob logic"), colour(25,45,30){
+groupbox bounds(5, 135, 590, 110), text("generate events with prob logic"), colour(25,45,30){
 button bounds(10, 25, 70, 30), text("generate"), channel("generate"), colour:0("green"), colour:1("red")
-nslider bounds(95, 25, 40, 25), channel("gen_tempo_bpm"), range(1, 2999, 60), fontSize(14)
-label bounds(95, 45, 60, 18), text("g_tempo"), fontSize(12), align("left")
-nslider bounds(155, 25, 40, 25), channel("gen_r1_order"), range(0, 4, 2, 1, 0.5), fontSize(14)
-label bounds(155, 45, 60, 18), text("g_r1_ord"), fontSize(12), align("left")
-nslider bounds(220, 25, 40, 25), channel("gen_r2_order"), range(0, 4, 2, 1, 0.5), fontSize(14)
-label bounds(220, 45, 60, 18), text("g_r2_ord"), fontSize(12), align("left")
+nslider bounds(90, 25, 40, 25), channel("gen_r1_order"), range(0, 4, 2, 1, 0.5), fontSize(14)
+label bounds(90, 45, 60, 18), text("r1_ord"), fontSize(12), align("left")
+nslider bounds(155, 25, 40, 25), channel("gen_r2_order"), range(0, 4, 2, 1, 0.5), fontSize(14)
+label bounds(155, 45, 60, 18), text("r2_ord"), fontSize(12), align("left")
+nslider bounds(220, 25, 40, 25), channel("gen_pitch_order"), range(0, 4, 2, 1, 0.5), fontSize(14)
+label bounds(220, 45, 60, 18), text("ptch_ord"), fontSize(12), align("left")
 nslider bounds(285, 25, 40, 25), channel("gen_temperature"), range(0.01, 10, 0.2, 1, 0.01), fontSize(14)
-label bounds(285, 45, 60, 18), text("g_temp"), fontSize(12), align("left")
+label bounds(285, 45, 60, 18), text("temp"), fontSize(12), align("left")
+
+nslider bounds(20, 65, 40, 25), channel("gen_tempo_bpm"), range(1, 2999, 60), fontSize(14)
+label bounds(20, 90, 60, 18), text("g_tempo"), fontSize(12), align("left")
+nslider bounds(90, 65, 40, 25), channel("gen_duration_scale"), range(0.1, 2, 1), fontSize(14)
+label bounds(90, 90, 60, 18), text("g_dur"), fontSize(12), align("left")
+button bounds(155, 65, 55, 25), text("rel pitch"), channel("gen_relative_pitch"), colour:0("green"), colour:1("red")
+nslider bounds(220, 65, 40, 25), channel("gen_interval_order"), range(0, 4, 2, 1, 0.5), fontSize(14)
+label bounds(220, 90, 60, 18), text("intv_ord"), fontSize(12), align("left")
+
 
 button bounds(350, 25, 45, 30), text("metro"), channel("gen_metro_on"), colour:0("green"), colour:1("red"), latched(1)
 button bounds(400, 25, 50, 30), text("dwnbeat sync"), channel("downbeat_sync"), colour:0("green"), colour:1("red"), latched(1)
@@ -67,7 +76,7 @@ label bounds(455, 45, 60, 18), text("sync_w"), fontSize(12), align("left")
 ; debug
 button bounds(520, 25, 50, 30), text("print stm"), channel("pl_print"), colour:0("green"), colour:1("red"), latched(0)
 }
-csoundoutput bounds(5, 205, 560, 200)
+csoundoutput bounds(5, 255, 560, 200)
 </Cabbage>
 
 <CsoundSynthesizer>
@@ -250,16 +259,18 @@ instr 31
   kautocorr_weight chnget "autocorr_weight"
   kratio1_order chnget "gen_r1_order"
   kratio2_order chnget "gen_r2_order"
+  knotenum_order chnget "gen_pitch_order"
+  kinterval_order chnget "gen_interval_order"
   ktemperature chnget "gen_temperature"
   kparm_update = changed(kbenni_weight, knd_weight, kratio_dev_weight, 
                       kratio_dev_abs_max_weight, kgrid_dev_weight, 
                       kevidence_weight, kautocorr_weight, kratio1_order, 
-                      kratio2_order, ktemperature)
-  OSCsend kparm_update, "127.0.0.1", 9901, "/client_parametercontrols", "ffffffffff", 
+                      kratio2_order, knotenum_order, kinterval_order, ktemperature)
+  OSCsend kparm_update, "127.0.0.1", 9901, "/client_parametercontrols", "ffffffffffff", 
                       kbenni_weight, knd_weight, kratio_dev_weight, 
                       kratio_dev_abs_max_weight, kgrid_dev_weight, 
                       kevidence_weight, kautocorr_weight, kratio1_order, 
-                      kratio2_order, ktemperature
+                      kratio2_order, knotenum_order, kinterval_order, ktemperature
 
   ; receive trigger string from Python (only for playback of last recorded phrase)
   ktrig_sig init 0
@@ -311,12 +322,12 @@ endin
 
 instr 109
   ktempo_bpm chnget "gen_tempo_bpm"
-  korder chnget "gen_order" ; Markov-ish order, may be fractional, up to 2nd order
-  kdimension chnget "gen_dimension"
   kdownbeat_sync chnget "downbeat_sync"
   kdownbeat_sync_strength chnget "downbeat_sync_strength"
   ktemperature chnget "gen_temperature"
   kmetro_on chnget "gen_metro_on"
+  kdur_scale chnget "gen_duration_scale"
+  krelative_pitch chnget "gen_relative_pitch"
 
   ; beat clock
   kclock_counter init 0
@@ -346,20 +357,28 @@ instr 109
   kgen_ratio init 1
   kgen_duration init 1
   kgen_notenum init 0
+  kgen_interval init 0
   kgen_velocity init 0
   knext_event_time init 0
   kget_event = (kbeat_clock > knext_event_time) ? 1 : 0 ; if current time is greater than the time for the next event, then activate
   kget_event_trig trigger kget_event, 0.5, 0
   kcount init 0
   kcount += kget_event_trig
+  kprev_notenum = 60 ; for interval melody generation
   if kget_event_trig > 0 then
+    if krelative_pitch > 0 then
+      knotenum = kprev_notenum + kgen_interval
+    else
+      knotenum = kgen_notenum
+    endif
+    kprev_notenum = knotenum
     knext_event_time += round(kgen_ratio*iclock_resolution)/iclock_resolution 
-    kdur = kgen_duration*(60/ktempo_bpm)
-    event "i", igen_instr, 0, kdur, kgen_notenum, kgen_velocity
+    kdur = kgen_duration*(60/ktempo_bpm)*kdur_scale
+    event "i", igen_instr, 0, kdur, knotenum, kgen_velocity
     OSCsend kcount, "127.0.0.1", 9901, "/client_prob_gen", "fff", kgen_index, krequest_ratio, krequest_weight
   endif
   nextmsg:
-    kmess OSClisten gihandle, "python_prob_gen", "fffff", kgen_index, kgen_ratio, kgen_duration, kgen_notenum, kgen_velocity ; receive OSC data from Python
+    kmess OSClisten gihandle, "python_prob_gen", "ffffff", kgen_index, kgen_ratio, kgen_duration, kgen_notenum, kgen_interval, kgen_velocity ; receive OSC data from Python
     if kmess == 0 goto done
     kgoto nextmsg ; make sure we read all messages in the network buffer
   done:

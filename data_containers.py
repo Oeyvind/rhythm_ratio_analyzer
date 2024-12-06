@@ -57,8 +57,10 @@ def load_corpus():
 # zero order just means give us all indices where the value occurs
 # higher orders similar to markov order
 prob_parms_description = {
-  'ratio_best': 2,
-  'ratio_2nd_best': 2}
+  'ratio_best': 4,
+  'ratio_2nd_best': 4,
+  'notenum': 4, 
+  'notenum_relative': 4}
 
 # set up prob_parms as dict with format: [order, prob_encoder instance, [list of prob logic indices]]
 # prob_encoder instance will be updated when the encoder is instantiated

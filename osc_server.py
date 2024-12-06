@@ -58,7 +58,7 @@ class Osc_server():
                 if timenow > (self.corpus[index-1, self.pnum_corpus['timestamp']] + (self.minimum_delta_time/1000)):
                     self.corpus[index,self.pnum_corpus['timestamp']] = timenow
                     self.corpus[index, self.pnum_corpus['notenum']] = notenum
-                    self.corpus[index, self.pnum_corpus['velocity']] = velocity
+                    # relative notenumber and velocity
                     if self.previous_notenum > -1:
                         self.corpus[index, self.pnum_corpus['notenum_relative']] = notenum-self.previous_notenum
                         self.previous_notenum = notenum
@@ -122,15 +122,6 @@ class Osc_server():
 
         self.query = self.pl.generate(self.query) #query probabilistic models for next event and update query for next iteration
         next_item_index = self.query[0]
-        #event_duration = (self.corpus[next_item_index, self.pnum_corpus['time_off']] - 
-        #                  self.corpus[next_item_index, self.pnum_corpus['timestamp']])
-        '''
-        print(self.corpus[next_item_index, self.pnum_corpus["ratio_best"]], 
-              self.corpus[next_item_index, self.pnum_corpus["notenum"]],
-              event_duration, 
-              self.corpus[next_item_index, self.pnum_corpus["timestamp"]], 
-              self.corpus[next_item_index, self.pnum_corpus["time_off"]])
-        '''
         returnmsg = [int(next_item_index), 
                      float(self.corpus[next_item_index, self.pnum_corpus['ratio_best']]),
                      float(self.corpus[next_item_index, self.pnum_corpus['duration']]),
@@ -183,7 +174,7 @@ class Osc_server():
         kbenni_weight, knd_weight, kratio_dev_weight, \
             kratio_dev_abs_max_weight, kgrid_dev_weight, \
             kevidence_weight, kautocorr_weight, kratio1_order, \
-            kratio2_order, ktemperature = osc_data
+            kratio2_order, knotenum_order, kinterval_order, ktemperature = osc_data
         
         ratio_analyzer_weights = [kbenni_weight, knd_weight, kratio_dev_weight, \
                                   kratio_dev_abs_max_weight, kgrid_dev_weight, \
@@ -192,6 +183,8 @@ class Osc_server():
         
         self.pl.set_weights_pname('ratio_best', kratio1_order)         
         self.pl.set_weights_pname('ratio_2nd_best', kratio2_order) 
+        self.pl.set_weights_pname('notenum', knotenum_order) 
+        self.pl.set_weights_pname('notenum_relative', kinterval_order) 
         self.pl.set_temperature(ktemperature)        
         logging.debug('receive_parameter_controls {}'.format(osc_data))
 
