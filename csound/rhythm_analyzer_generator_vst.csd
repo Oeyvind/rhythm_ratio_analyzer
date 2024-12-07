@@ -352,7 +352,7 @@ instr 109
   kget_event_trig trigger kget_event, 0.5, 0
   kcount init 0
   kcount += kget_event_trig
-  kprev_notenum = 60 ; for interval melody generation
+  kprev_notenum init 60 ; for interval melody generation
   if kget_event_trig > 0 then
     if krelative_pitch > 0 then
       knotenum = kprev_notenum + kgen_interval
@@ -403,7 +403,6 @@ endin
 
 ; prob gen event player
 instr 121
-  print p1, p2, p3, p4, p5
   iamp = ampdbfs(-6)
   inote = p4
   ivel = p5
