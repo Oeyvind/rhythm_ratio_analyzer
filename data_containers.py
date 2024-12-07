@@ -23,9 +23,9 @@ pnum_corpus = {
   'phrase_num': 7, 
   'downbeat_trig': 8, # to be implemented
   'velocity': 9,
-  'velocity_relative': 10, # to be implemented
+  'velocity_relative': 10, 
   'notenum': 11,
-  'notenum_relative': 12 # to be implemented
+  'notenum_relative': 12 
 }
 print('pnum_corpus keys', pnum_corpus.keys())
 # corpus is the main data container for events
@@ -82,22 +82,3 @@ print('* prob parms and weight indices:')
 for key,value in prob_parms.items():
   print(f'{key}: {value}')
 
-'''
-# test set
-prob_parms_description = {
-  'ratio_best': 2, 
-  'ratio_2nd_best': 2,
-  'phrase_num': 1} 
-'''
-
-'''
-# full set example
-prob_parms_description = {
-  'ratio_best': 4, 
-  'ratio_2nd_best': 4,
-  'phrase_num': 1,
-  'downbeat': 0,
-  'amp_relative': 2,
-  'pitch_relative': 2,
-}
-'''

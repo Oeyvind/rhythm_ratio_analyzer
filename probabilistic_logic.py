@@ -34,7 +34,6 @@ class Probabilistic_encoder:
             self.previous_item = item
             return
         else: # all next items are analyzed, stored as possible successors to the previous note
-            #print('Analyze:', self.name, self.previous_item, index, item)
             if self.previous_item not in self.stm.keys():
                 index_container = np.copy(self.empty_index_container)
                 index_container[index+self.max_order] = 1
@@ -45,7 +44,6 @@ class Probabilistic_encoder:
 
     def next_items(self, previous=None):
         # as we are live recording items for analysis, dead ends are likely, and needs to be dealt with
-        #print(self.name, previous)
         if previous and (previous not in self.stm.keys()):
             print(f'Prob_encoder: {self.name} dead end at key {previous}, wrap around ')
             print(f'key: {previous}, allkeys: {self.stm.keys()}')
@@ -55,7 +53,6 @@ class Probabilistic_encoder:
             return [-1.0]
         # for the very first item, if we do not have any previous note, so let's choose one randomly
         if not previous:
-            #print(f'{self.name}: Previous is None, returning zero probabilities')
             alternatives = self.empty_index_container
         else:
             alternatives = self.stm[previous] # get an index container of possible next items
@@ -144,7 +141,6 @@ class Probabilistic_logic:
         self.prob_history = self.update_history(self.prob_history, next_item_index)
 
         # get alternatives from Probabilistic encoder
-        print('prob_parm.keys', self.prob_parms.keys())
         for parm in self.prob_parms.keys():
             pe = self.prob_parms[parm][1]
             for ord in range(1,self.prob_parms[parm][0]+1): # will skip for specific request (order 0)
@@ -155,11 +151,8 @@ class Probabilistic_logic:
                         query_item = None
                     else:
                         query_item = self.corpus[self.prob_history[-ord], self.pnum_corpus[parm]]
-                    #print(f'query item {query_item}, history {self.prob_history}, -ord {-ord}, pnum {self.pnum_corpus[parm]}')
                     self.indices_prob_temp = pe.next_items(query_item)[offset:self.current_datasize+offset]
-                    print(f'ic {pe.name} \ {self.indices_prob_temp}')
                     self.indx_container[:self.current_datasize, w_index] = self.indices_prob_temp[:self.current_datasize]
-                #else: print(f'skipping {parm} order {ord}')
 
         # if we request a specific item, handle this here 
         if request_next_item[0]:

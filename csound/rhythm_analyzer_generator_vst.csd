@@ -158,8 +158,8 @@ instr 3
   chnset kon, "event_on"
   kon = 0
   gkactivenote = p4
-  a1 oscil 0.1, cpsmidinn(p4)
-  outs a1, a1
+  ;a1 oscil 0.1, cpsmidinn(p4)
+  ;outs a1, a1
 endin
 
 ; play trigger rhythm
@@ -199,17 +199,6 @@ instr 31
   ksend_osc += kevent_trig ; need this to activate osc send
   kevent_onoff = kevent_on ; if it is not on, it is an "off" event
 
-/*  
-  kprint_count init 0
-  kprint_count += (kevent_on +kevent_off +kevent_force_off)
-  ;printk2 kprint_count
-  kndx_test init 0
-  kndx_test += kevent_on
-  Sdebug sprintfk "ndx:%i on:%i, off:%i, forceoff:%i", kndx_test, kevent_on, kevent_off, kevent_force_off
-  ;kndx_test += kevent_force_off
-  puts Sdebug, kprint_count
-*/
-
   knotenum chnget "notenum"
   kvelocity chnget "velocity"
 
@@ -225,7 +214,6 @@ instr 31
   ; send time data to Python
   if krecord_enable > 0 then
     kindex += kevent_on
-    ;printk2 kindex, 10
     if kevent_trig > 0 then
       OSCsend ksend_osc, "127.0.0.1", 9901, "/client_eventdata", "fffff", kindex, ktime, kevent_onoff, knotenum, kvelocity
     endif
@@ -415,6 +403,7 @@ endin
 
 ; prob gen event player
 instr 121
+  print p1, p2, p3, p4, p5
   iamp = ampdbfs(-6)
   inote = p4
   ivel = p5

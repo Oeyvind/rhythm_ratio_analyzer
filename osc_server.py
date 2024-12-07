@@ -31,7 +31,7 @@ class Osc_server():
         self.previous_velocity = -1
         self.phrase_number = 0
         
-        self.pl = pl_instance
+        self.pl = pl_instance # probabilistic logic instance
         self.pl.weights[1] = 1 # first order for best ratio
         self.pl.weights[2] = 1 # 2nd order for best ratio
         self.pl.set_temperature(0.2) # < 1.0 is more deterministic
@@ -58,13 +58,14 @@ class Osc_server():
                 if timenow > (self.corpus[index-1, self.pnum_corpus['timestamp']] + (self.minimum_delta_time/1000)):
                     self.corpus[index,self.pnum_corpus['timestamp']] = timenow
                     self.corpus[index, self.pnum_corpus['notenum']] = notenum
+                    self.corpus[index, self.pnum_corpus['velocity']] = velocity
                     # relative notenumber and velocity
                     if self.previous_notenum > -1:
                         self.corpus[index, self.pnum_corpus['notenum_relative']] = notenum-self.previous_notenum
-                        self.previous_notenum = notenum
                     if self.previous_velocity > -1:
                         self.corpus[index, self.pnum_corpus['velocity_relative']] = velocity-self.previous_velocity
-                        self.previous_velocity = velocity
+                    self.previous_notenum = notenum
+                    self.previous_velocity = velocity
                     self.pending_analysis.append(index)
                 else:
                     logging.debug('skipped double trig event: {}, {}'.format(index, timenow))
@@ -80,12 +81,10 @@ class Osc_server():
         self.last_analyzed_phrase = self.pending_analysis # keep it so we can delete it if clear_last_phrase is called
         start, end = self.pending_analysis[0], self.pending_analysis[-1]
         timedata = self.corpus[start:end+1,self.pnum_corpus['timestamp']]
-        #print('timedata', timedata)
         self.phrase_number += 1
         ratios_reduced, ranked_unique_representations, trigseq, ticktempo_bpm, tempo_tendency, pulseposition = self.ra.analyze(timedata)
         for i in range(len(trigseq)):
             osc_io.sendOSC("python_triggerdata", [i, trigseq[i]]) # send OSC back to client
-        #print('len:',float(len(self.pending_analysis)))
         returnmsg = [ticktempo_bpm, tempo_tendency, float(pulseposition), float(len(self.pending_analysis))]
         osc_io.sendOSC("python_other", returnmsg) # send OSC back to client
         
@@ -111,7 +110,6 @@ class Osc_server():
 
     def pl_generate(self, unused_addr, *osc_data):
         '''Message handler. This is called when we receive an OSC message'''
-        #order, dimension, temperature, index, ratio, request_item, request_weight, update = osc_data
         index, request_item, request_weight = osc_data
         if request_item < 0:
             request = [None, 0, 0]
@@ -126,6 +124,7 @@ class Osc_server():
                      float(self.corpus[next_item_index, self.pnum_corpus['ratio_best']]),
                      float(self.corpus[next_item_index, self.pnum_corpus['duration']]),
                      float(self.corpus[next_item_index, self.pnum_corpus['notenum']]),
+                     float(self.corpus[next_item_index, self.pnum_corpus['notenum_relative']]),
                      float(self.corpus[next_item_index, self.pnum_corpus['velocity']])]
         osc_io.sendOSC("python_prob_gen", returnmsg) # send OSC back to client
 
@@ -133,8 +132,8 @@ class Osc_server():
         '''Message handler. This is called when we receive an OSC message'''
         printcode = int(osc_data[0])
         if printcode == 1:
-            for parm in self.dc.prob_parms.keys():
-                pe = self.dc.prob_parms[parm][1]
+            for parm in self.pl.prob_parms.keys():
+                pe = self.pl.prob_parms[parm][1]
                 print(pe, pe.name)
                 for key, value in pe.stm.items():
                     print(key, value[pe.max_order:pe.size+pe.max_order])
