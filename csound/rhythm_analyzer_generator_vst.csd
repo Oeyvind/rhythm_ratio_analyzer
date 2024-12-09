@@ -60,7 +60,7 @@ label bounds(220, 45, 60, 18), text("ptch_ord"), fontSize(12), align("left")
 nslider bounds(285, 25, 40, 25), channel("gen_temperature"), range(0.01, 10, 0.2, 1, 0.01), fontSize(14)
 label bounds(285, 45, 60, 18), text("temp"), fontSize(12), align("left")
 
-button bounds(10, 65, 30, 20), text("at"), channel("auto_tempo"), colour:0("green"), colour:1("red")
+button bounds(10, 65, 30, 20), text("at"), channel("auto_tempo"), colour:0("green"), colour:1("red"), value(1)
 nslider bounds(40, 65, 40, 25), channel("gen_tempo_bpm"), range(1, 2999, 60), fontSize(14)
 label bounds(40, 90, 60, 18), text("g_tpo"), fontSize(12), align("left")
 nslider bounds(90, 65, 40, 25), channel("gen_duration_scale"), range(0.1, 2, 1), fontSize(14)

@@ -120,6 +120,7 @@ class Osc_server():
 
         self.query = self.pl.generate(self.query) #query probabilistic models for next event and update query for next iteration
         next_item_index = self.query[0]
+        print('next item', next_item_index)
         returnmsg = [int(next_item_index), 
                      float(self.corpus[next_item_index, self.pnum_corpus['ratio_best']]),
                      float(self.corpus[next_item_index, self.pnum_corpus['duration']]),

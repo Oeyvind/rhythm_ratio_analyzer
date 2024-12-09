@@ -92,6 +92,10 @@ class Probabilistic_logic:
         for i in range(self.max_order): self.prob_history.append(None)
         self.no_prob_history = self.prob_history.copy()
         self.weights = np.zeros(self.numparms)
+        # set default weights to first order for all parameters
+        for pname in self.prob_parms.keys():
+            self.set_weights_pname(pname, 1, printit=False)
+        print(f'prob weights set to {self.weights}')
         self.temperature_coef = 1 # 1 is default (no temperature influence)
 
         # set data and allocate data containers
@@ -115,7 +119,7 @@ class Probabilistic_logic:
     def set_weights(self, weights):
         self.weights = weights
 
-    def set_weights_pname(self, pname, order):
+    def set_weights_pname(self, pname, order, printit=True):
         # set weights according to parameter name and desired order
         if pname in self.prob_parms.keys():
             max_order = self.prob_parms[pname][0]
@@ -124,7 +128,8 @@ class Probabilistic_logic:
                     w_index = self.prob_parms[pname][2][0] + i
                     w = np.clip(1+order-i, 0, 1)
                     self.weights[w_index] = w
-                print(f'prob weights set to {self.weights}')
+                if printit:
+                    print(f'prob weights set to {self.weights}')
             else: print(f'max order for {pname} exceeded: WARNING no change in weights applied')
         else: print(f'{pname} not in prob_parms: WARNING no change in weights applied')
 
