@@ -65,9 +65,11 @@ nslider bounds(40, 65, 40, 25), channel("gen_tempo_bpm"), range(1, 2999, 60), fo
 label bounds(40, 90, 60, 18), text("g_tpo"), fontSize(12), align("left")
 nslider bounds(90, 65, 40, 25), channel("gen_duration_scale"), range(0.1, 2, 1), fontSize(14)
 label bounds(90, 90, 60, 18), text("g_dur"), fontSize(12), align("left")
-button bounds(155, 65, 55, 25), text("rel pitch"), channel("gen_relative_pitch"), colour:0("green"), colour:1("red")
+nslider bounds(155, 65, 40, 25), channel("gen_deviation_scale"), range(0, 1, 0), fontSize(14)
+label bounds(155, 90, 60, 18), text("g_dev"), fontSize(12), align("left")
 nslider bounds(220, 65, 40, 25), channel("gen_interval_order"), range(0, 4, 2, 1, 0.5), fontSize(14)
 label bounds(220, 90, 60, 18), text("intv_ord"), fontSize(12), align("left")
+button bounds(265, 65, 55, 25), text("rel pitch"), channel("gen_relative_pitch"), colour:0("green"), colour:1("red")
 
 
 button bounds(350, 25, 45, 30), text("metro"), channel("gen_metro_on"), colour:0("green"), colour:1("red"), latched(1)
@@ -316,6 +318,7 @@ instr 109
   ktemperature chnget "gen_temperature"
   kmetro_on chnget "gen_metro_on"
   kdur_scale chnget "gen_duration_scale"
+  kdeviation_scale chnget "gen_deviation_scale"
   krelative_pitch chnget "gen_relative_pitch"
 
   ; beat clock
@@ -344,6 +347,7 @@ instr 109
   ; event trig
   kgen_index init 0
   kgen_ratio init 1
+  kgen_deviation init 0
   kgen_duration init 1
   kgen_notenum init 0
   kgen_interval init 0
@@ -362,12 +366,16 @@ instr 109
     endif
     kprev_notenum = knotenum
     knext_event_time += round(kgen_ratio*iclock_resolution)/iclock_resolution 
+    Sdebug sprintfk "next event time %.2f, beatclock %.2f index %i", knext_event_time, kbeat_clock, kgen_index
+    puts Sdebug, knext_event_time
     kdur = kgen_duration*(60/ktempo_bpm)*kdur_scale
-    event "i", igen_instr, 0, kdur, knotenum, kgen_velocity
+    imax_time_dev = 0.2
+    ktime_deviation limit imax_time_dev+(kgen_deviation*kdeviation_scale), 0, 1
+    event "i", igen_instr, ktime_deviation, kdur, knotenum, kgen_velocity
     OSCsend kcount, "127.0.0.1", 9901, "/client_prob_gen", "fff", kgen_index, krequest_ratio, krequest_weight
   endif
   nextmsg:
-    kmess OSClisten gihandle, "python_prob_gen", "ffffff", kgen_index, kgen_ratio, kgen_duration, kgen_notenum, kgen_interval, kgen_velocity ; receive OSC data from Python
+    kmess OSClisten gihandle, "python_prob_gen", "fffffff", kgen_index, kgen_ratio, kgen_deviation, kgen_duration, kgen_notenum, kgen_interval, kgen_velocity ; receive OSC data from Python
     if kmess == 0 goto done
     kgoto nextmsg ; make sure we read all messages in the network buffer
   done:

@@ -123,6 +123,7 @@ class Osc_server():
         print('next item', next_item_index)
         returnmsg = [int(next_item_index), 
                      float(self.corpus[next_item_index, self.pnum_corpus['ratio_best']]),
+                     float(self.corpus[next_item_index, self.pnum_corpus['deviation_best']]),
                      float(self.corpus[next_item_index, self.pnum_corpus['duration']]),
                      float(self.corpus[next_item_index, self.pnum_corpus['notenum']]),
                      float(self.corpus[next_item_index, self.pnum_corpus['notenum_relative']]),
