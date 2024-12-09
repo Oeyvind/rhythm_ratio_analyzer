@@ -67,7 +67,7 @@ The message format might change during development. Look at the relevant methods
 
 The server returns data to the client on these OSC channels:
 
-"/python_prob_gen" - for event data from probabilistic logic generator
+"/python_prob_gen_voice%i" - for event data from probabilistic logic generator (%i replaced with voice number for polyphonic generation)
 "/python_skipindex" - used during recording, if Python skips an event due to too small delta time
 "/python_triggerdata" - rhythm analysis generates a trigger sequence (1's and 0's) representing the last analyzed rhyhm phrase
  "/python_other" - various data like ticktempo, tempo_tendency, pulseposition for the last analyzed phrase
