@@ -121,7 +121,6 @@ class Osc_server():
 
         self.query = self.pl.generate(self.query) #query probabilistic models for next event and update query for next iteration
         next_item_index = self.query[0]
-        print('next item', next_item_index)
         returnmsg = [int(next_item_index), 
                      float(self.corpus[next_item_index, self.pnum_corpus['ratio_best']]),
                      float(self.corpus[next_item_index, self.pnum_corpus['deviation_best']]),
@@ -129,8 +128,8 @@ class Osc_server():
                      float(self.corpus[next_item_index, self.pnum_corpus['notenum']]),
                      float(self.corpus[next_item_index, self.pnum_corpus['notenum_relative']]),
                      float(self.corpus[next_item_index, self.pnum_corpus['velocity']])]
-        print('next item', next_item_index)
-        print(returnmsg)
+        #print('next item', next_item_index)
+        #print(returnmsg)
         osc_io.sendOSC(f"python_prob_gen_voice{voicenum}", returnmsg) # send OSC back to client
 
     def printstuff(self, unused_addr, *osc_data):
