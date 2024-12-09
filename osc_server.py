@@ -110,13 +110,14 @@ class Osc_server():
 
     def pl_generate(self, unused_addr, *osc_data):
         '''Message handler. This is called when we receive an OSC message'''
-        index, request_item, request_weight = osc_data
+        voicenum, index, request_item, request_weight = osc_data
+        voicenum = int(voicenum)
         if request_item < 0:
             request = [None, 0, 0]
         else:
             request = ['ratio_best', request_item, request_weight] # FIX/update
         self.query = [index, request]
-        print('***pl_query', self.query)
+        print('***pl_query', voicenum, self.query)
 
         self.query = self.pl.generate(self.query) #query probabilistic models for next event and update query for next iteration
         next_item_index = self.query[0]
@@ -130,7 +131,7 @@ class Osc_server():
                      float(self.corpus[next_item_index, self.pnum_corpus['velocity']])]
         print('next item', next_item_index)
         print(returnmsg)
-        osc_io.sendOSC("python_prob_gen", returnmsg) # send OSC back to client
+        osc_io.sendOSC(f"python_prob_gen_voice{voicenum}", returnmsg) # send OSC back to client
 
     def printstuff(self, unused_addr, *osc_data):
         '''Message handler. This is called when we receive an OSC message'''

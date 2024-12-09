@@ -49,7 +49,7 @@ nslider bounds(300, 25, 40, 20), channel("autocorr_weight"), range(0, 1, 1), fon
 label bounds(300, 45, 40, 20), text("acorr"), fontSize(12)
 }
 
-groupbox bounds(5, 135, 590, 110), text("generate events with prob logic"), colour(25,45,30){
+groupbox bounds(5, 135, 590, 170), text("generate events with prob logic"), colour(25,45,30){
 button bounds(10, 25, 70, 30), text("generate"), channel("generate"), colour:0("green"), colour:1("red")
 nslider bounds(90, 25, 40, 25), channel("gen_r1_order"), range(0, 4, 2, 1, 0.5), fontSize(14)
 label bounds(90, 45, 60, 18), text("r1_ord"), fontSize(12), align("left")
@@ -60,7 +60,7 @@ label bounds(220, 45, 60, 18), text("ptch_ord"), fontSize(12), align("left")
 nslider bounds(285, 25, 40, 25), channel("gen_temperature"), range(0.01, 10, 0.2, 1, 0.01), fontSize(14)
 label bounds(285, 45, 60, 18), text("temp"), fontSize(12), align("left")
 
-button bounds(10, 65, 30, 20), text("at"), channel("auto_tempo"), colour:0("green"), colour:1("red"), value(1)
+button bounds(10, 65, 30, 23), text("at"), channel("auto_tempo"), colour:0("green"), colour:1("red"), value(1)
 nslider bounds(40, 65, 40, 25), channel("gen_tempo_bpm"), range(1, 2999, 60), fontSize(14)
 label bounds(40, 90, 60, 18), text("g_tpo"), fontSize(12), align("left")
 nslider bounds(90, 65, 40, 25), channel("gen_duration_scale"), range(0.1, 2, 1), fontSize(14)
@@ -71,15 +71,21 @@ nslider bounds(220, 65, 40, 25), channel("gen_interval_order"), range(0, 4, 2, 1
 label bounds(220, 90, 60, 18), text("intv_ord"), fontSize(12), align("left")
 button bounds(265, 65, 55, 25), text("rel pitch"), channel("gen_relative_pitch"), colour:0("green"), colour:1("red")
 
-
 button bounds(350, 25, 45, 30), text("metro"), channel("gen_metro_on"), colour:0("green"), colour:1("red"), latched(1)
 button bounds(400, 25, 50, 30), text("dwnbeat sync"), channel("downbeat_sync"), colour:0("green"), colour:1("red"), latched(1)
 nslider bounds(455, 25, 40, 25), channel("downbeat_sync_strength"), range(0, 1, 0.5), fontSize(14)
 label bounds(455, 45, 60, 18), text("sync_w"), fontSize(12), align("left")
 ; debug
 button bounds(520, 25, 50, 30), text("print stm"), channel("pl_print"), colour:0("green"), colour:1("red"), latched(0)
+
+; voice 2
+button bounds(10, 115, 70, 23), text("voice 2"), channel("gen_voice2"), colour:0("green"), colour:1("red")
+nslider bounds(90, 115, 40, 25), channel("gen_v2_pitch_offset"), range(-24, 24, 12, 1, 1), fontSize(14)
+label bounds(90, 135, 60, 18), text("transp"), fontSize(12), align("left")
+
+
 }
-csoundoutput bounds(5, 255, 560, 200)
+csoundoutput bounds(5, 315, 560, 140)
 </Cabbage>
 
 <CsoundSynthesizer>
@@ -120,11 +126,24 @@ instr 1
   ktrig_generate trigger kgenerate, 0.5, 0
   ktrig_generate_stop trigger kgenerate, 0.5, 1
   if ktrig_generate > 0 then
-    event "i", 109, 0, -1
+    ivoice = 1
+    event "i", 109+(ivoice*0.1), 0, -1, ivoice
   endif
   if ktrig_generate_stop > 0 then
-    event "i", -109, 0, .1
+    event "i", -(109+(ivoice*0.1)), 0, .1
   endif
+  ; voice 2
+  kgenerate2 chnget "gen_voice2"
+  ktrig_generate2 trigger kgenerate2, 0.5, 0
+  ktrig_generate2_stop trigger kgenerate2, 0.5, 1
+  if ktrig_generate2 > 0 then
+    ivoice2 = 2
+    event "i", 109+(ivoice2*0.1), 0, -1, ivoice2
+  endif
+  if ktrig_generate2_stop > 0 then
+    event "i", -(109+(ivoice2*0.1)), 0, .1
+  endif
+
   ; print probabilistic logic stm
   kprint_stm chnget "pl_print"
   kprint_last chnget "print_last_phrase"
@@ -312,6 +331,7 @@ endin
 ; generator
 
 instr 109
+  ivoice = p4
   ktempo_bpm chnget "gen_tempo_bpm"
   kdownbeat_sync chnget "downbeat_sync"
   kdownbeat_sync_strength chnget "downbeat_sync_strength"
@@ -320,6 +340,7 @@ instr 109
   kdur_scale chnget "gen_duration_scale"
   kdeviation_scale chnget "gen_deviation_scale"
   krelative_pitch chnget "gen_relative_pitch"
+  ktranspose_voice2 chnget "gen_v2_pitch_offset"
 
   ; beat clock
   kclock_counter init 0
@@ -366,16 +387,22 @@ instr 109
     endif
     kprev_notenum = knotenum
     knext_event_time += round(kgen_ratio*iclock_resolution)/iclock_resolution 
-    Sdebug sprintfk "next event time %.2f, beatclock %.2f index %i", knext_event_time, kbeat_clock, kgen_index
-    puts Sdebug, knext_event_time
+    ;Sdebug sprintfk "next event time %.2f, beatclock %.2f index %i", knext_event_time, kbeat_clock, kgen_index
+    ;puts Sdebug, knext_event_time
     kdur = kgen_duration*(60/ktempo_bpm)*kdur_scale
     imax_time_dev = 0.2
     ktime_deviation limit imax_time_dev+(kgen_deviation*kdeviation_scale), 0, 1
-    event "i", igen_instr, ktime_deviation, kdur, knotenum, kgen_velocity
-    OSCsend kcount, "127.0.0.1", 9901, "/client_prob_gen", "fff", kgen_index, krequest_ratio, krequest_weight
+    if ivoice == 2 then
+      knotenum_play = knotenum+ktranspose_voice2
+    else
+      knotenum_play = knotenum
+    endif
+    event "i", igen_instr, ktime_deviation, kdur, knotenum_play, kgen_velocity, ivoice
+    OSCsend kcount, "127.0.0.1", 9901, "/client_prob_gen", "ffff", ivoice, kgen_index, krequest_ratio, krequest_weight
   endif
   nextmsg:
-    kmess OSClisten gihandle, "python_prob_gen", "fffffff", kgen_index, kgen_ratio, kgen_deviation, kgen_duration, kgen_notenum, kgen_interval, kgen_velocity ; receive OSC data from Python
+    Saddr sprintf "python_prob_gen_voice%i", ivoice
+    kmess OSClisten gihandle, Saddr, "fffffff", kgen_index, kgen_ratio, kgen_deviation, kgen_duration, kgen_notenum, kgen_interval, kgen_velocity ; receive OSC data from Python
     if kmess == 0 goto done
     kgoto nextmsg ; make sure we read all messages in the network buffer
   done:
@@ -415,13 +442,13 @@ instr 121
   iamp = ampdbfs(-6)
   inote = p4
   ivel = p5
+  ichan = p6
   aenv expon 1, p3, 0.0001
   a1 oscili ivel/127, cpsmidinn(inote)
   a1 *= aenv
   a1 *= iamp
   outs a1, a1
   ; midi out
-  ichan = 1
   noteondur ichan, inote, ivel, p3
 
 endin
