@@ -60,8 +60,9 @@ label bounds(220, 45, 60, 18), text("ptch_ord"), fontSize(12), align("left")
 nslider bounds(285, 25, 40, 25), channel("gen_temperature"), range(0.01, 10, 0.2, 1, 0.01), fontSize(14)
 label bounds(285, 45, 60, 18), text("temp"), fontSize(12), align("left")
 
-nslider bounds(20, 65, 40, 25), channel("gen_tempo_bpm"), range(1, 2999, 60), fontSize(14)
-label bounds(20, 90, 60, 18), text("g_tempo"), fontSize(12), align("left")
+button bounds(10, 65, 30, 20), text("at"), channel("auto_tempo"), colour:0("green"), colour:1("red")
+nslider bounds(40, 65, 40, 25), channel("gen_tempo_bpm"), range(1, 2999, 60), fontSize(14)
+label bounds(40, 90, 60, 18), text("g_tpo"), fontSize(12), align("left")
 nslider bounds(90, 65, 40, 25), channel("gen_duration_scale"), range(0.1, 2, 1), fontSize(14)
 label bounds(90, 90, 60, 18), text("g_dur"), fontSize(12), align("left")
 button bounds(155, 65, 55, 25), text("rel pitch"), channel("gen_relative_pitch"), colour:0("green"), colour:1("red")
@@ -201,16 +202,16 @@ instr 31
 
   knotenum chnget "notenum"
   kvelocity chnget "velocity"
+  ktime timeinsts  
+  kindex init 0
 
   krecord_enable chnget "record_enable"
   krec_trig_off trigger krecord_enable, 0.5, 1 ; stop recording, trigger the analysis process in Python 
   kclear_last_phrase chnget "clear_last_phrase"
   kclear_all chnget "clear_all"
   ksave_all chnget "save_all"
-
-  ktime timeinsts  
-  kindex init 0
-  
+  kauto_tempo_update chnget "auto_tempo"
+    
   ; send time data to Python
   if krecord_enable > 0 then
     kindex += kevent_on
@@ -286,7 +287,7 @@ instr 31
   chnset kticktempo_bpm/60, "tempo_triggerseq"
   ktempo_bpm = kticktempo_bpm/kpulseposition
   cabbageSetValue "tempo_bps_last_phrase", ktempo_bpm, changed(ktempo_bpm)
-  cabbageSetValue "gen_tempo_bpm", ktempo_bpm, changed(ktempo_bpm)
+  cabbageSetValue "gen_tempo_bpm", ktempo_bpm, changed(ktempo_bpm*kauto_tempo_update)
   cabbageSetValue "tempo_tendency", ktempo_tendency, changed(ktempo_tendency)
   cabbageSetValue "phrase_len", kphraselen, changed(kphraselen)
   if kmess_other == 0 goto done_other
