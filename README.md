@@ -56,12 +56,18 @@ The server receives OSC messages on port 9901 and sends OSC messages to the clie
 This can be edited in osc_io.py, at the top of the script (approx line 20)
 
 The client uses these OSC channels:
-"/client_timevalues" - for recording event time stamps
+"/client_eventdata" - for recording event time stamps
 "/client_analyze_trig" - trigger analysis of recorded events
 "/client_parametercontrols" - set various parameters
-"/client_clear" - clear recorded data
+"/client_memory" - admin/clear recorded data, clear all or clear last phrase
 "/client_prob_gen" - query to generate one new event with the probabilistic logic
 "/client_prob_print" - print state transition matrices for the probabilistic logic module
 
 The message format might change during development. Look at the relevant methods in rhythm_osc_server to find how many values each method expects.
 
+The server returns data to the client on these OSC channels:
+
+"/python_prob_gen" - for event data from probabilistic logic generator
+"/python_skipindex" - used during recording, if Python skips an event due to too small delta time
+"/python_triggerdata" - rhythm analysis generates a trigger sequence (1's and 0's) representing the last analyzed rhyhm phrase
+ "/python_other" - various data like ticktempo, tempo_tendency, pulseposition for the last analyzed phrase

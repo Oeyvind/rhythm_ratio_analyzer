@@ -155,6 +155,7 @@ class Osc_server():
             self.phrase_number -= 1
             if self.phrase_number < 0: 
                 self.phrase_number = 0
+            self.pl.clear_phrase(self.last_analyzed_phrase)
         if clear_all > 0:
             print('CLEAR CORPUS')
             self.dc.clear_corpus()

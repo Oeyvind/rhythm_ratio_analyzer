@@ -61,6 +61,14 @@ class Probabilistic_encoder:
     def clear(self):
         self.stm = {}
         self.previous_item = None 
+    
+    def clear_phrase(self, indices):
+        # clear last recorded phrase
+        for key in self.stm.keys():
+            for i in indices:
+                self.stm[key][i+self.max_order] 
+        self.previous_item == None
+
         
 class Probabilistic_logic:
     # coordinate several queries (different orders, and different dimensions/parameters) to the Probabilistic encoder
@@ -178,7 +186,9 @@ class Probabilistic_logic:
             next_item_index = np.random.choice(self.indices,p=self.prob)
         else:
             print(f'Prob encoder zero probability from query {query}, choose one at random')
+            print('indices', self.indices)
             next_item_index = np.random.choice(self.indices)
+            print('selected', next_item_index)
         next_item_index = int(next_item_index)
         return [next_item_index, [None,0]]
 
@@ -188,6 +198,16 @@ class Probabilistic_logic:
         for parm in self.prob_parms.keys():
             pe = self.prob_parms[parm][1]
             pe.clear()
+        self.current_datasize = 0
+        self.indices = self.corpus[:self.current_datasize, self.pnum_corpus['index']]
+    
+    def clear_phrase(self, indices):
+        # clear last recorded phrase
+        for parm in self.prob_parms.keys():
+            pe = self.prob_parms[parm][1]
+            pe.clear_phrase(indices)
+        self.current_datasize -= len(indices)
+        self.indices = self.corpus[:self.current_datasize, self.pnum_corpus['index']]
     
     def save_all(self):
         # save all prob encoders to file
