@@ -128,6 +128,8 @@ class Osc_server():
                      float(self.corpus[next_item_index, self.pnum_corpus['notenum']]),
                      float(self.corpus[next_item_index, self.pnum_corpus['notenum_relative']]),
                      float(self.corpus[next_item_index, self.pnum_corpus['velocity']])]
+        print('next item', next_item_index)
+        print(returnmsg)
         osc_io.sendOSC("python_prob_gen", returnmsg) # send OSC back to client
 
     def printstuff(self, unused_addr, *osc_data):

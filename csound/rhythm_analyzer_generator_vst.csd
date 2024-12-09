@@ -205,7 +205,7 @@ instr 31
   knotenum chnget "notenum"
   kvelocity chnget "velocity"
   ktime timeinsts  
-  kindex init 0
+  kindex init -1
 
   krecord_enable chnget "record_enable"
   krec_trig_off trigger krecord_enable, 0.5, 1 ; stop recording, trigger the analysis process in Python 
@@ -301,7 +301,7 @@ instr 31
   kmem_trig_count init 0
   kmem_trig_count += kmem_trig
   OSCsend kmem_trig_count, "127.0.0.1", 9901, "/client_memory", "iii", kclear_last_phrase, kclear_all, ksave_all
-  kindex = changed(kclear_all) > 0 ? 0 : kindex
+  kindex = changed(kclear_all) > 0 ? -1 : kindex
   kclear_phrase_trig trigger kclear_last_phrase, 0.5, 0
   kindex = kclear_phrase_trig > 0 ? kindex-kphraselen : kindex
   puts "reset index", changed(kclear_last_phrase, kclear_all)
