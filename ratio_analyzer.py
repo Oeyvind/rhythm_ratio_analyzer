@@ -6,7 +6,7 @@
 
 import numpy as np
 np.set_printoptions(suppress=True)
-import scipy.signal as signal
+#np.set_printoptions(precision=2)
 import math
 from fractions import Fraction
 import time # for profiling
@@ -278,16 +278,16 @@ def analyze(t, rank=1):
 if __name__ == '__main__':
     # example rhythms
     # rhythm is represented here by the time stamp of each event
-    t = [0.0, 0.3467, 0.524, 1.02, 1.546, 1.8553, 2.088, 2.362, 2.6053, 2.8713, 3.1333, 3.62, 3.962, 4.176,]    
+    #t = [0.0, 0.3467, 0.524, 1.02, 1.546, 1.8553, 2.088, 2.362, 2.6053, 2.8713, 3.1333, 3.62, 3.962, 4.176,]    
     # test 2 jazzphrase
-    t = [0.    , 0.302 , 0.5406, 0.8426, 1.3613, 1.5746, 1.8673, 2.0813, 2.58  , 2.9286, 3.1213]
+    #t = [0.    , 0.302 , 0.5406, 0.8426, 1.3613, 1.5746, 1.8673, 2.0813, 2.58  , 2.9286, 3.1213]
     # skalert for å matche til 3.0
-    t = [0.    , 0.2903, 0.5196, 0.8099, 1.3084, 1.5134, 1.7947, 2.0004, 2.4797, 2.8148, 3.    ] 
+    #t = [0.    , 0.2903, 0.5196, 0.8099, 1.3084, 1.5134, 1.7947, 2.0004, 2.4797, 2.8148, 3.    ] 
     # ideell
-    #t = [0,    0.25,     0.5,    0.75,   1.25,   1.5,    1.75,   2,      2.5,    2.75,   3]
+    t = [0,    0.25,     0.5,    0.75,   1.25,   1.5,    1.75,   2,      2.5,    2.75,   3]
     # manuell slark
     #t = [0,    0.3,      0.5,    0.8,    1.3,    1.5,    1.8,    2,      2.5,    2.8,   3]
-    t = [ 6.69,  7.19,  7.44,  7.69,  8.19,  8.52,  8.69,  9.19,  9.44,  9.69, 10.19]
+    #t = [ 6.69,  7.19,  7.44,  7.69,  8.19,  8.52,  8.69,  9.19,  9.44,  9.69, 10.19]
     t = np.array(t,dtype=np.float32)
     benni_weight = 1
     nd_sum_weight = 1
@@ -299,8 +299,9 @@ if __name__ == '__main__':
     weights = [benni_weight, nd_sum_weight, ratio_dev_weight, ratio_dev_abs_max_weight, grid_dev_weight, evidence_weight, autocorr_weight]
     set_weights(weights)
     rank = 1
-    ratios_reduced, ranked_unique_representations, selected, trigseq, ticktempo_bpm, tempo_tendency, pulseposition = analyze(t, rank)
-    ratios_list = ratios_reduced[selected].tolist()
+    ratios_reduced, ranked_unique_representations, trigseq, ticktempo_bpm, tempo_tendency, pulseposition = analyze(t, rank)
+    best = ranked_unique_representations[0]
+    ratios_list = ratios_reduced[best].tolist()
     for i in range(len(ratios_list)):
         print(ratios_list[i])
     #print(ratios_reduced[selected,:,:3]) #nom, denom, deviation

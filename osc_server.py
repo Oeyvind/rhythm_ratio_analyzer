@@ -90,6 +90,7 @@ class Osc_server():
         
         # store the rhythm fractions as float for each event in the corpus
         best = ranked_unique_representations[0]
+        print(f'ratios best: \n{ratios_reduced[best,range(len(self.pending_analysis)-1),0]/ratios_reduced[best,range(len(self.pending_analysis)-1),1]}')
         next_best = ranked_unique_representations[1]
         for i in range(len(self.pending_analysis)-1): 
             indx = self.pending_analysis[i]
