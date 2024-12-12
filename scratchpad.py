@@ -50,6 +50,53 @@ def rational_approx(n):
   return nom, denom
 
 rational_approx(0.2)
+
+'''def fraction_approx(n):
+  div_limit = 4
+  f = Fraction(n).limit_denominator(div_limit)
+  numerator, denom = f.numerator, f.denominator
+  deviation = (n-(numerator/denom))
+  return numerator, denom, deviation
+  
+def rational_approx(n):
+  # faster rational approx
+  fact = [3,4]#np.array([3,4])
+  dev = np.zeros(2)
+  res = [0,0]#np.zeros(2)
+  if n < 0.25:
+    fact *= 2
+  if n < 0.1:
+    fact *= 2
+  if n < 0.04:
+    fact *= 2
+  if n < 0.02:
+    fact *= 2
+  if n < 0.01:
+    num = 1
+    denom = 64
+  else:
+    for i in range(2):
+      f = fact[i]
+      r = n*f
+      res[i] = r
+      dev[i] = abs(round(r)-r)
+  num = round(res[np.argmin(dev)])
+  denom = fact[np.argmin(dev)] 
+  deviation = (n-(num/denom))
+  gcd = np.gcd(num, denom)
+  num /= gcd
+  denom /= gcd
+  return int(num), int(denom), deviation
+
+def test_f(n):
+  for i in range(10000):
+    fraction_approx(n)
+
+def test_r(n):
+  for i in range(10000):
+    rational_approx(n)
+
+'''
 '''
 def rational_approx_old(n, maxdev):
   fact = np.array([3,4])

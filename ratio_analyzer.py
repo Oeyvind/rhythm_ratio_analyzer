@@ -8,8 +8,7 @@ import numpy as np
 np.set_printoptions(suppress=True)
 #np.set_printoptions(precision=2)
 import math
-from fractions import Fraction
-import time # for profiling
+#import time # for profiling
 #import logging 
 #logging.basicConfig(level=logging.DEBUG)
 
@@ -26,6 +25,36 @@ weights = [1,1,0.3,1,0.2,0.3,1]
 def set_weights(w):
     global weights
     weights = w
+
+def rational_approx(n):
+    # faster rational approx
+    fact = [3,4]
+    dev = np.zeros(2)
+    res = [0,0]
+    if n < 0.25:
+      fact *= 2
+    if n < 0.1:
+      fact *= 2
+    if n < 0.04:
+      fact *= 2
+    if n < 0.02:
+      fact *= 2
+    if n < 0.01:
+      num = 1
+      denom = 64
+    else:
+      for i in range(2):
+        f = fact[i]
+        r = n*f
+        res[i] = r
+        dev[i] = abs(round(r)-r)
+    num = round(res[np.argmin(dev)])
+    denom = fact[np.argmin(dev)] 
+    deviation = (n-(num/denom))
+    gcd = np.gcd(num, denom)
+    num /= gcd
+    denom /= gcd
+    return int(num), int(denom), deviation
 
 def ratio_to_each(timeseries, mode='connect', div_limit=4):
     """Ratio of delta times to each other delta time in rhythm sequence. Also including combinations of two neighbouring delta times as reference"""
@@ -47,20 +76,7 @@ def ratio_to_each(timeseries, mode='connect', div_limit=4):
         for j in range(t_series_len):
             delta = deltas[j]
             ratio = delta/ref_delta
-            f = Fraction(ratio).limit_denominator(div_limit)
-            numerator, denom = f.numerator, f.denominator
-            numerator, denom = [1,1]
-            if numerator < 1: # if the subdivision is higher than 4
-                print('***********WARNING***************: numerator less than 1', delta, ref_delta)
-                for m in [2,4,8]: # try doubling it, then 4 then 8
-                    ratio *= 2
-                    f = Fraction(ratio).limit_denominator(div_limit)
-                    numerator, denom = f.numerator, f.denominator
-                    denom *= m # with this we compensate for the doubling, keeping the correct relationship to other ratios
-                    deviation = (ratio-(numerator/denom))
-                    if numerator > 0:
-                        break
-            deviation = (ratio-(numerator/denom)) # #difference between measured and quantized value, as fraction of the reference value
+            numerator, denom, deviation = rational_approx(ratio)
             ratios[i,j] = [numerator, denom, deviation, delta, ref_delta]
     return ratios
 
@@ -123,9 +139,9 @@ def simplify_ratios(ratios):
     d = ratios[:,:,1].astype(int)
     for i in range(len(n)):
         for j in range(len(n[0])):
-            f = Fraction(n[i,j],d[i,j])
-            n[i,j] = f.numerator
-            d[i,j] = f.denominator
+            gcd = np.gcd(n[i,j],d[i,j])
+            n[i,j] /= gcd
+            d[i,j] /= gcd
     ratios[:,:,0] = n
     ratios[:,:,1] = d
     return ratios
