@@ -40,15 +40,15 @@ def create_weight_combinations(num_weights, stepsize):
   return list(weight_combinations)
 
 def create_and_compare(t, answer, num_weights, stepsize):
-  num_weights = 3
+  #num_weights = 3
   weight_combinations = create_weight_combinations(num_weights, stepsize)
   good_weights = []
   for weights in weight_combinations:
-    w = [1,0,1,0]
-    w.extend(weights)
-    w[5] = 0
-    w[4] = 0
-    weights = w
+    #w = [1,0,1,0]
+    #w.extend(weights)
+    #w[5] = 0
+    #w[4] = 0
+    #weights = w
     ra.set_weights(weights)
     rank = 1
     ratios_reduced, ranked_unique_representations, trigseq, ticktempo_bpm, tempo_tendency, pulseposition = ra.analyze(t, rank)
@@ -79,54 +79,51 @@ test_weights = {
     'autocorr_weight' : 0.3
 }
 
-if __name__ == '__main__':
-  #beats = [3,3,2]
-  #subdiv = 4
-  beats = [6,3,3,2,2,2,6]
-  subdiv = 6
-  t = make_time_from_beats(beats, subdiv)
-  print(f'{beats} \n{t}')
-  answer = make_correct_answer(beats, subdiv)
-  #print(len(create_weight_combinations(7, 0.5)))
-  #good_weights = create_and_compare(t, answer, 7, 0.1)
-  cProfile.run('create_and_compare(t, answer, 7, 0.1)')
-  '''
-  ord_good =[]
-  for g in good_weights:
-    ord_good.append([sum(g), g])
-    #print(g, '    ', sum(g))
-  ord_good.sort()
-  for i in range(5):
-    print(ord_good[i])
-  '''
-  '''
-  weights = [test_weights['benni_weight'], 
-             test_weights['nd_sum_weight'], 
-             test_weights['ratio_dev_weight'],  
-             test_weights['ratio_dev_abs_max_weight'],  
-             test_weights['grid_dev_weight'], 
-             test_weights['evidence_weight'], 
-             test_weights['autocorr_weight']]
-  ra.set_weights(weights)
-  rank = 1
-  ratios_reduced, ranked_unique_representations, trigseq, ticktempo_bpm, tempo_tendency, pulseposition = ra.analyze(t, rank)
+#if __name__ == '__main__':
+#beats = [3,3,2]
+#subdiv = 4
+beats = [6,3,3,2,2,2,6]
+subdiv = 6
+t = make_time_from_beats(beats, subdiv)
+print(f'{beats} \n{t}')
+answer = make_correct_answer(beats, subdiv)
+#print(len(create_weight_combinations(7, 0.5)))
+#good_weights = create_and_compare(t, answer, 7, 0.1)
+cProfile.run('create_and_compare(t, answer, 7, 0.1)')
+'''
+ord_good =[]
+for g in good_weights:
+  ord_good.append([sum(g), g])
+  #print(g, '    ', sum(g))
+ord_good.sort()
+for i in range(5):
+  print(ord_good[i])
+'''
+'''
+weights = [test_weights['benni_weight'], 
+           test_weights['nd_sum_weight'], 
+           test_weights['ratio_dev_weight'],  
+           test_weights['ratio_dev_abs_max_weight'],  
+           test_weights['grid_dev_weight'], 
+           test_weights['evidence_weight'], 
+           test_weights['autocorr_weight']]
+ra.set_weights(weights)
+rank = 1
+ratios_reduced, ranked_unique_representations, trigseq, ticktempo_bpm, tempo_tendency, pulseposition = ra.analyze(t, rank)
+print('best')
+best = ranked_unique_representations[0]
+ratios_list = ratios_reduced[best].tolist()
+one = np.array(ratios_reduced[best][:,:2],dtype='int')
+for o in one:
+  print(f'{o[0]}/{o[1]}')
+print('second_best')
+next_best = ranked_unique_representations[1]
+two = np.array(ratios_reduced[next_best][:,:2],dtype='int')
+for t in two:
+  print(f'{t[0]}/{t[1]}')
+print('answer')
+for a in answer:
+  print(f'{a[0]}/{a[1]}')
 
-  print('best')
-  best = ranked_unique_representations[0]
-  ratios_list = ratios_reduced[best].tolist()
-  one = np.array(ratios_reduced[best][:,:2],dtype='int')
-  for o in one:
-    print(f'{o[0]}/{o[1]}')
-
-  print('second_best')
-  next_best = ranked_unique_representations[1]
-  two = np.array(ratios_reduced[next_best][:,:2],dtype='int')
-  for t in two:
-    print(f'{t[0]}/{t[1]}')
-
-  print('answer')
-  for a in answer:
-    print(f'{a[0]}/{a[1]}')
-  
-  print('equal', np.array_equal(answer,one))
-  '''
+print('equal', np.array_equal(answer,one))
+'''

@@ -22,6 +22,57 @@
 
 import numpy as np
 
+def rational_approx(n):
+  # faster rational approx
+  fact = np.array([3,4])
+  dev = np.zeros(2)
+  res = np.zeros(2)
+  if n < 0.25:
+    fact *= 2
+  if n < 0.1:
+    fact *= 2
+  if n < 0.04:
+    fact *= 2
+  if n < 0.02:
+    fact *= 2
+  if n < 0.01:
+    nom = 1
+    denom = 64
+  else:
+    for i in range(2):
+      f = fact[i]
+      r = n*f
+      res[i] = r
+      dev[i] = abs(round(r)-r)
+    print(res, '\n', dev)
+    nom = round(res[np.argmin(dev)])
+    denom = fact[np.argmin(dev)] 
+  return nom, denom
+
+rational_approx(0.2)
+'''
+def rational_approx_old(n, maxdev):
+  fact = np.array([3,4])
+  dev = np.zeros(2)
+  res = np.zeros(2)
+  for i in range(2):
+    f = fact[i]
+    r = n*f
+    res[i] = r
+    dev[i] = abs(round(r)-r)
+  print(res, '\n', dev)
+  if np.min(dev) > maxdev:
+    fact *= 2
+    for i in range(2):
+      f = fact[i]
+      r = n*f
+      res[i] = r
+      dev[i] = abs(round(r)-r)
+    print('div2', res, '\n', dev)
+  denom = fact[np.argmin(dev)]
+  nom = round(res[np.argmin(dev)])
+  print(nom, denom)
+
 history = [0,0,0,0]
 def update_history(history,new_item):
   history = history[1:]+history[:1] #rotate
@@ -40,6 +91,8 @@ print(history)
 for i in range(2):
   history = update_history(history,i+10)
   print(history)
+'''
+
 '''
 # profiling tests
 import cProfile
