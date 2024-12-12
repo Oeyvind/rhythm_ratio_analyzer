@@ -1,34 +1,10 @@
-* create Csound UDOs
-  - assume we have a record_enable button to gate events being sent to Record_new_event
-  1. Record_new_event (update and rename receive_timevalues() in server)
-    - time stamp
-    - 4 event parameters, 
-      - conventionally [pitch, amp, x1, x2], using midi encoding for pitch and amp (velocity)
-  2. Trigger_analysis
-    - triggers analysis of the events occurred since the last record_enable activation
-    - expects a rank value (which ratio analysis to consider the best one)
-      - skip this? it is only relevant for debugging
-  3. Send_eventserver_parameters
-    - send parameter controls to server:
-            kbenni_weight, knd_weight, kratio_dev_weight, \
-            kratio_dev_abs_max_weight, kgrid_dev_weight, \
-            kevidence_weight, kautocorr_weight, kratio1_order, \
-            kratio2_order, ktemperature = osc_data
-  4. Generate_prob_event
-    - query server for next event parameters
-      - index, request_item, request_weight = osc_data
-      - currently request_item and request_weight is inflexible (only one parameter)
-  5. Event_generation_clock
-    - based on data from 4), rewrite instr 109 as UDO
-  6. Print_stm
-    - print state transition matrices for the prob_logic module
-  7. Clear_data
-    - clear server data
-      - option to clear last recorded phrase, or clear all data
-  8. Play_last_phrase
-    - currently in instr 3
-    - mostly for debugging, but keep functionality for now
-  
+
+* Notes on optimization
+  - Fractions.div_limit is used a lot (ratio_to_each) and is expensive
+  - array_equal is used a lot (evidence and find_duplicate_representations) and is expensive
+
+
+
 
 * clean up Csound script
   - remove time series, ratios, deviation text fields

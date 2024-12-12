@@ -49,6 +49,7 @@ def ratio_to_each(timeseries, mode='connect', div_limit=4):
             ratio = delta/ref_delta
             f = Fraction(ratio).limit_denominator(div_limit)
             numerator, denom = f.numerator, f.denominator
+            numerator, denom = [1,1]
             if numerator < 1: # if the subdivision is higher than 4
                 print('***********WARNING***************: numerator less than 1', delta, ref_delta)
                 for m in [2,4,8]: # try doubling it, then 4 then 8
@@ -203,7 +204,7 @@ def autocorr(data):
     """Autocorrelation (non normalized)"""
     return np.correlate(data, data, 'full')[len(data)-1:]
 
-def autocorr_bitwise(data):
+'''def autocorr_bitwise(data):
     """Autocorrelation by means of bitmasking, input is a list of ones and zeros"""
     acorr=[]
     b = 0b0
@@ -213,6 +214,7 @@ def autocorr_bitwise(data):
         b1 = b>>i&b
         acorr.append(b1.bit_count())
     return acorr                     
+'''
 
 def find_duplicate_representations(ratios):
     """Find indices in the ratios array where the exact same rational approximations are used (not regarding deviations or other parameters)"""
@@ -251,7 +253,7 @@ def analyze(t, rank=1):
     autocorr_scores = []
     for i in range(len(ratios)):
         trigseq = make_trigger_sequence(ratios_commondiv[i,:,:2])
-        acorr = autocorr_bitwise(trigseq)
+        acorr = autocorr(trigseq)
         autocorr_scores.append(np.max(acorr[1:])**2) #max autocorr, raised to give more difference
     scores = normalize_and_add_scores(
         [benedetti_height, nd_add, ratio_deviation_abs, ratio_deviation_abs_max, gridsize_deviations, evidence_scores, autocorr_scores], 
