@@ -143,6 +143,16 @@ instr 1
   if ktrig_generate2_stop > 0 then
     event "i", -(109+(ivoice2*0.1)), 0, .1
   endif
+  ; start/stop master clock
+  kactive active 109
+  kanytrig_on = ktrig_generate+ktrig_generate2
+  kanytrig_off trigger kactive, 0.5, 1
+  if (kactive == 0) && (kanytrig_on > 0) then
+    event "i", 108, 0, -1 ; master clock
+  endif
+  if kanytrig_off > 0 then
+    event "i", -108, 0, .1 ; master clock
+  endif
 
   ; print probabilistic logic stm
   kprint_stm chnget "pl_print"
@@ -330,50 +340,49 @@ endin
 ; *******************************
 ; generator
 
+; master clock
+instr 108
+  ; beat clock
+  ktempo_bpm chnget "gen_tempo_bpm"
+  ibeat_clock chnget "beat_clock"
+  kclock_counter init ibeat_clock*kr
+  kclock_counter += (ktempo_bpm/60)
+  kbeat_clock = (kclock_counter/kr)
+  chnset kbeat_clock, "beat_clock"
+  printk2 floor(kbeat_clock)
+  iclock_resolution = 10000 ; 0.1 millisec
+  chnset iclock_resolution, "clock_resolution"
+endin
+
 instr 109
   ivoice = p4
+  print ivoice
   ktempo_bpm chnget "gen_tempo_bpm"
-  kdownbeat_sync chnget "downbeat_sync"
-  kdownbeat_sync_strength chnget "downbeat_sync_strength"
+  ;kdownbeat_sync chnget "downbeat_sync"
+  ;kdownbeat_sync_strength chnget "downbeat_sync_strength"
   ktemperature chnget "gen_temperature"
   kmetro_on chnget "gen_metro_on"
   kdur_scale chnget "gen_duration_scale"
   kdeviation_scale chnget "gen_deviation_scale"
   krelative_pitch chnget "gen_relative_pitch"
   ktranspose_voice2 chnget "gen_v2_pitch_offset"
-
-  ; beat clock
-  kclock_counter init 0
-  kclock_counter += (ktempo_bpm/60)
-  kbeat_clock = (kclock_counter/kr)
-  iclock_resolution = 10000 ; 0.1 millisec
-
-  ; downbeat trig
-  knext_downbeat_time init 0
-  kdownbeat = (kbeat_clock > knext_downbeat_time) ? 1 : 0 
-  ktrig_downbeat trigger kdownbeat, 0.5, 0
-  kzero = 0
-  if ktrig_downbeat > 0 then
-    cabbageSetValue "downbeat_sync", kzero
-    knext_downbeat_time += 1
-    idownbeat_instr = 119
-    if kmetro_on > 0 then
-      event "i", idownbeat_instr, 0, 0.3
-    endif
-  endif
+  iclock_resolution chnget "clock_resolution"
+  kbeat_clock chnget "beat_clock"
+  ibeat_clock chnget "beat_clock"
 
   krequest_ratio init -1
-  krequest_weight = kdownbeat_sync_strength ; may not necessary to rename/patch this, if it will only be used for that purpose
+  krequest_weight = 0
   igen_instr = 121
   ; event trig
   kgen_index init 0
-  kgen_ratio init 1
+  kgen_ratio init 0
   kgen_deviation init 0
   kgen_duration init 1
   kgen_notenum init 0
   kgen_interval init 0
   kgen_velocity init 0
-  knext_event_time init 0
+  knext_event_time init ibeat_clock
+  printk2 knext_event_time, 10+(5*ivoice)
   kget_event = (kbeat_clock > knext_event_time) ? 1 : 0 ; if current time is greater than the time for the next event, then activate
   kget_event_trig trigger kget_event, 0.5, 0
   kcount init 0
@@ -407,8 +416,6 @@ instr 109
     kgoto nextmsg ; make sure we read all messages in the network buffer
   done:
   
-  kratio_to_next_downbeat = knext_downbeat_time-knext_event_time
-  krequest_ratio = kdownbeat_sync > 0 ? kratio_to_next_downbeat : -1 ; in case we want to request a ratio that will sync to next downbeat 
 endin
 
 ; print stuff on server
