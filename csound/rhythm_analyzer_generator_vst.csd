@@ -65,18 +65,20 @@ nslider bounds(40, 65, 40, 25), channel("gen_tempo_bpm"), range(1, 2999, 60), fo
 label bounds(40, 90, 60, 18), text("g_tpo"), fontSize(12), align("left")
 nslider bounds(90, 65, 40, 25), channel("gen_duration_scale"), range(0.1, 2, 1), fontSize(14)
 label bounds(90, 90, 60, 18), text("g_dur"), fontSize(12), align("left")
-nslider bounds(155, 65, 40, 25), channel("gen_deviation_scale"), range(0, 1, 0), fontSize(14)
+nslider bounds(155, 65, 40, 25), channel("gen_deviation_scale"), range(0, 3, 0), fontSize(14)
 label bounds(155, 90, 60, 18), text("g_dev"), fontSize(12), align("left")
 nslider bounds(220, 65, 40, 25), channel("gen_interval_order"), range(0, 4, 2, 1, 0.5), fontSize(14)
 label bounds(220, 90, 60, 18), text("intv_ord"), fontSize(12), align("left")
 button bounds(265, 65, 55, 25), text("rel pitch"), channel("gen_relative_pitch"), colour:0("green"), colour:1("red")
 
 button bounds(350, 25, 45, 30), text("metro"), channel("gen_metro_on"), colour:0("green"), colour:1("red"), latched(1)
+button bounds(350, 60, 45, 30), text("clock reset"), channel("beat_clock_reset"), colour:0("green"), colour:1("red"), latched(0)
 button bounds(400, 25, 50, 30), text("dwnbeat sync"), channel("downbeat_sync"), colour:0("green"), colour:1("red"), latched(1)
 nslider bounds(455, 25, 40, 25), channel("downbeat_sync_strength"), range(0, 1, 0.5), fontSize(14)
 label bounds(455, 45, 60, 18), text("sync_w"), fontSize(12), align("left")
 ; debug
 button bounds(520, 25, 50, 30), text("print stm"), channel("pl_print"), colour:0("green"), colour:1("red"), latched(0)
+
 
 ; voice 2
 button bounds(10, 115, 70, 23), text("voice 2"), channel("gen_voice2"), colour:0("green"), colour:1("red")
@@ -107,7 +109,7 @@ gkactivenote init 0; stores the note number of the active note, for polyphony co
 gitrig_ftab ftgen 0, 0, 4096, 2, 0
 gitrig_ftab_empty ftgen 0, 0, 4096, 2, 0
 gihandle OSCinit 9999 ; set the network port number where we will receive OSC data from Python
-
+giSine ftgen 0, 0, 4096, 10, 1
 
 ; GUI handling
 instr 1
@@ -152,6 +154,12 @@ instr 1
   endif
   if kanytrig_off > 0 then
     event "i", -108, 0, .1 ; master clock
+  endif
+
+  kclock_reset chnget "beat_clock_reset"
+  if kclock_reset > 0 then
+    kzero = 0
+    chnset kzero, "beat_clock"
   endif
 
   ; print probabilistic logic stm
@@ -342,80 +350,185 @@ endin
 
 ; master clock
 instr 108
+
   ; beat clock
   ktempo_bpm chnget "gen_tempo_bpm"
   ibeat_clock chnget "beat_clock"
   kclock_counter init ibeat_clock*kr
-  kclock_counter += (ktempo_bpm/60)
+	kclock_counter += (ktempo_bpm/60)
   kbeat_clock = (kclock_counter/kr)
+	chnset kbeat_clock, "beat_clock_dry" ; unmodulated clock
+	kmod_index chnget "beat_clock_mod_index"
+  kmod_ratio chnget "beat_clock_mod_ratio"
+	kmod_freq = (ktempo_bpm/60)/kmod_ratio
+	i2pi = 6.283186
+	kmod_amp = (kmod_index/kmod_freq)*(ktempo_bpm/60)/i2pi
+	;imodphase = 0.
+	;kclock_modulator oscili kmod_amp, kmod_freq, -1, imodphase
+	kmod_phase chnget "beat_clock_mod_phase"
+  kmod_wave = giSine
+  aclock_modulator osciliktp kmod_freq, kmod_wave, kmod_phase
+  kclock_modulator downsamp aclock_modulator
+  kclock_modulator *= kmod_amp
+  kbeat_clock += kclock_modulator
+	kprev init 0
+	kdirection signum kbeat_clock-kprev ; indicate if time is moving forwards or backwards
+	kprev = kbeat_clock
   chnset kbeat_clock, "beat_clock"
-  printk2 floor(kbeat_clock)
-  iclock_resolution = 10000 ; 0.1 millisec
-  chnset iclock_resolution, "clock_resolution"
+	chnset kdirection, "beat_clock_direction"
+  ; metro sound
+  kmetro_on chnget "gen_metro_on"
+  if (kmetro_on > 0) && (changed(floor(kbeat_clock)) > 0) then
+      event "i", 119, 0, 0.1
+  endif
 endin
 
+; event generator
 instr 109
   ivoice = p4
-  print ivoice
-  ktempo_bpm chnget "gen_tempo_bpm"
+  ;print ivoice
+  kinit_clock init 1 ; make sure a k-value from the master have come in
+	if kinit_clock > 0 then
+		reinit beat_clock_init
+	endif
+	beat_clock_init:
+		ibeat_clock chnget "beat_clock"
+    print ibeat_clock
+    kinit_clock = 0
+	rireturn
+
+	; gen and play events
+	ktempo_bpm chnget "gen_tempo_bpm"
+  kbeat_clock chnget "beat_clock"  
+	kbeat_clock_dry chnget "beat_clock_dry"
+	kclock_direction chnget "beat_clock_direction"
+	kEvent_queue[] init 8, 6 ; 30 events, 6 parameters each
+
   ;kdownbeat_sync chnget "downbeat_sync"
   ;kdownbeat_sync_strength chnget "downbeat_sync_strength"
   ktemperature chnget "gen_temperature"
-  kmetro_on chnget "gen_metro_on"
   kdur_scale chnget "gen_duration_scale"
   kdeviation_scale chnget "gen_deviation_scale"
   krelative_pitch chnget "gen_relative_pitch"
-  ktranspose_voice2 chnget "gen_v2_pitch_offset"
-  iclock_resolution chnget "clock_resolution"
-  kbeat_clock chnget "beat_clock"
-  ibeat_clock chnget "beat_clock"
+  iclock_resolution = 10000
 
+  ; oddities
   krequest_ratio init -1
   krequest_weight = 0
-  igen_instr = 121
+
   ; event trig
+	kgen_once init 1 ; do only the first time
   kgen_index init 0
-  kgen_ratio init 0
+  kgen_ratio init 0 
   kgen_deviation init 0
   kgen_duration init 1
   kgen_notenum init 0
   kgen_interval init 0
   kgen_velocity init 0
-  knext_event_time init ibeat_clock
-  printk2 knext_event_time, 10+(5*ivoice)
-  kget_event = (kbeat_clock > knext_event_time) ? 1 : 0 ; if current time is greater than the time for the next event, then activate
-  kget_event_trig trigger kget_event, 0.5, 0
+  knext_event_time init -999 ; overwritten on first k-event
+	kprevious_ratio init 0 ; means we will generate two events when starting
   kcount init 0
-  kcount += kget_event_trig
-  kprev_notenum init 60 ; for interval melody generation
-  if kget_event_trig > 0 then
-    if krelative_pitch > 0 then
-      knotenum = kprev_notenum + kgen_interval
-    else
-      knotenum = kgen_notenum
-    endif
-    kprev_notenum = knotenum
-    knext_event_time += round(kgen_ratio*iclock_resolution)/iclock_resolution 
-    ;Sdebug sprintfk "next event time %.2f, beatclock %.2f index %i", knext_event_time, kbeat_clock, kgen_index
-    ;puts Sdebug, knext_event_time
-    kdur = kgen_duration*(60/ktempo_bpm)*kdur_scale
-    imax_time_dev = 0.2
-    ktime_deviation limit imax_time_dev+(kgen_deviation*kdeviation_scale), 0, 1
-    if ivoice == 2 then
-      knotenum_play = knotenum+ktranspose_voice2
-    else
-      knotenum_play = knotenum
-    endif
-    event "i", igen_instr, ktime_deviation, kdur, knotenum_play, kgen_velocity, ivoice
+  igen_instr = 121
+  ktime timeinsts ; for debug
+  ;printk2 floor(kbeat_clock)
+  kpython_data_ready init 0
+
+  ; get event data from server
+  if (kbeat_clock > knext_event_time) && (kpython_data_ready == 0) then
     OSCsend kcount, "127.0.0.1", 9901, "/client_prob_gen", "ffff", ivoice, kgen_index, krequest_ratio, krequest_weight
-  endif
   nextmsg:
     Saddr sprintf "python_prob_gen_voice%i", ivoice
     kmess OSClisten gihandle, Saddr, "fffffff", kgen_index, kgen_ratio, kgen_deviation, kgen_duration, kgen_notenum, kgen_interval, kgen_velocity ; receive OSC data from Python
+    if kmess > 0 then
+        kpython_data_ready = 1
+    endif
     if kmess == 0 goto done
     kgoto nextmsg ; make sure we read all messages in the network buffer
   done:
-  
+  endif
+
+  ; store events in queue for playback
+  if (kbeat_clock > knext_event_time) && (kpython_data_ready == 1) then
+		;Sindex sprintfk "count %i, gen index %i, ratio %.2f, beat_clock %.2f, at time %.2f", kcount, kgen_index, kgen_ratio, kbeat_clock, ktime
+		;puts Sindex, kcount+1
+  	knext_event_time += round(kprevious_ratio*iclock_resolution)/iclock_resolution ; prevent accumulative rounding errors
+		knext_event_time = kgen_once > 0 ? ibeat_clock : knext_event_time ; sync to beat clock the first time
+	  kdeviation = kgen_deviation * kdeviation_scale 
+		kprevious_ratio = kgen_ratio
+    kEvent_queue[kcount % lenarray(kEvent_queue)][0] = knext_event_time + (kgen_ratio*kdeviation)*(60/ktempo_bpm); store this event time with deviation, for correct playback
+    kEvent_queue[kcount % lenarray(kEvent_queue)][2] = kgen_duration*(60/ktempo_bpm)
+    kEvent_queue[kcount % lenarray(kEvent_queue)][3] = kgen_notenum
+    kEvent_queue[kcount % lenarray(kEvent_queue)][4] = kgen_interval
+    kEvent_queue[kcount % lenarray(kEvent_queue)][5] = kgen_velocity
+		;printarray kEvent_queue
+		kgen_once = 0
+    kcount += 1
+    kpython_data_ready = 0
+	endif
+
+	; event playback
+  kplay_index init 0
+	kplay_event_time = kEvent_queue[wrap(kplay_index, 0, lenarray(kEvent_queue))][0]
+	kclock_switch trigger kclock_direction, 0, 1 ; trigger on change to negative
+	kbacklog_clock_point init 0
+	kbacklog_clock_point = kclock_switch > 0 ? kbeat_clock : kbacklog_clock_point ; the beat time when we started playing backwards
+	kclock_behind = kbeat_clock < kbacklog_clock_point ? 1 : 0
+	
+	; regular play trig
+	kplaytrig_flag init 1
+	kplay_trig init 0
+	if kbeat_clock > kplay_event_time && kplaytrig_flag > 0 then
+		kplaytrig_flag = 0
+		kplay_trig = 1
+	endif
+	if kbeat_clock < kplay_event_time then
+		kplaytrig_flag = 1
+	endif
+
+	; playtrig when we are playing backlog (previous) events due to time modulation
+	if kclock_behind > 0 then
+		if kclock_direction < 0 then
+			if kplay_index >= 0 then
+				kbacklog_time = kEvent_queue[(kplay_index-1) % lenarray(kEvent_queue)][0]
+			else
+				klast_index = lenarray(kEvent_queue)+(kplay_index+1)
+				kbacklog_time = kEvent_queue[klast_index-1][0]-kEvent_queue[klast_index][0]
+			endif
+			if kbeat_clock < kbacklog_time && kplaytrig_flag > 0 then
+				kplaytrig_flag = 0
+				kplay_trig = 1
+			endif
+			if kbeat_clock > kbacklog_time then
+				kplaytrig_flag = 1
+			endif
+		endif
+	endif
+
+	; play event and update
+  kprev_notenum init 0
+	if kplay_trig > 0 then
+		if kclock_direction < 0 then 
+			keventqueue_index wrap kplay_index-1, 0, lenarray(kEvent_queue)
+		else
+			keventqueue_index wrap kplay_index, 0, lenarray(kEvent_queue)
+		endif
+		;Sdebug sprintfk "play_index %i, e_queue_index %i, beat_clock %.2f, dir %i, time %.2f", kplay_index, keventqueue_index, kbeat_clock, kclock_direction, ktime
+		;puts Sdebug, ktime+1
+    ;kEvent[] fillarray kgen_ratio, kgen_deviation, kgen_duration, kgen_notenum, kgen_interval, kgen_velocity
+    printk2 krelative_pitch
+    if krelative_pitch > 0 then
+      kgen_notenum = kprev_notenum + kEvent_queue[keventqueue_index][4]
+    else
+      kgen_notenum = kEvent_queue[keventqueue_index][3]
+    endif
+    kprev_notenum = kgen_notenum
+		kgen_velocity = kEvent_queue[keventqueue_index][5]
+    kdur = kEvent_queue[keventqueue_index][2]*kdur_scale
+  	event "i", igen_instr, 0, kdur, kgen_notenum, kgen_velocity, ivoice
+		kplay_index += kclock_direction		
+		kplay_trig = 0
+	endif
+
 endin
 
 ; print stuff on server
@@ -450,10 +563,13 @@ instr 121
   inote = p4
   ivel = p5
   ichan = p6
+  ktranspose_voice2 chnget "gen_v2_pitch_offset"
+  if p6 == 2 then
+    inote += i(ktranspose_voice2)
+  endif
   aenv expon 1, p3, 0.0001
   a1 oscili ivel/127, cpsmidinn(inote)
-  a1 *= aenv
-  a1 *= iamp
+  a1 *= (aenv*iamp)
   outs a1, a1
   ; midi out
   noteondur ichan, inote, ivel, p3

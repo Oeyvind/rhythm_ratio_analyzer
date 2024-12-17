@@ -1,3 +1,5 @@
 *.dll
 *.rpp-bak
 __pycache__
+/csound/test.wav
+*.reapeaks

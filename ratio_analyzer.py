@@ -27,27 +27,22 @@ def set_weights(w):
     weights = w
 
 def rational_approx(n):
-    # faster rational approx
-    fact = [3,4]
+    # faster rational approx for 2 and 3 divisions
+    fact = np.array([3,4])
     dev = np.zeros(2)
     res = [0,0]
-    if n < 0.25:
+    threshold = 0.208333 # finer resolution with small n
+    while n < threshold:
       fact *= 2
-    if n < 0.1:
-      fact *= 2
-    if n < 0.04:
-      fact *= 2
-    if n < 0.02:
-      fact *= 2
+      threshold /= 2
+      if threshold < 0.011:
+          break
     if n < 0.01:
       num = 1
       denom = 64
     else:
-      for i in range(2):
-        f = fact[i]
-        r = n*f
-        res[i] = r
-        dev[i] = abs(round(r)-r)
+      res = n*fact
+      dev = np.abs(np.round(res)-res)
     num = round(res[np.argmin(dev)])
     denom = fact[np.argmin(dev)] 
     deviation = (n-(num/denom))

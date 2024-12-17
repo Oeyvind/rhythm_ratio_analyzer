@@ -21,7 +21,31 @@
 # - if we have such "index-masks" and "value-masks" it would be quite efficient to collate severel different "probability-sets" into one probability distribution
 
 import numpy as np
-
+def rational_approx(n):
+    # faster rational approx
+    fact = np.array([3,4])
+    dev = np.zeros(2)
+    res = [0,0]
+    threshold = 0.208333
+    while n < threshold:
+      fact *= 2
+      threshold /= 2
+      if threshold < 0.011:
+          break
+    if n < 0.01:
+      num = 1
+      denom = 64
+    else:
+      res = n*fact
+      dev = np.abs(np.round(res)-res)
+    num = round(res[np.argmin(dev)])
+    denom = fact[np.argmin(dev)] 
+    deviation = (n-(num/denom))
+    gcd = np.gcd(num, denom)
+    num /= gcd
+    denom /= gcd
+    return int(num), int(denom), deviation
+'''
 def rational_approx(n):
   # faster rational approx
   fact = np.array([3,4])
@@ -38,6 +62,7 @@ def rational_approx(n):
   if n < 0.01:
     nom = 1
     denom = 64
+  print(fact)
   else:
     for i in range(2):
       f = fact[i]
@@ -49,6 +74,7 @@ def rational_approx(n):
     denom = fact[np.argmin(dev)] 
   return nom, denom
 
+'''
 rational_approx(0.2)
 
 '''def fraction_approx(n):
