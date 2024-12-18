@@ -120,7 +120,7 @@ class Osc_server():
         self.query = [index, request]
         print('***pl_query', voicenum, self.query)
 
-        self.query = self.pl.generate(self.query) #query probabilistic models for next event and update query for next iteration
+        self.query = self.pl.generate(self.query, voicenum) #query probabilistic models for next event and update query for next iteration
         next_item_index = self.query[0]
         returnmsg = [int(next_item_index), 
                      float(self.corpus[next_item_index, self.pnum_corpus['ratio_best']]),

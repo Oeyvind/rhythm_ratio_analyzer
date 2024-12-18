@@ -71,13 +71,21 @@ nslider bounds(220, 65, 40, 25), channel("gen_interval_order"), range(0, 4, 2, 1
 label bounds(220, 90, 60, 18), text("intv_ord"), fontSize(12), align("left")
 button bounds(265, 65, 55, 25), text("rel pitch"), channel("gen_relative_pitch"), colour:0("green"), colour:1("red")
 
-button bounds(350, 25, 45, 30), text("metro"), channel("gen_metro_on"), colour:0("green"), colour:1("red"), latched(1)
-button bounds(350, 60, 45, 30), text("clock reset"), channel("beat_clock_reset"), colour:0("green"), colour:1("red"), latched(0)
-button bounds(400, 25, 50, 30), text("dwnbeat sync"), channel("downbeat_sync"), colour:0("green"), colour:1("red"), latched(1)
-nslider bounds(455, 25, 40, 25), channel("downbeat_sync_strength"), range(0, 1, 0.5), fontSize(14)
-label bounds(455, 45, 60, 18), text("sync_w"), fontSize(12), align("left")
+button bounds(350, 25, 45, 25), text("metro"), channel("gen_metro_on"), colour:0("green"), colour:1("red"), latched(1)
+button bounds(350, 60, 45, 25), text("clock reset"), channel("beat_clock_reset"), colour:0("green"), colour:1("red"), latched(0)
+
+groupbox bounds(430, 98, 160, 72), text("beat clock modulation") {
+nslider bounds(10, 25, 40, 25), channel("beat_clock_mod_index"), range(0, 4, 0, 1), fontSize(14)
+label bounds(13, 50, 40, 18), text("indx"), fontSize(12), align("left")
+nslider bounds(60, 25, 40, 25), channel("beat_clock_mod_ratio"), range(0.5, 8, 1, 1, 0.5), fontSize(14)
+label bounds(63, 50, 40, 18), text("ratio"), fontSize(12), align("left")
+nslider bounds(110, 25, 40, 25), channel("beat_clock_mod_phase"), range(0.5, 8, 1, 1, 0.5), fontSize(14)
+label bounds(113, 50, 40, 18), text("phase"), fontSize(12), align("left")
+}
+
+button bounds(400, 25, 50, 25), text("beat sync"), channel("beat_sync"), colour:0("green"), colour:1("red"), latched(1)
 ; debug
-button bounds(520, 25, 50, 30), text("print stm"), channel("pl_print"), colour:0("green"), colour:1("red"), latched(0)
+button bounds(520, 25, 50, 25), text("print stm"), channel("pl_print"), colour:0("green"), colour:1("red"), latched(0)
 
 
 ; voice 2
@@ -402,10 +410,9 @@ instr 109
   kbeat_clock chnget "beat_clock"  
 	kbeat_clock_dry chnget "beat_clock_dry"
 	kclock_direction chnget "beat_clock_direction"
-	kEvent_queue[] init 8, 6 ; 30 events, 6 parameters each
+	kEvent_queue[] init 30, 6 ; 30 events, 6 parameters each
 
-  ;kdownbeat_sync chnget "downbeat_sync"
-  ;kdownbeat_sync_strength chnget "downbeat_sync_strength"
+  kbeat_sync chnget "beat_sync"
   ktemperature chnget "gen_temperature"
   kdur_scale chnget "gen_duration_scale"
   kdeviation_scale chnget "gen_deviation_scale"
@@ -452,7 +459,11 @@ instr 109
 		;Sindex sprintfk "count %i, gen index %i, ratio %.2f, beat_clock %.2f, at time %.2f", kcount, kgen_index, kgen_ratio, kbeat_clock, ktime
 		;puts Sindex, kcount+1
   	knext_event_time += round(kprevious_ratio*iclock_resolution)/iclock_resolution ; prevent accumulative rounding errors
-		knext_event_time = kgen_once > 0 ? ibeat_clock : knext_event_time ; sync to beat clock the first time
+		if kbeat_sync == 0 then
+      knext_event_time = kgen_once > 0 ? ibeat_clock : knext_event_time ; sync to free beat clock the first time
+    else
+      knext_event_time = kgen_once > 0 ? ceil(ibeat_clock) : knext_event_time ; sync to whole beat clock the first time
+    endif
 	  kdeviation = kgen_deviation * kdeviation_scale 
 		kprevious_ratio = kgen_ratio
     kEvent_queue[kcount % lenarray(kEvent_queue)][0] = knext_event_time + (kgen_ratio*kdeviation)*(60/ktempo_bpm); store this event time with deviation, for correct playback
@@ -492,6 +503,7 @@ instr 109
 				kbacklog_time = kEvent_queue[(kplay_index-1) % lenarray(kEvent_queue)][0]
 			else
 				klast_index = lenarray(kEvent_queue)+(kplay_index+1)
+        klast_index wrap klast_index, 0, lenarray(kEvent_queue)
 				kbacklog_time = kEvent_queue[klast_index-1][0]-kEvent_queue[klast_index][0]
 			endif
 			if kbeat_clock < kbacklog_time && kplaytrig_flag > 0 then
@@ -505,7 +517,7 @@ instr 109
 	endif
 
 	; play event and update
-  kprev_notenum init 0
+  kprev_notenum init 60
 	if kplay_trig > 0 then
 		if kclock_direction < 0 then 
 			keventqueue_index wrap kplay_index-1, 0, lenarray(kEvent_queue)
@@ -515,7 +527,6 @@ instr 109
 		;Sdebug sprintfk "play_index %i, e_queue_index %i, beat_clock %.2f, dir %i, time %.2f", kplay_index, keventqueue_index, kbeat_clock, kclock_direction, ktime
 		;puts Sdebug, ktime+1
     ;kEvent[] fillarray kgen_ratio, kgen_deviation, kgen_duration, kgen_notenum, kgen_interval, kgen_velocity
-    printk2 krelative_pitch
     if krelative_pitch > 0 then
       kgen_notenum = kprev_notenum + kEvent_queue[keventqueue_index][4]
     else

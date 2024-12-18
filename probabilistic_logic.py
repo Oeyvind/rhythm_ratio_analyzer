@@ -73,7 +73,7 @@ class Probabilistic_encoder:
 class Probabilistic_logic:
     # coordinate several queries (different orders, and different dimensions/parameters) to the Probabilistic encoder
 
-    def __init__(self, corpus, pnum_corpus, prob_parms, d_size2=2, max_size=100, max_order=2, hack=1):
+    def __init__(self, corpus, pnum_corpus, prob_parms, max_size=100, max_order=2, max_voices=10):
         self.maxsize = max_size # allocate more space than we need, we will add more data later
         self.max_order = max_order
         print('max order', self.max_order)
@@ -88,9 +88,12 @@ class Probabilistic_logic:
         self.numparms = numparms
         print('number of parameters in probabilistic logic:', self.numparms)
         
+        prob_history = []
+        for i in range(self.max_order): prob_history.append(None)
+        self.no_prob_history = prob_history.copy()
         self.prob_history = []
-        for i in range(self.max_order): self.prob_history.append(None)
-        self.no_prob_history = self.prob_history.copy()
+        for i in range(max_voices):
+            self.prob_history.append(self.no_prob_history) #make separate history for each voice
         self.weights = np.zeros(self.numparms)
         # set default weights to first order for all parameters
         for pname in self.prob_parms.keys():
@@ -147,11 +150,11 @@ class Probabilistic_logic:
                     history[i] = history[i+1]-1 # if there is a gap in the history, smooth out
         return history
 
-    def generate(self, query):
+    def generate(self, query, voice=1):
         next_item_index, request_next_item = query
         
         # need to update and keep track of previous events for higher orders
-        self.prob_history = self.update_history(self.prob_history, next_item_index)
+        self.prob_history[voice-1] = self.update_history(self.prob_history[voice-1], next_item_index)
 
         # get alternatives from Probabilistic encoder
         for parm in self.prob_parms.keys():
@@ -160,10 +163,10 @@ class Probabilistic_logic:
                 w_index = self.prob_parms[parm][2][ord] #prob weight index
                 if self.weights[w_index] != 0:
                     offset = self.max_order+1-ord
-                    if not self.prob_history[-ord]:
+                    if not self.prob_history[voice-1][-ord]:
                         query_item = None
                     else:
-                        query_item = self.corpus[self.prob_history[-ord], self.pnum_corpus[parm]]
+                        query_item = self.corpus[self.prob_history[voice-1][-ord], self.pnum_corpus[parm]]
                     self.indices_prob_temp = pe.next_items(query_item)[offset:self.current_datasize+offset]
                     self.indx_container[:self.current_datasize, w_index] = self.indices_prob_temp[:self.current_datasize]
 
@@ -262,7 +265,7 @@ if __name__ == '__main__' :
         corpus[i,pnum_corpus['val1']] = list_val1[i]
         corpus[i,pnum_corpus['val2']] = list_val2[i]
 
-    pl = Probabilistic_logic(corpus, pnum_corpus, prob_parms, d_size2=nparms_corpus, max_size=max_events, max_order=2, hack=1)
+    pl = Probabilistic_logic(corpus, pnum_corpus, prob_parms, max_size=max_events, max_order=2, max_voices=2)
     for i in range(len(list_val1)):
         pl.corpus[i,pnum_corpus['index']] = i
         pl.analyze_single_event(i)
@@ -288,8 +291,27 @@ if __name__ == '__main__' :
     else: query = [start_index, [None, 0, 0]]
 
     i = 0
+    voice = 1
     while i < 10:
-        query = pl.generate(query) #query probabilistic encoders for next event and update query for next iteration
+        query = pl.generate(query, voice) #query probabilistic encoders for next event and update query for next iteration
+        next_item_index = query[0]
+        if request_value: query[1] = ['val1', request_value, 1]
+        print(f"the next item is  {corpus[next_item_index,pnum_corpus['val1']]} at index {next_item_index}, prob {pl.prob}")
+        i += 1
+    print(f'generated {i} items')
+
+    # test voice 2
+        # query
+    start_index = 0#np.random.choice(indices)
+    next_item = corpus[start_index,pnum_corpus['val1']]
+    print(f'The first item is {next_item} at index {start_index}')
+    request_value = None
+    if request_value: query = [start_index, ['val1', request_value, 1]]
+    else: query = [start_index, [None, 0, 0]]
+    i = 0
+    voice = 2
+    while i < 10:
+        query = pl.generate(query, voice) #query probabilistic encoders for next event and update query for next iteration
         next_item_index = query[0]
         if request_value: query[1] = ['val1', request_value, 1]
         print(f"the next item is  {corpus[next_item_index,pnum_corpus['val1']]} at index {next_item_index}, prob {pl.prob}")
