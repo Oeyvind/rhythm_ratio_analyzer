@@ -79,7 +79,7 @@ nslider bounds(10, 25, 40, 25), channel("beat_clock_mod_index"), range(0, 4, 0, 
 label bounds(13, 50, 40, 18), text("indx"), fontSize(12), align("left")
 nslider bounds(60, 25, 40, 25), channel("beat_clock_mod_ratio"), range(0.5, 8, 1, 1, 0.5), fontSize(14)
 label bounds(63, 50, 40, 18), text("ratio"), fontSize(12), align("left")
-nslider bounds(110, 25, 40, 25), channel("beat_clock_mod_phase"), range(0.5, 8, 1, 1, 0.5), fontSize(14)
+nslider bounds(110, 25, 40, 25), channel("beat_clock_mod_phase"), range(0, 1, 0, 1), fontSize(14)
 label bounds(113, 50, 40, 18), text("phase"), fontSize(12), align("left")
 }
 
@@ -410,7 +410,7 @@ instr 109
   kbeat_clock chnget "beat_clock"  
 	kbeat_clock_dry chnget "beat_clock_dry"
 	kclock_direction chnget "beat_clock_direction"
-	kEvent_queue[] init 30, 6 ; 30 events, 6 parameters each
+	kEvent_queue[] init 10, 6 ; 30 events, 6 parameters each
 
   kbeat_sync chnget "beat_sync"
   ktemperature chnget "gen_temperature"

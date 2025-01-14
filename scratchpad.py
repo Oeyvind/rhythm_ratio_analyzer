@@ -1,27 +1,56 @@
 #!/usr/bin/python
 # -*- coding: latin-1 -*-
 
-# Test using arrays to hold collections of alternatives for next event.
-# e.g. for a markov lookup, we might use the previous event *data value* as the *key*,
-# ... and then get an array of indices as the *value* for that *key*.
-# The array would hold a 1 for each index that is a possible data point for the next event.
-# This would allow several markov lookups to be efficiently collated, e.g. summing two such arrays.
-
-# Thing to test:
-# - use an array of values as the probability distribution for numpy.random.choice
-# - how expensive is it (profiling) to multiply a large 1D array with a scalar? (in order to weigh the different sets of possibilities)
-#    - 0.02 secs (20 millisecs) to multiply an array of size 10 million
-# - should we instead just sum several times (e.g. only have integer weights possible)
-#    - same as multiplication, no gain
-# - can we efficiently create a "mask" from data values? e.g. put a '1' for each time we have a specific value in the data?
-#    - for example, find all occurences of 0.25 (in the case we need that value to synchronize the rhythm to the next downbeat)
-# - profiling of masking an array of size 10 million, extracting matching values (within tolerance)
-#    - 0.1 seconds to mask an array and output result, 0.07 for just the masking operation (0.02 for the multiplication)
-#    - using np.ma.array(data, mask=mask) seems much faster than multiplication (maybe twice as fast)
-# - if we have such "index-masks" and "value-masks" it would be quite efficient to collate severel different "probability-sets" into one probability distribution
-
 import numpy as np
-def rational_approx(n):
+np.set_printoptions(suppress=True)
+np.set_printoptions(precision=2)
+
+
+def autocorr(data, offset):
+    """Autocorrelation (non normalized), options to offset"""
+    if offset == 'm':
+      mean = np.mean(data)
+      data = data-mean
+    elif offset < 0:
+      mean = np.mean(data)
+      mean *= abs(offset)
+      data = data-mean
+    else:
+      data = data*(1+offset)
+      data -= offset
+    mean = np.mean(data)
+    print(mean)
+    acorr = np.correlate(data, data, 'full')[len(data)-1:]
+    sorted = np.argsort(acorr[1:])
+    best = sorted[-1]+1
+    second_best = sorted[-2]+1
+    print(f'max corr at {best} and {second_best}')
+    return acorr
+
+def make_trigger_sequence(ratios):
+    # make the trigger sequence 
+    # 1=transient, 0 = space
+    # e.g. for rhythm 6, 3, 3, 2, 2, 2, the sequence will be
+    # [1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0]
+    trigger_seq = []
+    for num in ratios:
+        trigger_seq.append(1)
+        for i in range(num-1):
+            trigger_seq.append(0)
+    return np.array(trigger_seq)
+
+autocorr(a1,0.7)
+
+def indigestability2(n,e):
+    "Barlow's indigestability measure"
+    d = prime_factorization(n)
+    b = 0
+    for p in d.keys():
+        b += (d[p]*((p-1)**e)/p)
+    return b*2
+
+
+'''def rational_approx(n):
     # faster rational approx
     fact = np.array([3,4])
     dev = np.zeros(2)
@@ -45,6 +74,7 @@ def rational_approx(n):
     num /= gcd
     denom /= gcd
     return int(num), int(denom), deviation
+'''
 '''
 def rational_approx(n):
   # faster rational approx

@@ -82,7 +82,7 @@ class Osc_server():
         start, end = self.pending_analysis[0], self.pending_analysis[-1]
         timedata = self.corpus[start:end+1,self.pnum_corpus['timestamp']]
         self.phrase_number += 1
-        ratios_reduced, ranked_unique_representations, trigseq, ticktempo_bpm, tempo_tendency, pulseposition = self.ra.analyze(timedata)
+        ratios_reduced, ranked_unique_representations, rankscores, trigseq, ticktempo_bpm, tempo_tendency, pulseposition = self.ra.analyze(timedata)
         for i in range(len(trigseq)):
             osc_io.sendOSC("python_triggerdata", [i, trigseq[i]]) # send OSC back to client
         returnmsg = [ticktempo_bpm, tempo_tendency, float(pulseposition), float(len(self.pending_analysis))]

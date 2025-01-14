@@ -16,10 +16,10 @@ instr 1
 	p3 = 1/kr
 	; make test data
 	; event format: delta_time (ratio), deviation, note, velocity
-	kEvent1[] fillarray 1, 0.0, 60, 90
+	kEvent1[] fillarray 0.5, 0.0, 60, 90
 	kEvent2[] fillarray 0.5, 0.0, 61, 90
-	kEvent3[] fillarray 0.25, 0.1, 62, 90
-	kEvent4[] fillarray 0.25, 0.0, 63, 90
+	kEvent3[] fillarray 0.5, 0.1, 62, 90
+	kEvent4[] fillarray 0.5, 0.0, 63, 90
 	kEvent5[] fillarray 0.5, -0.1, 64, 90
 	kEvent6[] fillarray 0.5, 0.0, 65, 90
 	gkTest_data setrow kEvent1, 0
@@ -40,7 +40,7 @@ instr 2
 	kclock_counter += (ktempo_bpm/60)
   kbeat_clock = (kclock_counter/kr)
 	chnset kbeat_clock, "beat_clock_dry" ; unmodulated clock
-	kmod_index linseg 0, 4, 0, 16, 2.6
+	kmod_index =1; linseg 0, 4, 0, 16, 2.6
 	kmod_freq = (ktempo_bpm/60)/4
 	i2pi = 6.283186
 	kmod_amp = (kmod_index/kmod_freq)*(ktempo_bpm/60)/i2pi
@@ -52,7 +52,7 @@ instr 2
 	kprev = kbeat_clock
   chnset kbeat_clock, "beat_clock"
 	chnset kdirection, "beat_clock_direction"
-	outch 1, -0.9+a(kbeat_clock)*0.02
+	outch 1, -0.9+a(kbeat_clock)*0.05
 endin	
 
 instr 3
@@ -97,7 +97,7 @@ instr 3
 		kgen_once = 0
 		kgen_index += 1
 	endif
-	; TO HERE
+	
 	; event playback
   kplay_index init 0
 	kplay_event_time = kEvent_queue[wrap(kplay_index, 0, lenarray(kEvent_queue))][0]

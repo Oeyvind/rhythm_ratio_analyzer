@@ -6,7 +6,7 @@
 
 import numpy as np
 np.set_printoptions(suppress=True)
-#np.set_printoptions(precision=2)
+np.set_printoptions(precision=2)
 import math
 #import time # for profiling
 #import logging 
@@ -26,12 +26,16 @@ def set_weights(w):
     global weights
     weights = w
 
-def rational_approx(n):
+def rational_approx(n, div_limit=4):
     # faster rational approx for 2 and 3 divisions
-    fact = np.array([3,4])
+    if div_limit == 2:
+        fact = np.array([2])
+        threshold = 0.2501 # finer resolution with small n
+    else:
+        fact = np.array([3,4])
+        threshold = 0.208333 # finer resolution with small n
     dev = np.zeros(2)
     res = [0,0]
-    threshold = 0.208333 # finer resolution with small n
     while n < threshold:
       fact *= 2
       threshold /= 2
@@ -71,7 +75,7 @@ def ratio_to_each(timeseries, mode='connect', div_limit=4):
         for j in range(t_series_len):
             delta = deltas[j]
             ratio = delta/ref_delta
-            numerator, denom, deviation = rational_approx(ratio)
+            numerator, denom, deviation = rational_approx(ratio, div_limit)
             ratios[i,j] = [numerator, denom, deviation, delta, ref_delta]
     return ratios
 
@@ -93,6 +97,67 @@ def ratio_scores(ratios, timeseries):
         benedetti_height.append(np.add.reduce(np.multiply(ratios[i,:,0], ratios[i,:,1]))) # sum of Benedetti heights across all ratios in each set
         nd_add.append(np.add.reduce(np.add(ratios[i,:,0], ratios[i,:,1]))) # sum of sums of numerators and denominators in each set
     return ratio_deviations, ratio_deviation_abs, ratio_deviation_abs_max, gridsize_deviations, benedetti_height, nd_add 
+
+
+def prime_factorization(n):
+    "prime factorization of `n` as a dictionary with p:multiplicity for each p."
+    # nudged from https://scientific-python-101.readthedocs.io/python/exercises/prime_factorization.html
+    prime_factors = {}
+    i = 2
+    while i**2 <= n:
+        if n % i:
+            i += 1
+        else:
+            n /= i
+            try:
+                prime_factors[i] += 1
+            except KeyError:
+                prime_factors[i] = 1
+    if n > 1:
+        try:
+            prime_factors[n] += 1
+        except KeyError:
+            prime_factors[n] = 1
+    return prime_factors
+
+def indigestability(n):
+    "Barlow's indigestability measure"
+    d = prime_factorization(n)
+    b = 0
+    for p in d.keys():
+        b += (d[p]*((p-1)**2)/p)
+    return b*2
+
+def suavitatis(n):
+    "Euler's gradus suavitatis"
+    d = prime_factorization(n)
+    s = 0
+    for p in d.keys():
+        s += d[p]*(p-1)
+    return s
+
+def ind_log(n,d):
+    m = np.gcd(n,d)
+    n /= m
+    d /= m
+    print(f'n {indigestability(n)+2} d {indigestability(d)+2}')
+    print(f'log of {(indigestability(n)+2)**(indigestability(d)+2)}')
+    return np.log((indigestability(n)+2)**(indigestability(d)+2))
+
+def ind_mult(n,d):
+    m = np.gcd(n,d)
+    n /= m
+    d /= m
+    print(f'n+1 {indigestability(n)+1} d+2 {indigestability(d)+2}')
+    return ((indigestability(n)+1)*(indigestability(d)+2))
+
+def print_sua():
+    for i in range(1,9):
+        print(f'sua {i} {suavitatis(i)}')
+
+def print_ind():
+    for i in range(1,9):
+        print(f'ind {i} {indigestability(i)}')
 
 def test_gridsize_deviation(timeseries, gridsize, offset=-1):
     """Test how well a ratio assumtion can be used as basis for a grid (for the whole time sequence)"""
@@ -144,15 +209,17 @@ def simplify_ratios(ratios):
 def get_ranked_unique_representations(duplicates, scores):
     ranked_unique_representations = []
     already_included = []
+    rankscores = []
     for i in np.argsort(scores):
         if i not in already_included:
             for d in range(len(duplicates)):
                 if (i in duplicates[d]):
                     ranked_unique_representations.append(i)
                     already_included.extend(duplicates[d])
+                    rankscores.append(scores[i])
                     duplicates.remove(duplicates[d])
                     break
-    return ranked_unique_representations
+    return ranked_unique_representations, rankscores
 
 def normalize_numerators(ratios):
     norm_num_ratios = np.copy(ratios)
@@ -191,12 +258,12 @@ def normalize_and_add_scores(scores, weights, invert=None):
         smax = max(scores[i])
         smin = min(scores[i])
         if smax == smin:
-            s = 1
+            s = np.ones(len(scores[0]))
         else:
             s = (scores[i]-smin)/(smax-smin)
         if invert[i] > 0:
             s = np.subtract(1,s)
-        scoresum += s*weights[i]        
+        scoresum += s*weights[i]
     return scoresum
 
 def make_trigger_sequence(commondiv_ratios):
@@ -213,19 +280,9 @@ def make_trigger_sequence(commondiv_ratios):
 
 def autocorr(data):
     """Autocorrelation (non normalized)"""
+    mean = np.mean(data)
+    data = data-mean
     return np.correlate(data, data, 'full')[len(data)-1:]
-
-'''def autocorr_bitwise(data):
-    """Autocorrelation by means of bitmasking, input is a list of ones and zeros"""
-    acorr=[]
-    b = 0b0
-    for i in data:
-        b = b << 1 | i
-    for i in range(len(data)):
-        b1 = b>>i&b
-        acorr.append(b1.bit_count())
-    return acorr                     
-'''
 
 def find_duplicate_representations(ratios):
     """Find indices in the ratios array where the exact same rational approximations are used (not regarding deviations or other parameters)"""
@@ -265,17 +322,19 @@ def analyze(t, rank=1):
     for i in range(len(ratios)):
         trigseq = make_trigger_sequence(ratios_commondiv[i,:,:2])
         acorr = autocorr(trigseq)
-        autocorr_scores.append(np.max(acorr[1:])**2) #max autocorr, raised to give more difference
+        autocorr_scores.append(np.max(acorr[1:])) # max of autocorr
+    #print('autocorr_scores', np.array(autocorr_scores))
     scores = normalize_and_add_scores(
         [benedetti_height, nd_add, ratio_deviation_abs, ratio_deviation_abs_max, gridsize_deviations, evidence_scores, autocorr_scores], 
         [benni_weight, nd_sum_weight, ratio_dev_weight, ratio_dev_abs_max_weight, grid_dev_weight, evidence_weight, autocorr_weight],
         [0, 0, 0, 0, 0, 1, 1])
+    #print('scores', scores)
 
     # simplify ratios and remove duplicate ratio representations
     ratios_reduced = np.copy(ratios_commondiv)
     ratios_reduced = simplify_ratios(ratios_reduced)
     duplicates = find_duplicate_representations(ratios_reduced)
-    ranked_unique_representations = get_ranked_unique_representations(duplicates, scores)
+    ranked_unique_representations, rankscores = get_ranked_unique_representations(duplicates, scores)
     # isolate the selected (best) representation
     selected = ranked_unique_representations[rank-1] # select the unique representation ranked from the lowest score
     ticktempo_Hz = (1/ratios_commondiv[selected,0,-1])*ratios_commondiv[selected,0,1]
@@ -286,7 +345,7 @@ def analyze(t, rank=1):
     tempo_tendency = ratio_deviations[selected]*-1 # invert deviation to adjust tempo
     
     # return
-    return ratios_reduced, ranked_unique_representations, trigseq, ticktempo_bpm, tempo_tendency, pulseposition
+    return ratios_reduced, ranked_unique_representations, rankscores, trigseq, ticktempo_bpm, tempo_tendency, pulseposition
 
 if __name__ == '__main__':
     # example rhythms
