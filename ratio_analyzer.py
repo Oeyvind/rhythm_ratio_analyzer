@@ -308,9 +308,10 @@ def analyze(t, rank=1):
     """Do the full ratio analysis"""
     timedata = t.tolist()
     barlow_weight, benni_weight, nd_sum_weight, ratio_dev_weight, ratio_dev_abs_max_weight, grid_dev_weight, evidence_weight, autocorr_weight = weights # global weights
-    rat2 = ratio_to_each(timedata, div_limit=2)
-    rat4 = ratio_to_each(timedata, div_limit=4)
-    ratios = np.concatenate((rat2, rat4), axis=0)
+    #rat2 = ratio_to_each(timedata, div_limit=2)
+    #rat4 = ratio_to_each(timedata, div_limit=4)
+    #ratios = np.concatenate((rat2, rat4), axis=0)
+    ratios = ratio_to_each(timedata, div_limit=4)
     ratio_deviations, ratio_deviation_abs, ratio_deviation_abs_max, gridsize_deviations, barlow_indigest,benedetti_height, nd_add = ratio_scores(ratios,timedata)
     ratios_commondiv = make_commondiv_ratios(ratios)
     ratios_commondiv_copy = np.copy(ratios_commondiv)
