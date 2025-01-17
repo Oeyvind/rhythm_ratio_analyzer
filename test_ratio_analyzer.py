@@ -186,18 +186,20 @@ def flatten(xss):
     return [x for xs in xss for x in xs]
 
 # test for each beat with all weight combinations
-discrete_weights = [1,0.3,0.5,0.7,0]
-num_weights = 6
+discrete_weights = [1,0]
+num_weights = 8
 weight_combinations = make_weight_combinations(num_weights, discrete_weights)
 #weight_combinations = [[1,1,1,1,1,1],[1,0,1,1,0,1],[0,0,0,0,0,1]]
 # the weights are (in order):
 #barlow_weight
+#benni_weight
+#nd_sum_weight
 #ratio_dev_weight
 #ratio_dev_abs_max_weight
 #grid_dev_weight
 #evidence_weight
 #autocorr_weight
-#weights = [0,0,0,1,0,0]
+#weights = [0,0,0,0,1,0,0]
 
 beats_subdivs = [[[6,3,3,2,2,2,6],6], 
                  [[2,1,1,2],2],
@@ -223,12 +225,14 @@ beats_subdivs = [[[6,3,3,2,2,2,6],6],
 
 # the weights are (in order):
 #barlow_weight
+#benni_weight
+#nd_sum_weight
 #ratio_dev_weight
 #ratio_dev_abs_max_weight
 #grid_dev_weight
 #evidence_weight
 #autocorr_weight
-weights = [0,0.76,0.99,0.04,1,0.09]
+weights = [0,0,0,0.76,0.99,0.04,1,0.09]
 '''
 beats_subdivs = beats_subdivs[0:1] #test subset
 good = 0
@@ -250,9 +254,14 @@ for i in range(10):
     print(f'****************\nbeat {beats} \ntime {t}')
 ''' 
 t = np.array([0.,   0.33, 0.52, 1.04, 1.56, 1.89 ,2.1,  2.4,  2.66, 2.92, 3.19, 3.67])
-weights = [.0,1,1,0.0,0,0.0]
+weights = [0, 0.09, 0.03, 1,1,0,0,0]
 ra.set_weights(weights)
-ratios_reduced, ranked_unique_representations, rankscores, trigseq, ticktempo_bpm, tempo_tendency, pulseposition = ra.analyze(t)
+import ratio_analyzer_old as rao
+new = True
+if new:
+  ratios_reduced, ranked_unique_representations, rankscores, trigseq, ticktempo_bpm, tempo_tendency, pulseposition = ra.analyze(t)
+else:
+  ratios_reduced, ranked_unique_representations, trigseq, ticktempo_bpm, tempo_tendency, pulseposition = rao.analyze(t)
 best = ranked_unique_representations[0]
 ratio_sequence = np.array(ratios_reduced[best])
 duration_pattern = ra.make_duration_pattern(ratio_sequence).astype('int')

@@ -12,9 +12,11 @@ import math
 #import logging 
 #logging.basicConfig(level=logging.DEBUG)
 
-weights = [1, 0.3, 1, 0.2, 0.3, 1]
+weights = [0, 1, 1, 0.3, 1, 0.2, 0.3, 1]
 # weights for the scoring of ratio alternatives, in this order:
 #barlow_weight
+#benni_weight
+#nd_sum_weight
 #ratio_dev_weight
 #ratio_dev_abs_max_weight
 #grid_dev_weight
@@ -89,6 +91,8 @@ def ratio_scores(ratios, timeseries):
     ratio_deviation_abs = []
     ratio_deviation_abs_max = []
     indigestabilities = []
+    benedetti_height = []
+    nd_add = []
     gridsize_deviations = [] #list of deviations from grid created on each delta value as rational approximation
     for i in range(len(ratios)):
         ratio_deviations.append(np.sum(ratios[i,:,2]))
@@ -97,11 +101,13 @@ def ratio_scores(ratios, timeseries):
         grid_subdivs = np.unique(ratios[i,:,1]).astype(int) #list of all denoms in this set
         gridsize_deviation = test_gridsize_deviation(timeseries, ratios[i,0,4]/math.lcm(*grid_subdivs)) # TEST gridsize on least common multiple of the set
         gridsize_deviations.append(gridsize_deviation)
+        benedetti_height.append(np.add.reduce(np.multiply(ratios[i,:,0], ratios[i,:,1]))) # sum of Benedetti heights across all ratios in each set
+        nd_add.append(np.add.reduce(np.add(ratios[i,:,0], ratios[i,:,1]))) # sum of sums of numerators and denominators in each set
         indig = 0
         for denom in ratios[i,:,1]:
             indig += indigestability_n(denom)
         indigestabilities.append(indig)
-    return ratio_deviations, ratio_deviation_abs, ratio_deviation_abs_max, gridsize_deviations, indigestabilities 
+    return ratio_deviations, ratio_deviation_abs, ratio_deviation_abs_max, gridsize_deviations, indigestabilities, benedetti_height, nd_add 
 
 
 def prime_factorization(n):
@@ -249,7 +255,7 @@ def normalize_and_add_scores(scores, weights, invert=None):
         smax = max(scores[i])
         smin = min(scores[i])
         if smax == smin:
-            s = np.ones(len(scores[0]))
+            s = 1
         else:
             s = (scores[i])-smin/(smax-smin)
         if invert[i] > 0:
@@ -301,13 +307,14 @@ def find_duplicate_representations(ratios):
 def analyze(t, rank=1):
     """Do the full ratio analysis"""
     timedata = t.tolist()
-    barlow_weight, ratio_dev_weight, ratio_dev_abs_max_weight, grid_dev_weight, evidence_weight, autocorr_weight = weights # global weights
+    barlow_weight, benni_weight, nd_sum_weight, ratio_dev_weight, ratio_dev_abs_max_weight, grid_dev_weight, evidence_weight, autocorr_weight = weights # global weights
     rat2 = ratio_to_each(timedata, div_limit=2)
     rat4 = ratio_to_each(timedata, div_limit=4)
     ratios = np.concatenate((rat2, rat4), axis=0)
-    ratio_deviations, ratio_deviation_abs, ratio_deviation_abs_max, gridsize_deviations, barlow_indigest = ratio_scores(ratios,timedata)
+    ratio_deviations, ratio_deviation_abs, ratio_deviation_abs_max, gridsize_deviations, barlow_indigest,benedetti_height, nd_add = ratio_scores(ratios,timedata)
     ratios_commondiv = make_commondiv_ratios(ratios)
-    norm_num_ratios = normalize_numerators(ratios_commondiv)
+    ratios_commondiv_copy = np.copy(ratios_commondiv)
+    norm_num_ratios = normalize_numerators(ratios_commondiv_copy)
     evidence_scores = evidence(norm_num_ratios)
     autocorr_scores = []
     for i in range(len(ratios)):
@@ -315,8 +322,8 @@ def analyze(t, rank=1):
         acorr = autocorr(trigseq)
         autocorr_scores.append(np.max(acorr[1:])) # max of autocorr
     scores = normalize_and_add_scores(
-        [barlow_indigest, ratio_deviation_abs, ratio_deviation_abs_max, gridsize_deviations, evidence_scores, autocorr_scores], 
-        [barlow_weight, ratio_dev_weight, ratio_dev_abs_max_weight, grid_dev_weight, evidence_weight, autocorr_weight],
+        [barlow_indigest, benedetti_height, nd_add, ratio_deviation_abs, ratio_deviation_abs_max, gridsize_deviations, evidence_scores, autocorr_scores], 
+        [barlow_weight, benni_weight, nd_sum_weight, ratio_dev_weight, ratio_dev_abs_max_weight, grid_dev_weight, evidence_weight, autocorr_weight],
         [0, 0, 0, 0, 0, 0, 1, 1])
     
     # simplify ratios and remove duplicate ratio representations
@@ -353,12 +360,14 @@ if __name__ == '__main__':
     #t = [ 6.69,  7.19,  7.44,  7.69,  8.19,  8.52,  8.69,  9.19,  9.44,  9.69, 10.19]
     t = np.array(t,dtype=np.float32)
     barlow_weight = 1
+    benni_weight = 1
+    nd_sum_weight = 1
     ratio_dev_weight = 0.3
     ratio_dev_abs_max_weight = 1
     grid_dev_weight = 0.2
     evidence_weight = 0.3
     autocorr_weight = 1
-    weights = [barlow_weight, ratio_dev_weight, ratio_dev_abs_max_weight, grid_dev_weight, evidence_weight, autocorr_weight]
+    weights = [barlow_weight, benni_weight, nd_sum_weight, ratio_dev_weight, ratio_dev_abs_max_weight, grid_dev_weight, evidence_weight, autocorr_weight]
     set_weights(weights)
     rank = 1
     ratios_reduced, ranked_unique_representations, rankscores, trigseq, ticktempo_bpm, tempo_tendency, pulseposition = analyze(t, rank)
