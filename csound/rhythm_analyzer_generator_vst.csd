@@ -33,10 +33,12 @@ groupbox bounds(5, 60, 240, 65), text("last recorded event"), colour(20,30,45){
 }
 
 groupbox bounds(250, 60, 350, 65), text("rhythm analysis weights"), colour(20,30,45){
-nslider bounds(5, 25, 40, 20), channel("benni_weight"), range(0, 1, 1), fontSize(14)
-label bounds(5, 45, 40, 20), text("benni"), fontSize(12)
-nslider bounds(50, 25, 40, 20), channel("nd_weight"), range(0, 1, 1), fontSize(14)
-label bounds(50, 45, 40, 20), text("n+d"), fontSize(12)
+nslider bounds(5, 25, 40, 20), channel("barlow_weight"), range(0, 1, 1), fontSize(14)
+label bounds(5, 45, 40, 20), text("barlow"), fontSize(12)
+;nslider bounds(50, 25, 40, 20), channel("benni_weight"), range(0, 1, 1), fontSize(14)
+;label bounds(50, 45, 40, 20), text("benni"), fontSize(12)
+;nslider bounds(100, 25, 40, 20), channel("nd_weight"), range(0, 1, 1), fontSize(14)
+;label bounds(100, 45, 40, 20), text("n+d"), fontSize(12)
 nslider bounds(100, 25, 40, 20), channel("ratio_dev_weight"), range(0, 1, 1), fontSize(14)
 label bounds(100, 45, 40, 20), text("r_dev"), fontSize(12)
 nslider bounds(150, 25, 40, 20), channel("ratio_dev_abs_max_weight"), range(0, 1, 1), fontSize(14)
@@ -286,8 +288,7 @@ instr 31
   OSCsend kanalyzetrig, "127.0.0.1", 9901, "/client_analyze_trig", "i", k_
   
   ; send other parameter controls to Python
-  kbenni_weight chnget "benni_weight"
-  knd_weight chnget "nd_weight"
+  kbarlow_weight chnget "barlow_weight"
   kratio_dev_weight chnget "ratio_dev_weight"
   kratio_dev_abs_max_weight chnget "ratio_dev_abs_max_weight"
   kgrid_dev_weight chnget "grid_dev_weight"
@@ -298,12 +299,12 @@ instr 31
   knotenum_order chnget "gen_pitch_order"
   kinterval_order chnget "gen_interval_order"
   ktemperature chnget "gen_temperature"
-  kparm_update = changed(kbenni_weight, knd_weight, kratio_dev_weight, 
+  kparm_update = changed(kbarlow_weight, kratio_dev_weight, 
                       kratio_dev_abs_max_weight, kgrid_dev_weight, 
                       kevidence_weight, kautocorr_weight, kratio1_order, 
                       kratio2_order, knotenum_order, kinterval_order, ktemperature)
-  OSCsend kparm_update, "127.0.0.1", 9901, "/client_parametercontrols", "ffffffffffff", 
-                      kbenni_weight, knd_weight, kratio_dev_weight, 
+  OSCsend kparm_update, "127.0.0.1", 9901, "/client_parametercontrols", "fffffffffff", 
+                      kbarlow_weight, kratio_dev_weight, 
                       kratio_dev_abs_max_weight, kgrid_dev_weight, 
                       kevidence_weight, kautocorr_weight, kratio1_order, 
                       kratio2_order, knotenum_order, kinterval_order, ktemperature

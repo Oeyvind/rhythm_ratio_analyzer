@@ -81,6 +81,7 @@ class Osc_server():
         self.last_analyzed_phrase = self.pending_analysis # keep it so we can delete it if clear_last_phrase is called
         start, end = self.pending_analysis[0], self.pending_analysis[-1]
         timedata = self.corpus[start:end+1,self.pnum_corpus['timestamp']]
+        #print('timedata:', timedata)
         self.phrase_number += 1
         ratios_reduced, ranked_unique_representations, rankscores, trigseq, ticktempo_bpm, tempo_tendency, pulseposition = self.ra.analyze(timedata)
         for i in range(len(trigseq)):
@@ -176,12 +177,12 @@ class Osc_server():
     def receive_parameter_controls(self, unused_addr, *osc_data):
         '''Message handler. This is called when we receive an OSC message'''
         # set control parameters, like score weights etc
-        kbenni_weight, knd_weight, kratio_dev_weight, \
+        kbarlow_weight, kratio_dev_weight, \
             kratio_dev_abs_max_weight, kgrid_dev_weight, \
             kevidence_weight, kautocorr_weight, kratio1_order, \
             kratio2_order, knotenum_order, kinterval_order, ktemperature = osc_data
         
-        ratio_analyzer_weights = [kbenni_weight, knd_weight, kratio_dev_weight, \
+        ratio_analyzer_weights = [kbarlow_weight, kratio_dev_weight, \
                                   kratio_dev_abs_max_weight, kgrid_dev_weight, \
                                   kevidence_weight, kautocorr_weight]
         self.ra.set_weights(ratio_analyzer_weights)

@@ -12,21 +12,18 @@ from fractions import Fraction
 from itertools import product
 # profiling tests
 import cProfile
+import random
 
-
-def make_time_from_beats(beats,subdiv):
+def make_time_from_beats(beats,subdiv, maxdev):
   timestamp = [0]
+  t = 0
   for b in beats:
-    t = timestamp[-1]
-    timestamp.append(t+(b/subdiv))
+    delta = (b/subdiv)
+    dev = (delta*(random.random()-0.5))*2*maxdev
+    #print('b/sub',b, subdiv, dev)
+    t += delta
+    timestamp.append(t+dev)
   return np.array(timestamp)
-
-def make_correct_answer(beats, subdiv):
-  answer = []
-  for b in beats:
-     f = Fraction(b,subdiv)
-     answer.append([f.numerator,f.denominator])
-  return np.array(answer, dtype='int')
 
 def make_weight_combinations(num_weights, discrete_weights):
   # all combinations (length num_weights) of values within range, with step size N
@@ -49,42 +46,21 @@ def confidence(a):
     else:
       return 0
 
-def commondiv_ratios(a,b):
-  # take two rational representations, make them use a common denominator
-  # ... to compare different equal representations
-  c = a[:,1].tolist()
-  c.extend(b[:,1].tolist())
-  common = np.lcm.reduce(c)
-  afact = common / np.max(a[:,1])
-  bfact = common / np.max(b[:,1])
-  a *= afact
-  b *= bfact
-  # NOT DONE
-
 def test_and_compare_weights(t, answer, weight_combinations):
   good_weights = []
   confidences = []
   for weights in weight_combinations:
-    #print(f'**** weights {weights} ****')
     ra.set_weights(weights)
     rank = 1
     ratios_reduced, ranked_unique_representations, rankscores, trigseq, ticktempo_bpm, tempo_tendency, pulseposition = ra.analyze(t, rank)
-    # !! also check ranked unique for uniqueness !!
-    '''
-    print('ranked_unique_representations', ranked_unique_representations)
-    print(f'rankscores {rankscores}')
-    for i in range((len(ranked_unique_representations))):
-      print(f'{i} score {rankscores[i]} \n{np.asarray(ratios_reduced[ranked_unique_representations[i]])[:,:3]}')
-    '''
-    
     score_confidence = confidence(rankscores)
-    #print(f'confidence {score_confidence}')
 
     # check if we found the right answer
     best = ranked_unique_representations[0]
-    one = np.array(ratios_reduced[best][:,:2],dtype='int')
-    print(f'answer: {answer.tolist()} \nbest  : {one.tolist()} \nbest_ID: {best}')
-    good_answer = np.array_equal(answer,one)
+    ratio_sequence = np.array(ratios_reduced[best])
+    duration_pattern = ra.make_duration_pattern(ratio_sequence).astype('int')
+    #print(f'answer: {answer} \nbest  : {duration_pattern.tolist()} \nbest_ID: {best}')
+    good_answer = np.array_equal(answer, duration_pattern)
     if good_answer:
       good_weights.append(weights)
       confidences.append(score_confidence)
@@ -93,13 +69,12 @@ def test_and_compare_weights(t, answer, weight_combinations):
     good_not_selected = []
     for i in ranked_unique_representations:
       #print(f'answer:{answer}, \ncompare{np.array(ratios_reduced[i][:,:2],dtype="int")}')
-      alternative_answer = np.array(ratios_reduced[i][:,:2],dtype='int')
-      if np.array_equal(answer, alternative_answer):
+      alternative_answer = np.array(ratios_reduced[i])
+      alt_dur_pattern = ra.make_duration_pattern(alternative_answer)
+      if np.array_equal(answer, alt_dur_pattern):
         any_good = True
-        good_not_selected.append([i, alternative_answer.tolist()])
-
-  print(f'good {len(good_weights)}, out of {len(weight_combinations)}')
-  print(f'rankscores:\n{rankscores} \nranked_unique:\n{ranked_unique_representations}')
+        good_not_selected.append([i, alt_dur_pattern.tolist()])
+  '''
   if len(confidences) > 0:
     confidences_avg = sum(confidences)/len(confidences)
   else:
@@ -107,108 +82,212 @@ def test_and_compare_weights(t, answer, weight_combinations):
   print(f'confidences avg {confidences_avg:.{2}f}, sum {sum(confidences):.{2}f}')
   if any_good and confidences_avg < 0:
     print(f'any good alternatives:{any_good} \ngood_not_selected:{good_not_selected}')
+  '''
   return good_weights, confidences
 
+def find_intersection_good_weights(all_weights_good):
+  # intersection of good weights, find those who exist with all beats
+  weight_sets = []
+  for i in range(len(all_weights_good)):
+    t = tuple(map(tuple, all_weights_good[i]))
+    s = set(t)
+    weight_sets.append(s)
+  weight_set_intersection = set(weight_sets[0]) # just start somewhere
+  for s in weight_sets:
+    weight_set_intersection.intersection_update(s)
+  print(f' *** num intersecting good weights {len(weight_set_intersection)} \n')
+  return weight_set_intersection
 
+def purge_duplicate_weights(weights):
+  # make set of the list of weights to get rid of duplicates
+  # duplicates will occur when the same weight is good for several beats suggestions
+  weight_sets = []
+  t = tuple(map(tuple, weights))
+  s = set(t)
+  return s
+
+def sum_confidence_each_weight(all_weights, all_confidences, weight_set_intersection):
+  # sum all confidence values for each weight
+  confidence_for_weights = {}
+  for w,c in zip(all_weights, all_confidences):
+    for i in range(len(w)):
+      if w[i] in weight_set_intersection:
+        if w[i] in confidence_for_weights:
+          confidence_for_weights[w[i]] += c[i]
+        else:
+          confidence_for_weights[w[i]] = c[i]
+  print('confidence_for_weights')
+  for key, value in confidence_for_weights.items():
+    print(key, value)
+  return confidence_for_weights
+
+def test_ratio_analyzer(t, answer, weights):
+    ra.set_weights(weights)
+    rank = 1
+    ratios_reduced, ranked_unique_representations, rankscores, trigseq, ticktempo_bpm, tempo_tendency, pulseposition = ra.analyze(t, rank)
+    # check if we found the right answer
+    best = ranked_unique_representations[0]
+    ratio_sequence = np.array(ratios_reduced[best])
+    duration_pattern = ra.make_duration_pattern(ratio_sequence).astype('int')
+    print(f'answer: {answer} \nbest  : {duration_pattern.tolist()} \nbest_ID: {best}')
+    good_answer = np.array_equal(answer,duration_pattern)
+    print('good:', good_answer)
+    return duration_pattern, np.array(ratios_reduced[best]), good_answer
+
+
+def test_ratio_analyze_scoring(beats_subdivs):
+  # test ratio approximation and scoring
+  for beats,subdiv in beats_subdivs:
+    t = make_time_from_beats(beats, subdiv)
+    print(t)
+    ratios = ra.ratio_to_each(t, div_limit=4)
+    ratios_copy = np.copy(ratios)
+    ratio_scores = np.array(ra.ratio_scores(ratios,t))
+    
+    commondiv = ra.make_commondiv_ratios(ratios)
+    commondiv = ra.recalculate_deviation(commondiv)
+    commondiv_copy = np.copy(commondiv)
+    commondiv_copy2 = np.copy(commondiv)
+    commondiv_scores = np.array(ra.ratio_scores(commondiv,t))
+    
+    norm_num_ratios = ra.normalize_numerators(commondiv)
+    norm_num_ratios = ra.recalculate_deviation(norm_num_ratios)
+    evidence = ra.evidence(norm_num_ratios)
+    norm_num_copy = np.copy(norm_num_ratios)
+    norm_num_scores = np.array(ra.ratio_scores(norm_num_ratios,t))
+
+    simplify = ra.simplify_ratios(commondiv_copy2)
+    simplify_scores = np.array(ra.ratio_scores(simplify,t))
+
+    for i in range(len(norm_num_ratios)):
+      print(f'{i} ratios \n{ratios_copy[i]}, \nscores {ratio_scores[:,i]}')
+      print(f'{i} commondiv \n{commondiv_copy[i]}, \nscores {commondiv_scores[:,i]}')
+      print(f'{i} norm_num_ratios, evidence: {evidence[i]} \n{norm_num_copy[i]}, \nscores {norm_num_scores[:,i]}')
+      print(f'{i} simplify \n{simplify[i]}, \nscores {simplify_scores[:,i]}')
+
+
+def compare_indigestabilities(duration_pattern, suggestion):
+  # testing different uses of the indigestability
+  print(duration_pattern)  
+  print(suggestion)
+  indigest_dur = []
+  for n in duration_pattern:
+    indigest_dur.append(ra.indigestability_n(n))
+  indigest_n = []
+  indigest_d = []
+  for r in suggestion:
+    indigest_n.append(ra.indigestability_n(r[0]))
+    indigest_d.append(ra.indigestability_n(r[1]))
+  print('dur', indigest_dur, sum(indigest_dur))
+  print('num', indigest_n, sum(indigest_n))
+  print('den', indigest_d, sum(indigest_d))
+
+def flatten(xss):
+    return [x for xs in xss for x in xs]
 
 # test for each beat with all weight combinations
-discrete_weights = [1,0]
-num_weights = 7
+discrete_weights = [1,0.3,0.5,0.7,0]
+num_weights = 6
 weight_combinations = make_weight_combinations(num_weights, discrete_weights)
-#weight_combinations = weight_combinations[:67]
-#weight_combinations = [[1,1,1,1,1,1,1],[1,0,1,0,1,0,1],[0,0,0,0,0,0,1]]
-#weight_combinations = [[1,1,1,1,1,1,1]]
-#weight_combinations = [[1,0,1,0,1,0,1]]
-#weight_combinations = [[0,0,0,0,0,0,1]]
-#weight_combinations = [[0,0,0,0,0,0,1]]
-#weight_combinations = [[0,0.4,0,0,0,1,0]]
+#weight_combinations = [[1,1,1,1,1,1],[1,0,1,1,0,1],[0,0,0,0,0,1]]
 # the weights are (in order):
-#benni_weight
-#nd_sum_weight
+#barlow_weight
 #ratio_dev_weight
 #ratio_dev_abs_max_weight
 #grid_dev_weight
 #evidence_weight
 #autocorr_weight
+#weights = [0,0,0,1,0,0]
 
-
-# set test rhythms as numbeats of a subdivision
-# adjust subdivision to expected correct answer, set manually for each rhythm 
-# THERE MIGHT BE SEVERAL EQUIVALENT GOOD ANSWERS, NEED TO REDO THIS
-# f.ex. 3/4 1/4 = 3/1 1/1 both can be found
-# f.ex 7/1 1/1 ... but 7/8 1/8 can not be found
-'''
 beats_subdivs = [[[6,3,3,2,2,2,6],6], 
                  [[2,1,1,2],2],
                  [[3,1,4,4],4],
-                 [[3,1,4,4],1], # !!
-                 [[7,1,8,8],1]]
+                 [[4,1,1,1,1,3,3,2,1],4], #!
+                 [[3,3,2,3,3,2,4],4], #!
+                 [[2,1,1,1,1,1,1,2,1,1,1,1,1,1,1],4], # !!
+                 [[7,1,8,8],1],
+                 [[7,1,1,7,3,2,3,8],1],
+                 [[4,1,1,1,1,4,1,1,1,1,1],4], #!
+                 [[3,1,1,1,3,1,1,1,1],3],
+                 [[3,1,2,3,2,1,1],3], #!
+                 [[3,1,1,2,1,1,2,1,1],3],
+                 [[3,1,1,2,1,1,2,1,3],3],
+                 [[3,1,1,1,2,1,3],3],
+                 [[4,2,1,1,4],4], #!
+                 [[4,2,1,1,4],4],
+                 [[3,5,5,3],4],
+                 [[3,5,3,3,2],4], 
+                 [[2,1,2,1,3],3], 
+                 [[3,3,4,2,2],4]]
+
+
+# the weights are (in order):
+#barlow_weight
+#ratio_dev_weight
+#ratio_dev_abs_max_weight
+#grid_dev_weight
+#evidence_weight
+#autocorr_weight
+weights = [0,0.76,0.99,0.04,1,0.09]
 '''
-beats_subdivs = [[[4,1,1,1,1,3,3,2,1],4]] #!
-#beats_subdivs = [[[4,1,1,1,1,3,3,2,4],4]] #!
-#beats_subdivs = [[[3,3,2,3,3,2,4],4]] #!
-#beats_subdivs = [[[2,1,1,1,1,1,1,2,1,1,1,1,1,1,1],4]] # !!
-#beats_subdivs = [[[4,1,1,1,1,4,1,1,1,1,1],4]] #!
-#beats_subdivs = [[[3,1,1,1,3,1,1,1,1],3]]
-#beats_subdivs = [[[3,1,2,3,2,1,1],3]] #!
-#beats_subdivs = [[[3,1,1,2,1,1,2,1,1],3]]
-#beats_subdivs = [[[3,1,1,2,1,1,2,1,3],3]]
-#beats_subdivs = [[[3,1,1,1,2,1,3],3]]
-
-#beats_subdivs = [[[4,2,1,1,4],4]] #!
-#beats_subdivs = [[[4,2,2,4],4]]
-
-#beats_subdivs = [[[6,3,3,2,2,2,6],6]]
-#beats_subdivs = [[[2,1,1,2],2]]
-beats_subdivs = [[[3,1,4,4],4]]
-beats_subdivs = [[[2,1,2,1,3],3]]
-#beats_subdivs = [[[7,1,8,8],1]]
+beats_subdivs = beats_subdivs[0:1] #test subset
+good = 0
+num_attempts = 1
 for beats,subdiv in beats_subdivs:
-  t = make_time_from_beats(beats, subdiv)
-  print(t)
-  ratios = ra.ratio_to_each(t, div_limit=4)
-  ratio_scores = ra.ratio_scores(ratios,t)
-  ratio_scores = np.array(ratio_scores)
-  print(len(ratios), len(ratio_scores), type(ratio_scores))
-  for i in range(len(ratios)):
-    print(f'ratios \n{ratios[i]}, \nratio_scores {ratio_scores[:,i]}')
-'''
-all_weights = []
-all_confidences = []
-for beats,subdiv in beats_subdivs:
-  print(f'**************** beat {beats} ****************')
-  t = make_time_from_beats(beats, subdiv)
-  answer = make_correct_answer(beats, subdiv)
-  #print(f'answer {answer.tolist()}')
-  good_weights, confidences = test_and_compare_weights(t, answer, weight_combinations)
-  all_weights.append(good_weights)
-  all_confidences.append(confidences)
+  for i in range(num_attempts):
+    maxdev = 0.01
+    t = make_time_from_beats(beats, subdiv, maxdev)
+    duration_pattern, suggestion, good_answer = test_ratio_analyzer(t, beats, weights)
+    if good_answer:
+      good += 1
+print(f'num good {good} out of {num_attempts}')
 '''
 '''
-# intersection of good weights, find those who exist with both/all beats
-weight_sets = []
-for i in range(len(all_weights)):
-  t = tuple(map(tuple, all_weights[i]))
-  s = set(t)
-  weight_sets.append(s)
-weight_set_intersection = set(weight_sets[0]) # just start somewhere
-for s in weight_sets:
-  weight_set_intersection.intersection_update(s)
+for i in range(10):
+  for beats,subdiv in beats_subdivs:
+    maxdev = 0.1
+    t = make_time_from_beats(beats, subdiv, maxdev)
+    print(f'****************\nbeat {beats} \ntime {t}')
+''' 
+t = np.array([0.,   0.33, 0.52, 1.04, 1.56, 1.89 ,2.1,  2.4,  2.66, 2.92, 3.19, 3.67])
+weights = [.0,1,1,0.0,0,0.0]
+ra.set_weights(weights)
+ratios_reduced, ranked_unique_representations, rankscores, trigseq, ticktempo_bpm, tempo_tendency, pulseposition = ra.analyze(t)
+best = ranked_unique_representations[0]
+ratio_sequence = np.array(ratios_reduced[best])
+duration_pattern = ra.make_duration_pattern(ratio_sequence).astype('int')
+print(ratio_sequence)
 
-# sum all confidence values for each weight
-confidence_for_weights = {}
-for w,c in zip(all_weights, all_confidences):
-  for i in range(len(w)):
-    if w[i] in weight_set_intersection:
-      if w[i] in confidence_for_weights:
-        confidence_for_weights[w[i]] += c[i]
-      else:
-        confidence_for_weights[w[i]] = c[i]
+beats_subdivs = beats_subdivs[1:3] #test subset
 
-print('confidence_for_weights')
-for key, value in confidence_for_weights.items():
-  print(key, value)
-'''
+def auto_adjust_weights():
+  # auto adjust weights
+  all_weights_good = []
+  all_confidences = []
+  for beats,subdiv in beats_subdivs:
+    maxdev = 0.1
+    t = make_time_from_beats(beats, subdiv, maxdev)
+    print(f'****************\nbeat {beats} \ntime {t}')
+    good_weights, confidences = test_and_compare_weights(t, beats, weight_combinations)
+    print(f'good {len(good_weights)}, out of {len(weight_combinations)}')
+    all_weights_good.append(good_weights)
+    all_confidences.append(confidences)
+
+  all_weights_bad = []
+  all_weights_good_flat = purge_duplicate_weights(flatten(all_weights_good))
+  for w in weight_combinations:
+    if w not in all_weights_good_flat:
+      all_weights_bad.append(w)
+  
+  print(f' *** num good weights {len(all_weights_good_flat)}')
+  print(f' *** num bad weights {len(all_weights_bad)}')
+  print(f' *** num all weights {len(weight_combinations)}')
+  weight_set_intersection = find_intersection_good_weights(all_weights_good)
+  sum_confidence_each_weight(all_weights_good, all_confidences, weight_set_intersection)
+
+#auto_adjust_weights()
+
+
 # THEN
 # select N best (highest confidence) for each beat
 # adjust weights [0.8, 0.2] 
@@ -217,3 +296,4 @@ for key, value in confidence_for_weights.items():
 # intersection of good weights, append to previous good weights
 # select N best from confidence
 # print and inspect
+#print(weight_combinations)
