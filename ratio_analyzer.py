@@ -26,7 +26,6 @@ weights = [0, 1, 1, 0.3, 1, 0.2, 0.3, 1]
 def set_weights(w):
     global weights
     weights = w
-    print('weights', weights)
 
 def rational_approx(n, div_limit=4):
     # faster rational approx for 2 and 3 divisions
@@ -219,7 +218,7 @@ def get_ranked_unique_representations(duplicates, scores):
     return ranked_unique_representations, rankscores
 
 def normalize_numerators(ratios):
-    n = ratios[:,:,0]#.astype(int)
+    n = ratios[:,:,0].astype(int)
     max_all = np.max(n)
     for i in range(len(n)):
         max_this = (np.max(n[i]))
@@ -250,14 +249,14 @@ def normalize_and_add_scores(scores, weights, invert=None):
     # and add them to produce a ranking (sum of scores)
     scoresum = np.zeros(len(scores[0]))
     if invert == None:
-        invert = np.zeros(len(scores[0]))
+        invert = np.zeros(len(weights))
     for i in range(len(scores)):
         smax = max(scores[i])
         smin = min(scores[i])
         if smax == smin:
             s = 1
         else:
-            s = (scores[i])-smin/(smax-smin)
+            s = (np.array(scores[i])-smin)/(smax-smin)
         if invert[i] > 0:
             s = np.subtract(1,s)
         scoresum += s*weights[i]

@@ -177,12 +177,12 @@ class Osc_server():
     def receive_parameter_controls(self, unused_addr, *osc_data):
         '''Message handler. This is called when we receive an OSC message'''
         # set control parameters, like score weights etc
-        kbarlow_weight, kratio_dev_weight, \
+        kbarlow_weight, kbenni_weight, knd_weight, kratio_dev_weight, \
             kratio_dev_abs_max_weight, kgrid_dev_weight, \
             kevidence_weight, kautocorr_weight, kratio1_order, \
             kratio2_order, knotenum_order, kinterval_order, ktemperature = osc_data
         
-        ratio_analyzer_weights = [kbarlow_weight, kratio_dev_weight, \
+        ratio_analyzer_weights = [kbarlow_weight, kbenni_weight, knd_weight, kratio_dev_weight, \
                                   kratio_dev_abs_max_weight, kgrid_dev_weight, \
                                   kevidence_weight, kautocorr_weight]
         self.ra.set_weights(ratio_analyzer_weights)

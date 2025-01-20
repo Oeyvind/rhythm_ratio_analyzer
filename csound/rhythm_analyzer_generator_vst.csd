@@ -1,5 +1,5 @@
 <Cabbage>
-form size(605, 460), caption("Rhythm Analyzer"), pluginId("rtm1"), guiMode("queue"), colour(46,45,52)
+form size(655, 460), caption("Rhythm Analyzer"), pluginId("rtm1"), guiMode("queue"), colour(46,45,52)
 
 ; recording and analysis
 button bounds(5, 5, 70, 50), text("record","recording"), channel("record_enable"), colour:0("green"), colour:1("red")
@@ -32,23 +32,23 @@ groupbox bounds(5, 60, 240, 65), text("last recorded event"), colour(20,30,45){
   label bounds(180,45,50,20), text("velocity"), fontSize(12)
 }
 
-groupbox bounds(250, 60, 350, 65), text("rhythm analysis weights"), colour(20,30,45){
+groupbox bounds(250, 60, 400, 65), text("rhythm analysis weights"), colour(20,30,45){
 nslider bounds(5, 25, 40, 20), channel("barlow_weight"), range(0, 1, 1), fontSize(14)
 label bounds(5, 45, 40, 20), text("barlow"), fontSize(12)
-;nslider bounds(50, 25, 40, 20), channel("benni_weight"), range(0, 1, 1), fontSize(14)
-;label bounds(50, 45, 40, 20), text("benni"), fontSize(12)
-;nslider bounds(100, 25, 40, 20), channel("nd_weight"), range(0, 1, 1), fontSize(14)
-;label bounds(100, 45, 40, 20), text("n+d"), fontSize(12)
-nslider bounds(100, 25, 40, 20), channel("ratio_dev_weight"), range(0, 1, 1), fontSize(14)
-label bounds(100, 45, 40, 20), text("r_dev"), fontSize(12)
-nslider bounds(150, 25, 40, 20), channel("ratio_dev_abs_max_weight"), range(0, 1, 1), fontSize(14)
-label bounds(150, 45, 40, 20), text("r_maxdev"), fontSize(12)
-nslider bounds(200, 25, 40, 20), channel("grid_dev_weight"), range(0, 1, 1), fontSize(14)
-label bounds(200, 45, 40, 20), text("grid"), fontSize(12)
-nslider bounds(250, 25, 40, 20), channel("evidence_weight"), range(0, 1, 1), fontSize(14)
-label bounds(250, 45, 40, 20), text("evidence"), fontSize(12)
-nslider bounds(300, 25, 40, 20), channel("autocorr_weight"), range(0, 1, 1), fontSize(14)
-label bounds(300, 45, 40, 20), text("acorr"), fontSize(12)
+nslider bounds(50, 25, 40, 20), channel("benni_weight"), range(0, 1, 1), fontSize(14)
+label bounds(50, 45, 40, 20), text("benni"), fontSize(12)
+nslider bounds(100, 25, 40, 20), channel("nd_weight"), range(0, 1, 1), fontSize(14)
+label bounds(100, 45, 40, 20), text("n+d"), fontSize(12)
+nslider bounds(150, 25, 40, 20), channel("ratio_dev_weight"), range(0, 1, 1), fontSize(14)
+label bounds(150, 45, 40, 20), text("r_dev"), fontSize(12)
+nslider bounds(200, 25, 40, 20), channel("ratio_dev_abs_max_weight"), range(0, 1, 1), fontSize(14)
+label bounds(200, 45, 40, 20), text("r_maxdev"), fontSize(12)
+nslider bounds(250, 25, 40, 20), channel("grid_dev_weight"), range(0, 1, 1), fontSize(14)
+label bounds(250, 45, 40, 20), text("grid"), fontSize(12)
+nslider bounds(300, 25, 40, 20), channel("evidence_weight"), range(0, 1, 1), fontSize(14)
+label bounds(300, 45, 40, 20), text("evidence"), fontSize(12)
+nslider bounds(350, 25, 40, 20), channel("autocorr_weight"), range(0, 1, 1), fontSize(14)
+label bounds(350, 45, 40, 20), text("acorr"), fontSize(12)
 }
 
 groupbox bounds(5, 135, 590, 170), text("generate events with prob logic"), colour(25,45,30){
@@ -289,6 +289,8 @@ instr 31
   
   ; send other parameter controls to Python
   kbarlow_weight chnget "barlow_weight"
+  kbenni_weight chnget "benni_weight"
+  knd_weight chnget "nd_weight"
   kratio_dev_weight chnget "ratio_dev_weight"
   kratio_dev_abs_max_weight chnget "ratio_dev_abs_max_weight"
   kgrid_dev_weight chnget "grid_dev_weight"
@@ -299,12 +301,12 @@ instr 31
   knotenum_order chnget "gen_pitch_order"
   kinterval_order chnget "gen_interval_order"
   ktemperature chnget "gen_temperature"
-  kparm_update = changed(kbarlow_weight, kratio_dev_weight, 
+  kparm_update = changed(kbarlow_weight, kbenni_weight, knd_weight, kratio_dev_weight, 
                       kratio_dev_abs_max_weight, kgrid_dev_weight, 
                       kevidence_weight, kautocorr_weight, kratio1_order, 
                       kratio2_order, knotenum_order, kinterval_order, ktemperature)
-  OSCsend kparm_update, "127.0.0.1", 9901, "/client_parametercontrols", "fffffffffff", 
-                      kbarlow_weight, kratio_dev_weight, 
+  OSCsend kparm_update, "127.0.0.1", 9901, "/client_parametercontrols", "fffffffffffff", 
+                      kbarlow_weight, kbenni_weight, knd_weight, kratio_dev_weight, 
                       kratio_dev_abs_max_weight, kgrid_dev_weight, 
                       kevidence_weight, kautocorr_weight, kratio1_order, 
                       kratio2_order, knotenum_order, kinterval_order, ktemperature
