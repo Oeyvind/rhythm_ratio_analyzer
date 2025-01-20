@@ -381,8 +381,7 @@ instr 108
   ; beat clock
   ktempo_bpm chnget "gen_tempo_bpm"
   ibeat_clock chnget "beat_clock"
-  print ibeat_clock, ceil(ibeat_clock)
-  kclock_counter init ceil(ibeat_clock)*kr ; when pausing clock, restart form the next whole beat
+  kclock_counter init ibeat_clock*kr
 	kclock_counter += (ktempo_bpm/60)
   kbeat_clock = (kclock_counter/kr)
 	chnset kbeat_clock, "beat_clock_dry" ; unmodulated clock
@@ -421,7 +420,6 @@ instr 109
 	endif
 	beat_clock_init:
 		ibeat_clock chnget "beat_clock"
-    ibeat_clock -= 2/kr
     print ibeat_clock
     kinit_clock = 0
 	rireturn
@@ -434,9 +432,6 @@ instr 109
 	kEvent_queue[] init 10, 6 ; 30 events, 6 parameters each
   Sbeat_sync sprintf "beat_sync_%i", ivoice
   kbeat_sync chnget Sbeat_sync
-  ibeat_sync = 1
-  cabbageSetValue Sbeat_sync, ibeat_sync
-
   ktemperature chnget "gen_temperature"
   kdur_scale chnget "gen_duration_scale"
   kdeviation_scale chnget "gen_deviation_scale"
@@ -448,7 +443,7 @@ instr 109
   krequest_weight = 0
 
   ; event trig
-	kgen_once init 1 ; do only the first time
+	;kgen_beatsync_once init 1 ; do only for next event
   kgen_index init 0
   kgen_ratio init 0 
   kgen_deviation init 0
@@ -462,36 +457,40 @@ instr 109
   igen_instr = 121
   ktime timeinsts ; for debug
   ;printk2 floor(kbeat_clock)
-  kpython_data_ready init 0
   
   ; get event data from server
-  if (kbeat_clock > knext_event_time) && (kpython_data_ready == 0) then
+  if (kbeat_clock > knext_event_time) then
     OSCsend kcount, "127.0.0.1", 9901, "/client_prob_gen", "ffff", ivoice, kgen_index, krequest_ratio, krequest_weight
   nextmsg:
     Saddr sprintf "python_prob_gen_voice%i", ivoice
     kmess OSClisten gihandle, Saddr, "fffffff", kgen_index, kgen_ratio, kgen_deviation, kgen_duration, kgen_notenum, kgen_interval, kgen_velocity ; receive OSC data from Python
-    if kmess > 0 then
-        kpython_data_ready = 1
-    endif
+    ;if kmess > 0 then
+    ;    kpython_data_ready = 1
+    ;endif
     if kmess == 0 goto done
     kgoto nextmsg ; make sure we read all messages in the network buffer
   done:
   endif
 
+  
+	if kbeat_sync == 1 then
+    knext_event_time init ceil(ibeat_clock)
+    printk2 knext_event_time
+    printk2 ceil(kbeat_clock), 10
+    knext_event_time = ceil(kbeat_clock) ; sync to whole beat clock if enabled
+    kzero = 0
+    cabbageSetValue Sbeat_sync, kzero, changed(knext_event_time)
+  else
+    knext_event_time init ibeat_clock
+  endif
   ; store events in queue for playback
-  Sdebug sprintfk "voice %i, beat clock %.2f, next event %.2f", ivoice, kbeat_clock, knext_event_time
-  ;puts Sdebug, knext_event_time
-  if (kbeat_clock > knext_event_time) && (kpython_data_ready == 1) then
+  Sdebug sprintfk "beat clock %.2f, next event %.2f", kbeat_clock, knext_event_time
+  puts Sdebug, knext_event_time
+  if (kbeat_clock > knext_event_time) then
     
 		;Sindex sprintfk "count %i, gen index %i, ratio %.2f, beat_clock %.2f, at time %.2f", kcount, kgen_index, kgen_ratio, kbeat_clock, ktime
 		;puts Sindex, kcount+1
   	knext_event_time += round(kprevious_ratio*iclock_resolution)/iclock_resolution ; prevent accumulative rounding errors
-		if kbeat_sync == 1 then
-      ;knext_event_time = kgen_once > 0 ? ceil(ibeat_clock) : knext_event_time ; sync to whole beat clock the first time
-      knext_event_time = ceil(kbeat_clock) ; sync to whole beat clock if enabled
-      kzero = 0
-      cabbageSetValue Sbeat_sync, kzero, changed(knext_event_time)
-    endif
 	  kdeviation = kgen_deviation * kdeviation_scale 
 		kprevious_ratio = kgen_ratio
     kEvent_queue[kcount % lenarray(kEvent_queue)][0] = knext_event_time + (kgen_ratio*kdeviation)*(60/ktempo_bpm); store this event time with deviation, for correct playback
@@ -500,9 +499,8 @@ instr 109
     kEvent_queue[kcount % lenarray(kEvent_queue)][4] = kgen_interval
     kEvent_queue[kcount % lenarray(kEvent_queue)][5] = kgen_velocity
 		;printarray kEvent_queue
-		kgen_once = 0
     kcount += 1
-    kpython_data_ready = 0
+    
 	endif
 
 	; event playback
@@ -578,12 +576,12 @@ endin
 
 ; downbeat instr
 instr 119
-  iamp = ampdbfs(-1)
+  iamp = ampdbfs(-5)
   aenv expon 1, p3, 0.0001
   a1 oscil 1, 440
   a1 *= aenv
   a1 *= iamp
-  outs a1, a1
+  outs a1, a1*0
 endin
 
 ; rhythm trig player

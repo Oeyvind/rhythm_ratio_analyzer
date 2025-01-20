@@ -82,9 +82,9 @@ nslider bounds(110, 25, 40, 25), channel("beat_clock_mod_phase"), range(0, 1, 0,
 label bounds(113, 50, 40, 18), text("phase"), fontSize(12), align("left")
 }
 
-button bounds(400, 25, 50, 20), text("sync_v1"), channel("beat_sync_1"), colour:0("green"), colour:1("red"), latched(1)
-button bounds(400, 50, 50, 20), text("sync_v2"), channel("beat_sync_2"), colour:0("green"), colour:1("red"), latched(1)
-combobox bounds(455, 25, 57, 17), items("analyze", "host", "host_x2", "free"), channel("gen_tempo_mode"), value(2), fontSize(15)
+button bounds(400, 25, 50, 25), text("beat sync"), channel("beat_sync"), colour:0("green"), colour:1("red"), latched(1)
+;button bounds(10, 65, 30, 23), text("at"), channel("auto_tempo"), colour:0("green"), colour:1("red"), value(1)
+combobox bounds(455, 25, 57, 17), items("analyze", "host", "free"), channel("gen_tempo_mode"), value(2), fontSize(15)
 nslider bounds(515, 25, 40, 25), channel("gen_tempo_bpm"), range(1, 2999, 60), fontSize(14)
 label bounds(460, 42, 60, 18), text("g_tempo"), fontSize(12), align("left")
 
@@ -262,17 +262,16 @@ instr 31
   kclear_all chnget "clear_all"
   ksave_all chnget "save_all"
   ktempo_mode chnget "gen_tempo_mode"
-  khost_bpm chnget "HOST_BPM"
-  khost_bpm_update = changed(khost_bpm, ktempo_mode)
+  printk2 ktempo_mode
   if ktempo_mode == 1 then
     kauto_tempo_update = 1
   else
     kauto_tempo_update = 0
-    if ktempo_mode == 2 then
-      cabbageSetValue "gen_tempo_bpm", khost_bpm, khost_bpm_update
-    elseif ktempo_mode == 3 then
-      cabbageSetValue "gen_tempo_bpm", khost_bpm*2, khost_bpm_update
-    endif
+  endif
+  if ktempo_mode == 2 then
+    khost_bpm chnget "HOST_BPM"
+    printk2 khost_bpm, 10
+    cabbageSetValue "gen_tempo_bpm", khost_bpm, changed(khost_bpm)
   endif
   ; if mode is "free", do nothing
 
@@ -381,8 +380,7 @@ instr 108
   ; beat clock
   ktempo_bpm chnget "gen_tempo_bpm"
   ibeat_clock chnget "beat_clock"
-  print ibeat_clock, ceil(ibeat_clock)
-  kclock_counter init ceil(ibeat_clock)*kr ; when pausing clock, restart form the next whole beat
+  kclock_counter init ibeat_clock*kr
 	kclock_counter += (ktempo_bpm/60)
   kbeat_clock = (kclock_counter/kr)
 	chnset kbeat_clock, "beat_clock_dry" ; unmodulated clock
@@ -421,7 +419,6 @@ instr 109
 	endif
 	beat_clock_init:
 		ibeat_clock chnget "beat_clock"
-    ibeat_clock -= 2/kr
     print ibeat_clock
     kinit_clock = 0
 	rireturn
@@ -432,11 +429,8 @@ instr 109
 	kbeat_clock_dry chnget "beat_clock_dry"
 	kclock_direction chnget "beat_clock_direction"
 	kEvent_queue[] init 10, 6 ; 30 events, 6 parameters each
-  Sbeat_sync sprintf "beat_sync_%i", ivoice
-  kbeat_sync chnget Sbeat_sync
-  ibeat_sync = 1
-  cabbageSetValue Sbeat_sync, ibeat_sync
 
+  kbeat_sync chnget "beat_sync"
   ktemperature chnget "gen_temperature"
   kdur_scale chnget "gen_duration_scale"
   kdeviation_scale chnget "gen_deviation_scale"
@@ -463,7 +457,7 @@ instr 109
   ktime timeinsts ; for debug
   ;printk2 floor(kbeat_clock)
   kpython_data_ready init 0
-  
+
   ; get event data from server
   if (kbeat_clock > knext_event_time) && (kpython_data_ready == 0) then
     OSCsend kcount, "127.0.0.1", 9901, "/client_prob_gen", "ffff", ivoice, kgen_index, krequest_ratio, krequest_weight
@@ -479,18 +473,14 @@ instr 109
   endif
 
   ; store events in queue for playback
-  Sdebug sprintfk "voice %i, beat clock %.2f, next event %.2f", ivoice, kbeat_clock, knext_event_time
-  ;puts Sdebug, knext_event_time
   if (kbeat_clock > knext_event_time) && (kpython_data_ready == 1) then
-    
 		;Sindex sprintfk "count %i, gen index %i, ratio %.2f, beat_clock %.2f, at time %.2f", kcount, kgen_index, kgen_ratio, kbeat_clock, ktime
 		;puts Sindex, kcount+1
   	knext_event_time += round(kprevious_ratio*iclock_resolution)/iclock_resolution ; prevent accumulative rounding errors
-		if kbeat_sync == 1 then
-      ;knext_event_time = kgen_once > 0 ? ceil(ibeat_clock) : knext_event_time ; sync to whole beat clock the first time
-      knext_event_time = ceil(kbeat_clock) ; sync to whole beat clock if enabled
-      kzero = 0
-      cabbageSetValue Sbeat_sync, kzero, changed(knext_event_time)
+		if kbeat_sync == 0 then
+      knext_event_time = kgen_once > 0 ? ibeat_clock : knext_event_time ; sync to free beat clock the first time
+    else
+      knext_event_time = kgen_once > 0 ? ceil(ibeat_clock) : knext_event_time ; sync to whole beat clock the first time
     endif
 	  kdeviation = kgen_deviation * kdeviation_scale 
 		kprevious_ratio = kgen_ratio
@@ -578,12 +568,12 @@ endin
 
 ; downbeat instr
 instr 119
-  iamp = ampdbfs(-1)
+  iamp = ampdbfs(-5)
   aenv expon 1, p3, 0.0001
   a1 oscil 1, 440
   a1 *= aenv
   a1 *= iamp
-  outs a1, a1
+  outs a1, a1*0
 endin
 
 ; rhythm trig player

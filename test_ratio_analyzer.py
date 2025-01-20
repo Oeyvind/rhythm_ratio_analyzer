@@ -243,123 +243,6 @@ def compare_indigestabilities(duration_pattern, suggestion):
 def flatten(xss):
     return [x for xs in xss for x in xs]
 
-# test for each beat with all weight combinations
-discrete_weights = [1,0]
-num_weights = 8
-weight_combinations_from_discrete = make_weight_combinations(num_weights, discrete_weights)
-#weight_combinations = [[1,1,1,1,1,1],[1,0,1,1,0,1],[0,0,0,0,0,1]]
-# the weights are (in order):
-#barlow_weight
-#benni_weight
-#nd_sum_weight
-#ratio_dev_weight
-#ratio_dev_abs_max_weight
-#grid_dev_weight
-#evidence_weight
-#autocorr_weight
-#weights = [0,0,0,0,1,0,0]
-
-beats_subdivs = [[[6,3,3,2,2,2,6],6], 
-                 [[2,1,1,2],2],
-                 [[3,1,4,4],4],
-                 [[4,1,1,1,1,3,3,2,1],4], #!
-                 [[3,3,2,3,3,2,4],4], #!
-                 [[2,1,1,1,1,1,1,2,1,1,1,1,1,1,1],4], # !!
-                 [[7,1,8,8],1],
-                 [[7,1,1,7,3,2,3,8],1],
-                 [[4,1,1,1,1,4,1,1,1,1,1],4], #!
-                 [[3,1,1,1,3,1,1,1,1],3],
-                 [[3,1,2,3,2,1,1],3], #!
-                 [[3,1,1,2,1,1,2,1,1],3],
-                 [[3,1,1,2,1,1,2,1,3],3],
-                 [[3,1,1,1,2,1,3],3],
-                 [[4,2,1,1,4],4], #!
-                 [[4,2,1,1,4],4],
-                 [[3,5,5,3],4],
-                 [[3,5,3,3,2],4], 
-                 [[2,1,2,1,3],3], 
-                 [[3,3,4,2,2],4]]
-
-
-# the weights are (in order):
-#barlow_weight
-#benni_weight
-#nd_sum_weight
-#ratio_dev_weight
-#ratio_dev_abs_max_weight
-#grid_dev_weight
-#evidence_weight
-#autocorr_weight
-
-def test_ratio_analyzer_on_beats(beats_subdivs):
-  weights = [0, 0, 0, 1, 0., 1, 0, 0]
-  good = 0
-  num_attempts = 5#30
-  for beats,subdiv in beats_subdivs:
-    for i in range(num_attempts):
-      maxdev = 0.1
-      t = make_time_from_beats(beats, subdiv, maxdev)
-      print(t)
-      duration_pattern, suggestion, good_answer = test_ratio_analyzer(t, beats, weights)
-      if good_answer:
-        good += 1
-  print(f'num good {good} out of {num_attempts*len(beats_subdivs)}')
-  print(len(beats_subdivs))
-#beats_subdivs = beats_subdivs[1:2]
-#test_ratio_analyzer_on_beats(beats_subdivs)
-
-'''
-def auto_adjust_weights_old(beats_subdivs, weight_combinations, maxdev=0, num_attempts=1):
-  # auto adjust weights
-  all_good_weights = []
-  all_good_weights_with_confidence = {}
-  weights_bad_for_some = []
-  for beats,subdiv in beats_subdivs:
-    this_good_weights = []
-    print(f'****************\nbeat {beats}')
-    for i in range(num_attempts):
-      t = make_time_from_beats(beats, subdiv, maxdev)
-      #print(f'****************\nbeat {beats} \ntime {t}')
-      good_weights, confidences = test_and_compare_weights(t, beats, weight_combinations)
-      #print(f'good {len(good_weights)}, out of {len(weight_combinations)}')
-      this_good_weights.append(good_weights)
-      for w,c in zip(good_weights, confidences):
-        all_good_weights_with_confidence.setdefault(tuple(w), []).append(c)
-
-    this_weights_good_flat = purge_duplicate_weights(flatten(this_good_weights))
-    for w in weight_combinations:
-      if w not in this_weights_good_flat:
-        weights_bad_for_some.append(w) # if the weight did not get it right in any attempt for this rhythm
-
-    all_good_weights.append(this_weights_good_flat)
-
-    print(f' *** num good weights for this rhythm {len(this_weights_good_flat)}')
-    print(f' *** num bad weights {len(weights_bad_for_some)}')
-    print(f' *** num all weights {len(weight_combinations)}')
-    
-  weight_set_intersection = find_intersection_good_weights(all_good_weights)
-  weights_bad_for_some = purge_duplicate_weights(weights_bad_for_some)
-  print(f'****************\ntotal')
-  print(f' *** num weights good for all rhythms {len(weight_set_intersection)}')
-  print(f' *** num bad weights {len(weights_bad_for_some)}')
-  print(f' *** num all weights {len(weight_combinations)}')
-  print('confidence for weights:')
-  #for k,v in all_good_weights_with_confidence.items():
-  #  print(f'{k}, avg:{(sum(v)/len(v)):.2f}, min:{min(v):.2f}')
-  for k in weight_set_intersection:
-    v = all_good_weights_with_confidence[k]
-    print(f'{k}, avg:{(sum(v)/len(v)):.2f}, min:{min(v):.2f}')
-#beats_subdivs = beats_subdivs[:3] #test subset
-# test for each beat with all weight combinations
-discrete_weights = [1,0]
-num_weights = 8
-weight_combinations = make_weight_combinations(num_weights, discrete_weights)
-maxdev = 0.
-num_attempts = 1
-#auto_adjust_weights_old(beats_subdivs, weight_combinations, maxdev, num_attempts)
-'''
-
-
 def auto_adjust_weights(init_weight_combinations, beats_subdivs, maxdev=0, num_attempts=3, training_rounds=3, outputfile ='weights_adjusted.txt'):
   print(f'testing the {len(init_weight_combinations)} initial weights, {training_rounds} training rounds')
   print(f'maxdev: {maxdev}, num_attempts: {num_attempts}, outputfile: {outputfile}')
@@ -497,6 +380,75 @@ def explore_test_weight_variations(weights, weights_confidence_dict, beats_subdi
   #  print(f'{k}, avg:{(sum(v)/len(v)):.2f}, min:{min(v):.2f}')
   return weights_confidence_dict2, all_tested_weights
 
+
+# test for each beat with all weight combinations
+discrete_weights = [1,0]
+num_weights = 8
+weight_combinations_from_discrete = make_weight_combinations(num_weights, discrete_weights)
+#weight_combinations = [[1,1,1,1,1,1],[1,0,1,1,0,1],[0,0,0,0,0,1]]
+# the weights are (in order):
+#barlow_weight
+#benni_weight
+#nd_sum_weight
+#ratio_dev_weight
+#ratio_dev_abs_max_weight
+#grid_dev_weight
+#evidence_weight
+#autocorr_weight
+#weights = [0,0,0,0,1,0,0]
+
+beats_subdivs = [[[6,3,3,2,2,2,6],6], 
+                 [[2,1,1,2],2],
+                 [[3,1,4,4],4],
+                 [[4,1,1,1,1,3,3,2,1],4], #!
+                 [[3,3,2,3,3,2,4],4], #!
+                 [[2,1,1,1,1,1,1,2,1,1,1,1,1,1,1],4], # !!
+                 [[7,1,8,8],1],
+                 [[7,1,1,7,3,2,3,8],1],
+                 [[4,1,1,1,1,4,1,1,1,1,1],4], #!
+                 [[3,1,1,1,3,1,1,1,1],3],
+                 [[3,1,2,3,2,1,1],3], #!
+                 [[3,1,1,2,1,1,2,1,1],3],
+                 [[3,1,1,2,1,1,2,1,3],3],
+                 [[3,1,1,1,2,1,3],3],
+                 [[4,2,1,1,4],4], #!
+                 [[4,2,1,1,4],4],
+                 [[3,5,5,3],4],
+                 [[3,5,3,3,2],4], 
+                 [[2,1,2,1,3],3], 
+                 [[3,3,4,2,2],4]]
+
+
+# the weights are (in order):
+#barlow_weight
+#benni_weight
+#nd_sum_weight
+#ratio_dev_weight
+#ratio_dev_abs_max_weight
+#grid_dev_weight
+#evidence_weight
+#autocorr_weight
+
+#weights = [0, 0, 0, 1, 0., 1, 0, 0]
+weights = [1.0, 0.0, 1.0, 0.0, 0.0, 0.0625, 0.5, 0.75]
+def test_ratio_analyzer_on_beats(beats_subdivs, weights):
+  good = 0
+  num_attempts = 5
+  for beats,subdiv in beats_subdivs:
+    for i in range(num_attempts):
+      maxdev = 0.2
+      t = make_time_from_beats(beats, subdiv, maxdev)
+      print(t)
+      duration_pattern, suggestion, good_answer = test_ratio_analyzer(t, beats, weights)
+      if good_answer:
+        good += 1
+  print(f'num good {good} out of {num_attempts*len(beats_subdivs)}')
+  print(len(beats_subdivs))
+#beats_subdivs = beats_subdivs[1:2]
+#test_ratio_analyzer_on_beats(beats_subdivs, weights)
+
+
+
 #beats_subdivs = beats_subdivs[:3]
 #init_weight_combinations = [[0,1,1,1,1,1,1,0],[0,1,0,1,1,0,1,0],[0,0,0,0,0,0,1,0]]
 init_weight_combinations = weight_combinations_from_discrete # all 256 init weights
@@ -508,12 +460,3 @@ training_rounds = 7
 outputfile = f'weights_adjusted_dev{int(maxdev*1000)}_att{num_attempts}_tr{training_rounds}.txt'
 auto_adjust_weights(init_weight_combinations, beats_subdivs, maxdev, num_attempts, training_rounds, outputfile)
 
-
-# possibly: 
-#   - run auto_adjust_weights on initial weight combinations, with some random deviation, attempts, training rounds
-#   - discard the weights with lowest minimum confidence
-#   - run auto_adjust_weights again with the remaining set of weights
-#   - when refactoring, we might divide the auto adjust into initial and exploration phases/functions
-#   - as for now, we just discard the confidences of the selected weight set when we run it again,
-#     ... the confidences will be calculated again in the intial phase when running auto_adjust_weights again
-# DO: implement num_attempts as argument to both auto_adjust and explore functions
