@@ -174,7 +174,7 @@ def sum_confidence_each_weight(all_weights, all_confidences, weight_set_intersec
     print(key, value)
   return confidence_for_weights
 
-def test_ratio_analyzer(t, answer, weights):
+def test_ratio_analyzer(t, answer, weights, debug=False):
     ra.set_weights(weights)
     rank = 1
     ratios_reduced, ranked_unique_representations, rankscores, trigseq, ticktempo_bpm, tempo_tendency, pulseposition = ra.analyze(t, rank)
@@ -185,7 +185,7 @@ def test_ratio_analyzer(t, answer, weights):
     print(f'answer: {answer} \nbest  : {duration_pattern.tolist()} \nbest_ID: {best}')
     good_answer = np.array_equal(answer,duration_pattern)
     print('good:', good_answer)
-    if not good_answer:
+    if (not good_answer) or debug:
       #print(ranked_unique_representations)
       #print(rankscores)
       for i in range(len(ranked_unique_representations)):
@@ -447,6 +447,61 @@ def test_ratio_analyzer_on_beats(beats_subdivs, weights):
 #beats_subdivs = beats_subdivs[1:2]
 #test_ratio_analyzer_on_beats(beats_subdivs, weights)
 
+def autocorr(data):
+    """Autocorrelation (non normalized)"""
+    mean = np.mean(data)
+    data = data-mean
+    return np.correlate(data, data, 'full')[len(data)-1:]
+
+def find_pulse(data, mode='coef'):
+  print(type(data))
+  # reduce 
+  data = data/np.gcd.reduce(data)
+  pulse_2 = 0
+  pulse_3 = 0
+  for i in range(4):
+    testdata = data*(2**i)
+    print(2**i, 'data', testdata)
+    t1 = make_trigger_sequence(testdata)
+    a1 = autocorr(t1)
+    p1 = np.argsort(-a1[1:])[:5]+1
+    print(p1)
+    print(a1[p1])
+    for j in range(len(p1)):
+      n = p1[j]
+      if mode == 'coef': coef = a1[p1[j]] # correlation coefficient
+      else: coef = 1/(j+1) # gradually decreasing with order
+      if n <= 32:
+        if n%3==0: pulse_3 += coef
+        elif n%2==0: pulse_2 += coef
+  certainty = pulse_2/(pulse_2+pulse_3)
+  if certainty > 0.5: 
+    pulse_div = 2
+  else: 
+    pulse_div = 3
+    certainty = 1-certainty 
+  #print(f'pulse div is {pulse_div} with certainty: {certainty} ')
+  return pulse_div, certainty
+
+def make_trigger_sequence(dur_pattern):
+    # make the trigger sequence 
+    # 1=transient, 0 = space
+    # e.g. for rhythm 6/6, 3/6, 3/6, 2/6, 2/6, 2/6, the sequence will be
+    # [1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0]
+    trigger_seq = []
+    for num in dur_pattern.astype(int):
+        trigger_seq.append(1)
+        for i in range(num-1):
+            trigger_seq.append(0)
+    return trigger_seq
+
+'''dur_pattern = np.array([4,2,2,3,1,4])
+#dur_pattern = np.array([4,2,4,2,4,3,3,3])
+#dur_pattern = np.array([2,1,2,1,3,1,1,1])
+#dur_pattern = np.array([2,2,1,2,2,2,1,2,2,1,2,2,2,1])
+print(dur_pattern)
+find_pulse(dur_pattern, mode='')
+'''
 
 
 #beats_subdivs = beats_subdivs[:3]
@@ -458,5 +513,48 @@ maxdev = 0.15
 num_attempts = 10
 training_rounds = 7
 outputfile = f'weights_adjusted_dev{int(maxdev*1000)}_att{num_attempts}_tr{training_rounds}.txt'
-auto_adjust_weights(init_weight_combinations, beats_subdivs, maxdev, num_attempts, training_rounds, outputfile)
+#auto_adjust_weights(init_weight_combinations, beats_subdivs, maxdev, num_attempts, training_rounds, outputfile)
 
+'''
+# test time sequence  
+t = np.array([0.,   0.5,  0.75, 1.25, 1.5,  2.,   2.67, 3.33, 4.  ])
+t = np.array([0.,   0.5,  0.75, 1.25, 1.5,  2.,   2.33, 2.67, 3.  ])
+beats=(4,2,2,4,1,1,1,1,4)
+t = make_time_from_beats(beats, 1, 0)
+'''
+
+'''
+# odd problem sequence
+# delta 3 and 4 should be same ratio
+# manual evaluation:
+dur_pat = [2,2,1,1,2,1,2,1,2,2,1,1,3,1,1,4]#,1,1,4,1,1
+t = [0.,   0.37, 0.74, 0.89, 1.08, 1.41, 1.61, 1.95, 2.14, 2.47, 2.86, 3.02, 3.19, 3.77, 3.92, 4.09]
+
+# print from test with osc_server
+ratios best:
+[0.5  0.5  0.17 0.25 0.5  0.25 0.5  0.25 0.5  0.5  0.25 0.25 0.75 0.25
+ 0.25]
+pulse_div, certainty 3 1.0
+tempo_sanitized, tempo_factor 109.3200442044246 1.3333333333333333
+sanitized ratios best:
+[0.67 0.67 0.22 0.33 0.67 0.33 0.67 0.33 0.67 0.67 0.33 0.33 1.   0.33
+ 0.33]
+ '''
+# odd problem sequence
+# delta 3 and 4 should be same ratio
+# manual evaluation:
+dur_pat = [2,2,1,1,2,1,2,1,2,2,1,1,3,1,1]#,4]#,1,1,4,1,1
+t = np.array([0.,   0.37, 0.74, 0.89, 1.08, 1.41, 1.61, 1.95, 2.14, 2.47, 2.86, 3.02, 3.19, 3.77, 3.92, 4.09])
+
+'''ratios_reduced, ranked_unique_representations, rankscores, trigseq, ticktempo_bpm, tempo_tendency, pulseposition = ra.analyze(t, 1)
+score_confidence = confidence(rankscores)
+# check if we found the right answer
+best = ranked_unique_representations[0]
+ratio_sequence = np.array(ratios_reduced[best])
+duration_pattern = ra.make_duration_pattern(ratio_sequence).astype('int')
+print(duration_pattern, np.equal(duration_pattern, dur_pat))
+print(ra.weights)
+'''
+weights = [0, 1, 1, 0.3, 1, 0.2, 0.3, 1]
+answer = dur_pat
+ans_duration_pattern, ratios, good_answer = test_ratio_analyzer(t, answer, weights, debug=True)

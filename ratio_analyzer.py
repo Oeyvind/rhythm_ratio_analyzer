@@ -274,6 +274,18 @@ def make_trigger_sequence(commondiv_ratios):
             trigger_seq.append(0)
     return trigger_seq
 
+def make_trigger_sequence_dur_pattern(dur_pattern):
+    # make the trigger sequence 
+    # 1=transient, 0 = space
+    # e.g. for rhythm 6/6, 3/6, 3/6, 2/6, 2/6, 2/6, the sequence will be
+    # [1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0]
+    trigger_seq = []
+    for num in dur_pattern.astype(int):
+        trigger_seq.append(1)
+        for i in range(num-1):
+            trigger_seq.append(0)
+    return trigger_seq
+
 def autocorr(data):
     """Autocorrelation (non normalized)"""
     mean = np.mean(data)
@@ -302,6 +314,45 @@ def find_duplicate_representations(ratios):
     for i in empties:
         duplicate_list.remove([])
     return duplicate_list
+
+def tempo_sanitize(tempo, assumption=120, pulse_div=1):
+    # Adjust tempo to be in sanitized range
+    # Using 120 bpm as the mother of all tempos, the range must be from 2/3 to 4/3: 80-160
+    mintempo = assumption*(2/3)
+    maxtempo = assumption*(4/3)
+    tempo_factor = pulse_div
+    while (tempo*tempo_factor) > maxtempo:
+        tempo_factor /= 2        
+    while (tempo*tempo_factor) < mintempo:
+        tempo_factor *= 2
+    tempo *= tempo_factor
+    return tempo, tempo_factor
+
+def find_pulse(data, mode='coef'):
+  # reduce 
+  data = data/np.gcd.reduce(data)
+  pulse_2 = 0
+  pulse_3 = 0
+  for i in range(4):
+    testdata = data*(2**i)
+    t1 = make_trigger_sequence_dur_pattern(testdata)
+    a1 = autocorr(t1)
+    p1 = np.argsort(-a1[1:])[:5]+1
+    for j in range(len(p1)):
+      n = p1[j]
+      if mode == 'coef': coef = a1[p1[j]] # correlation coefficient
+      else: coef = 1/(j+1) # gradually decreasing with order
+      if n <= 32:
+        if n%3==0: pulse_3 += coef
+        elif n%2==0: pulse_2 += coef
+  certainty = pulse_2/(pulse_2+pulse_3)
+  if certainty > 0.5: 
+    pulse_div = 2
+  else: 
+    pulse_div = 3
+    certainty = 1-certainty 
+  return pulse_div, certainty
+
 
 def analyze(t, rank=1):
     """Do the full ratio analysis"""
@@ -334,6 +385,7 @@ def analyze(t, rank=1):
     # isolate the selected (best) representation
     selected = ranked_unique_representations[rank-1] # select the unique representation ranked from the lowest score
     ticktempo_Hz = (1/ratios_commondiv[selected,0,-1])*ratios_commondiv[selected,0,1]
+    #print('analyze: commondiv', ratios_commondiv[selected,0,1])
     #print(f'ticktempo \n{ratios_commondiv[selected]} \n {ticktempo_Hz}')
     #print((1/ratios_commondiv[selected,0,-1]), ratios_commondiv[selected,0,1])
     ticktempo_bpm = ticktempo_Hz*60

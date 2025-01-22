@@ -81,7 +81,7 @@ class Osc_server():
         self.last_analyzed_phrase = self.pending_analysis # keep it so we can delete it if clear_last_phrase is called
         start, end = self.pending_analysis[0], self.pending_analysis[-1]
         timedata = self.corpus[start:end+1,self.pnum_corpus['timestamp']]
-        #print('timedata:', timedata)
+        print('timedata:', timedata-timedata[0])
         self.phrase_number += 1
         ratios_reduced, ranked_unique_representations, rankscores, trigseq, ticktempo_bpm, tempo_tendency, pulseposition = self.ra.analyze(timedata)
         for i in range(len(trigseq)):
@@ -92,12 +92,35 @@ class Osc_server():
         # store the rhythm fractions as float for each event in the corpus
         best = ranked_unique_representations[0]
         print(f'ratios best: \n{ratios_reduced[best,range(len(self.pending_analysis)-1),0]/ratios_reduced[best,range(len(self.pending_analysis)-1),1]}')
+        #print(f'num: {ratios_reduced[best,range(len(self.pending_analysis)-1),0]}')
+        #print(f'den: {ratios_reduced[best,range(len(self.pending_analysis)-1),1]}')
+        #print(f'dlt: {ratios_reduced[best,range(len(self.pending_analysis)-1),-2]}')
+        #print(f'ref: {ratios_reduced[best,range(len(self.pending_analysis)-1),-1]}')
+        #print('tempo before sanitize:', ticktempo_bpm, 'pulsepos', pulseposition)
+        ratio_sequence = np.array(ratios_reduced[best])
+        dur_pattern = self.ra.make_duration_pattern(ratio_sequence).astype('int')
+        #dur_pattern = np.array(ratios_reduced[best,range(len(self.pending_analysis)-1),0]).astype('int') #numerators from commondiv
+        #print('dur_pattern', dur_pattern)
+        pulse_div, certainty = self.ra.find_pulse(dur_pattern, mode='coef')
+        print('pulse_div, certainty', pulse_div, certainty)
+        # adjust tempo to be in range 80-160 bpm
+        tempo_sanitized, tempo_factor_not = self.ra.tempo_sanitize(ticktempo_bpm/pulseposition)
+        beat_dur_in_tempo_sanitized = 60/tempo_sanitized
+        n = ratios_reduced[best,0,0]
+        d = ratios_reduced[best,0,1]
+        r = ratios_reduced[best,0,-1]
+        beat_dur_from_ratio = r#(n/d)*r
+        tempo_factor = beat_dur_from_ratio/beat_dur_in_tempo_sanitized
+        print('tempo_sanitized, tempo_factor', tempo_sanitized, tempo_factor)
+        #print('beat dur: ratio, sanitized', beat_dur_from_ratio, beat_dur_in_tempo_sanitized)
+        print(f'sanitized ratios best: \n{(ratios_reduced[best,range(len(self.pending_analysis)-1),0]/ratios_reduced[best,range(len(self.pending_analysis)-1),1])*tempo_factor}')
+        
         next_best = ranked_unique_representations[1]
         for i in range(len(self.pending_analysis)-1): 
             indx = self.pending_analysis[i]
             self.corpus[indx,self.pnum_corpus['index']] = indx
-            self.corpus[indx,self.pnum_corpus['ratio_best']] = ratios_reduced[best,i,0]/ratios_reduced[best,i,1] # ratio as float
-            self.corpus[indx,self.pnum_corpus['deviation_best']] = ratios_reduced[best,i,2] # deviation
+            self.corpus[indx,self.pnum_corpus['ratio_best']] = (ratios_reduced[best,i,0]/ratios_reduced[best,i,1])*tempo_factor # ratio as float
+            self.corpus[indx,self.pnum_corpus['deviation_best']] = ratios_reduced[best,i,2]*tempo_factor # deviation
             self.corpus[indx,self.pnum_corpus['ratio_2nd_best']] = ratios_reduced[next_best,i,0]/ratios_reduced[next_best,i,1] # ratio as float
             self.corpus[indx,self.pnum_corpus['phrase_num']] = self.phrase_number
             # event duration relative to time until next event
@@ -131,7 +154,7 @@ class Osc_server():
                      float(self.corpus[next_item_index, self.pnum_corpus['notenum_relative']]),
                      float(self.corpus[next_item_index, self.pnum_corpus['velocity']])]
         #print('next item', next_item_index)
-        #print(returnmsg)
+        print(returnmsg)
         osc_io.sendOSC(f"python_prob_gen_voice{voicenum}", returnmsg) # send OSC back to client
 
     def printstuff(self, unused_addr, *osc_data):

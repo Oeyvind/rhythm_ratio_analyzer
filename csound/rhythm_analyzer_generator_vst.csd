@@ -52,7 +52,8 @@ label bounds(350, 45, 40, 20), text("acorr"), fontSize(12)
 }
 
 groupbox bounds(5, 135, 640, 170), text("generate events with prob logic"), colour(25,45,30){
-button bounds(10, 25, 70, 30), text("generate"), channel("generate"), colour:0("green"), colour:1("red")
+button bounds(10, 25, 70, 30), text("voice_1"), channel("gen_voice1"), colour:0("green"), colour:1("red")
+button bounds(10, 60, 70, 30), text("daw_sync"), channel("daw_sync"), colour:0("green"), colour:1("red")
 nslider bounds(90, 25, 40, 25), channel("gen_r1_order"), range(0, 4, 2, 1, 0.5), fontSize(14)
 label bounds(90, 45, 60, 18), text("r1_ord"), fontSize(12), align("left")
 nslider bounds(155, 25, 40, 25), channel("gen_r2_order"), range(0, 4, 2, 1, 0.5), fontSize(14)
@@ -110,7 +111,7 @@ csoundoutput bounds(5, 315, 560, 140)
 <CsInstruments>
 
 ;sr = 48000 ; set by host
-ksmps = 32
+ksmps = 16
 nchnls = 2
 0dbfs = 1
 
@@ -136,7 +137,7 @@ instr 1
     event "i", -itriggerseq_instr, 0, .1
   endif
   ; generator
-  kgenerate chnget "generate"
+  kgenerate chnget "gen_voice1"
   ktrig_generate trigger kgenerate, 0.5, 0
   ktrig_generate_stop trigger kgenerate, 0.5, 1
   if ktrig_generate > 0 then
@@ -380,10 +381,25 @@ instr 108
 
   ; beat clock
   ktempo_bpm chnget "gen_tempo_bpm"
+reinit_clock:
   ibeat_clock chnget "beat_clock"
-  print ibeat_clock, ceil(ibeat_clock)
+  ;print ibeat_clock, ceil(ibeat_clock)
   kclock_counter init ceil(ibeat_clock)*kr ; when pausing clock, restart form the next whole beat
-	kclock_counter += (ktempo_bpm/60)
+ rireturn
+	kdaw_sync chnget "daw_sync"
+  khost_is_playing chnget "IS_PLAYING"
+  if (kdaw_sync > 0) then
+    kstart_playing trigger khost_is_playing, 0.5, 0
+    if kstart_playing > 0 then
+      reinit reinit_clock
+    endif
+    if (khost_is_playing > 0) then
+      kclock_counter += (ktempo_bpm/60) ; if daw sync enabled, only run clock if daw is playing
+    endif
+  else
+    kclock_counter += (ktempo_bpm/60) ; if no daw sync just play
+  endif
+  
   kbeat_clock = (kclock_counter/kr)
 	chnset kbeat_clock, "beat_clock_dry" ; unmodulated clock
 	kmod_index chnget "beat_clock_mod_index"
@@ -414,18 +430,7 @@ endin
 ; event generator
 instr 109
   ivoice = p4
-  ;print ivoice
-  kinit_clock init 1 ; make sure a k-value from the master have come in
-	if kinit_clock > 0 then
-		reinit beat_clock_init
-	endif
-	beat_clock_init:
-		ibeat_clock chnget "beat_clock"
-    ibeat_clock -= 2/kr
-    print ibeat_clock
-    kinit_clock = 0
-	rireturn
-
+ 
 	; gen and play events
 	ktempo_bpm chnget "gen_tempo_bpm"
   kbeat_clock chnget "beat_clock"  
@@ -479,15 +484,11 @@ instr 109
   endif
 
   ; store events in queue for playback
-  Sdebug sprintfk "voice %i, beat clock %.2f, next event %.2f", ivoice, kbeat_clock, knext_event_time
+  ;Sdebug sprintfk "voice %i, beat clock %.2f, next event %.2f", ivoice, kbeat_clock, knext_event_time
   ;puts Sdebug, knext_event_time
   if (kbeat_clock > knext_event_time) && (kpython_data_ready == 1) then
-    
-		;Sindex sprintfk "count %i, gen index %i, ratio %.2f, beat_clock %.2f, at time %.2f", kcount, kgen_index, kgen_ratio, kbeat_clock, ktime
-		;puts Sindex, kcount+1
   	knext_event_time += round(kprevious_ratio*iclock_resolution)/iclock_resolution ; prevent accumulative rounding errors
 		if kbeat_sync == 1 then
-      ;knext_event_time = kgen_once > 0 ? ceil(ibeat_clock) : knext_event_time ; sync to whole beat clock the first time
       knext_event_time = ceil(kbeat_clock) ; sync to whole beat clock if enabled
       kzero = 0
       cabbageSetValue Sbeat_sync, kzero, changed(knext_event_time)
@@ -499,7 +500,6 @@ instr 109
     kEvent_queue[kcount % lenarray(kEvent_queue)][3] = kgen_notenum
     kEvent_queue[kcount % lenarray(kEvent_queue)][4] = kgen_interval
     kEvent_queue[kcount % lenarray(kEvent_queue)][5] = kgen_velocity
-		;printarray kEvent_queue
 		kgen_once = 0
     kcount += 1
     kpython_data_ready = 0
