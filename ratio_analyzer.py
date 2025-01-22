@@ -386,7 +386,7 @@ def analyze(t, rank=1):
     selected = ranked_unique_representations[rank-1] # select the unique representation ranked from the lowest score
     ticktempo_Hz = (1/ratios_commondiv[selected,0,-1])*ratios_commondiv[selected,0,1]
     #print('analyze: commondiv', ratios_commondiv[selected,0,1])
-    #print(f'ticktempo \n{ratios_commondiv[selected]} \n {ticktempo_Hz}')
+    print(f'ticktempo {ticktempo_Hz}\n{ratios_commondiv[selected]}')
     #print((1/ratios_commondiv[selected,0,-1]), ratios_commondiv[selected,0,1])
     ticktempo_bpm = ticktempo_Hz*60
     trigseq = make_trigger_sequence(ratios_commondiv[selected,:,:2])

@@ -104,15 +104,21 @@ class Osc_server():
         pulse_div, certainty = self.ra.find_pulse(dur_pattern, mode='coef')
         print('pulse_div, certainty', pulse_div, certainty)
         # adjust tempo to be in range 80-160 bpm
-        tempo_sanitized, tempo_factor_not = self.ra.tempo_sanitize(ticktempo_bpm/pulseposition)
-        beat_dur_in_tempo_sanitized = 60/tempo_sanitized
+        #tempo_sanitized, tempo_factor_not = self.ra.tempo_sanitize(ticktempo_bpm/pulseposition)
+        #beat_dur_in_tempo_sanitized = 60/tempo_sanitized
         n = ratios_reduced[best,0,0]
         d = ratios_reduced[best,0,1]
-        r = ratios_reduced[best,0,-1]
-        beat_dur_from_ratio = r#(n/d)*r
-        tempo_factor = beat_dur_from_ratio/beat_dur_in_tempo_sanitized
-        print('tempo_sanitized, tempo_factor', tempo_sanitized, tempo_factor)
-        #print('beat dur: ratio, sanitized', beat_dur_from_ratio, beat_dur_in_tempo_sanitized)
+        delta = ratios_reduced[best,0,-2]
+        #r = ratios_reduced[best,0,-1]
+        print('n', n,d,delta)
+        beat_dur_from_ratio = (1/(n/d))*delta
+        print('beat_dur_from_ratio', beat_dur_from_ratio)
+        bpm_from_ratio = (1/beat_dur_from_ratio)*60
+        print('bpm_from_ratio', bpm_from_ratio)
+        bpm_san, tfac_san = self.ra.tempo_sanitize(bpm_from_ratio)
+        tempo_factor = bpm_san/bpm_from_ratio
+        print('tfac, tempo_factor', tfac_san, tempo_factor)
+        print('sanitized bpm:', bpm_san)
         print(f'sanitized ratios best: \n{(ratios_reduced[best,range(len(self.pending_analysis)-1),0]/ratios_reduced[best,range(len(self.pending_analysis)-1),1])*tempo_factor}')
         
         next_best = ranked_unique_representations[1]
