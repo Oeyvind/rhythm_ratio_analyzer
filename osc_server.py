@@ -92,33 +92,22 @@ class Osc_server():
         # store the rhythm fractions as float for each event in the corpus
         best = ranked_unique_representations[0]
         print(f'ratios best: \n{ratios_reduced[best,range(len(self.pending_analysis)-1),0]/ratios_reduced[best,range(len(self.pending_analysis)-1),1]}')
-        #print(f'num: {ratios_reduced[best,range(len(self.pending_analysis)-1),0]}')
-        #print(f'den: {ratios_reduced[best,range(len(self.pending_analysis)-1),1]}')
-        #print(f'dlt: {ratios_reduced[best,range(len(self.pending_analysis)-1),-2]}')
-        #print(f'ref: {ratios_reduced[best,range(len(self.pending_analysis)-1),-1]}')
-        #print('tempo before sanitize:', ticktempo_bpm, 'pulsepos', pulseposition)
         ratio_sequence = np.array(ratios_reduced[best])
-        dur_pattern = self.ra.make_duration_pattern(ratio_sequence).astype('int')
-        #dur_pattern = np.array(ratios_reduced[best,range(len(self.pending_analysis)-1),0]).astype('int') #numerators from commondiv
-        #print('dur_pattern', dur_pattern)
-        pulse_div, certainty = self.ra.find_pulse(dur_pattern, mode='coef')
-        print('pulse_div, certainty', pulse_div, certainty)
-        # adjust tempo to be in range 80-160 bpm
-        #tempo_sanitized, tempo_factor_not = self.ra.tempo_sanitize(ticktempo_bpm/pulseposition)
-        #beat_dur_in_tempo_sanitized = 60/tempo_sanitized
+        #dur_pattern = self.ra.make_duration_pattern(ratio_sequence).astype('int')
+        #pulse_div, certainty = self.ra.find_pulse(dur_pattern, mode='coef')
+        #print('pulse_div, certainty', pulse_div, certainty)
+        # to adjust tempo to be in range 80-160 bpm:
+        # first find the beat duration based on analyzed ratio and delta time
         n = ratios_reduced[best,0,0]
         d = ratios_reduced[best,0,1]
         delta = ratios_reduced[best,0,-2]
-        #r = ratios_reduced[best,0,-1]
-        print('n', n,d,delta)
         beat_dur_from_ratio = (1/(n/d))*delta
-        print('beat_dur_from_ratio', beat_dur_from_ratio)
+        #print('beat_dur_from_ratio', beat_dur_from_ratio)
         bpm_from_ratio = (1/beat_dur_from_ratio)*60
         print('bpm_from_ratio', bpm_from_ratio)
-        bpm_san, tfac_san = self.ra.tempo_sanitize(bpm_from_ratio)
-        tempo_factor = bpm_san/bpm_from_ratio
-        print('tfac, tempo_factor', tfac_san, tempo_factor)
-        print('sanitized bpm:', bpm_san)
+        bpm_sanitized, tfac_san = self.ra.tempo_sanitize(bpm_from_ratio)
+        tempo_factor = bpm_sanitized/bpm_from_ratio
+        print('sanitized bpm:', bpm_sanitized)
         print(f'sanitized ratios best: \n{(ratios_reduced[best,range(len(self.pending_analysis)-1),0]/ratios_reduced[best,range(len(self.pending_analysis)-1),1])*tempo_factor}')
         
         next_best = ranked_unique_representations[1]
