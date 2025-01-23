@@ -99,7 +99,6 @@ class Probabilistic_logic:
         for pname in self.prob_parms.keys():
             self.set_weights_pname(pname, 1, printit=False)
         print(f'prob weights set to {self.weights}')
-        self.temperature_coef = 1 # 1 is default (no temperature influence)
 
         # set data and allocate data containers
         self.current_datasize = 0
@@ -138,8 +137,8 @@ class Probabilistic_logic:
 
     def set_temperature(self, temperature):
         if temperature < 0.001 : temperature = 0.001
-        self.temperature_coef = 1/temperature
-        print(f'PL temperature set to {temperature}')
+        temperature_coef = 1/temperature
+        return temperature_coef
        
     def update_history(self, history, new_item):
         history = history[1:]+history[:1] #rotate
@@ -150,8 +149,9 @@ class Probabilistic_logic:
                     history[i] = history[i+1]-1 # if there is a gap in the history, smooth out
         return history
 
-    def generate(self, query, voice=1):
+    def generate(self, query, voice=1, temperature=0.2):
         next_item_index, request_next_item = query
+        temperature_coef = self.set_temperature(temperature)
         
         # need to update and keep track of previous events for higher orders
         self.prob_history[voice-1] = self.update_history(self.prob_history[voice-1], next_item_index)
@@ -188,7 +188,7 @@ class Probabilistic_logic:
         self.prob = np.dot(self.indx_container[:self.current_datasize, :self.numparms], self.weights)
         if np.amax(self.prob) > 0:
             self.prob /= np.amax(self.prob) # normalize
-            self.prob = np.power(self.prob, self.temperature_coef) # temperature adjustment
+            self.prob = np.power(self.prob, temperature_coef) # temperature adjustment
             sumprob = np.sum(self.prob)
             self.prob = self.prob/sumprob #normalize sum to 1
             next_item_index = np.random.choice(self.indices,p=self.prob)
@@ -273,7 +273,7 @@ if __name__ == '__main__' :
     
     #generate
     pl.set_weights_pname('val1', 1.5)
-    pl.set_temperature(0.2) # low (<1.0) is deterministic, high (>1.0) is more random
+    temperature = 0.2 # low (<1.0) is deterministic, high (>1.0) is more random
     start_index = 0#np.random.choice(indices)
     next_item = corpus[start_index,pnum_corpus['val1']]
     # for debug only
@@ -293,7 +293,7 @@ if __name__ == '__main__' :
     i = 0
     voice = 1
     while i < 10:
-        query = pl.generate(query, voice) #query probabilistic encoders for next event and update query for next iteration
+        query = pl.generate(query, voice, temperature) #query probabilistic encoders for next event and update query for next iteration
         next_item_index = query[0]
         if request_value: query[1] = ['val1', request_value, 1]
         print(f"the next item is  {corpus[next_item_index,pnum_corpus['val1']]} at index {next_item_index}, prob {pl.prob}")

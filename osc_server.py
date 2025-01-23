@@ -34,7 +34,6 @@ class Osc_server():
         self.pl = pl_instance # probabilistic logic instance
         self.pl.weights[1] = 1 # first order for best ratio
         self.pl.weights[2] = 1 # 2nd order for best ratio
-        self.pl.set_temperature(0.2) # < 1.0 is more deterministic
         self.ra = ratio_analyzer
 
         # temporary!
@@ -130,7 +129,7 @@ class Osc_server():
 
     def pl_generate(self, unused_addr, *osc_data):
         '''Message handler. This is called when we receive an OSC message'''
-        voicenum, index, request_item, request_weight = osc_data
+        voicenum, index, request_item, request_weight, temperature = osc_data
         voicenum = int(voicenum)
         if request_item < 0:
             request = [None, 0, 0]
@@ -139,7 +138,7 @@ class Osc_server():
         self.query = [index, request]
         print('***pl_query', voicenum, self.query)
 
-        self.query = self.pl.generate(self.query, voicenum) #query probabilistic models for next event and update query for next iteration
+        self.query = self.pl.generate(self.query, voicenum, temperature) #query probabilistic models for next event and update query for next iteration
         next_item_index = self.query[0]
         returnmsg = [int(next_item_index), 
                      float(self.corpus[next_item_index, self.pnum_corpus['ratio_best']]),
@@ -198,7 +197,7 @@ class Osc_server():
         kbarlow_weight, kbenni_weight, knd_weight, kratio_dev_weight, \
             kratio_dev_abs_max_weight, kgrid_dev_weight, \
             kevidence_weight, kautocorr_weight, kratio1_order, \
-            kratio2_order, knotenum_order, kinterval_order, ktemperature = osc_data
+            kratio2_order, knotenum_order, kinterval_order = osc_data
         
         ratio_analyzer_weights = [kbarlow_weight, kbenni_weight, knd_weight, kratio_dev_weight, \
                                   kratio_dev_abs_max_weight, kgrid_dev_weight, \
@@ -209,7 +208,6 @@ class Osc_server():
         self.pl.set_weights_pname('ratio_2nd_best', kratio2_order) 
         self.pl.set_weights_pname('notenum', knotenum_order) 
         self.pl.set_weights_pname('notenum_relative', kinterval_order) 
-        self.pl.set_temperature(ktemperature)        
         logging.debug('receive_parameter_controls {}'.format(osc_data))
 
     def start_server(self):

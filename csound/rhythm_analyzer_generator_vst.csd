@@ -52,29 +52,66 @@ label bounds(350, 45, 40, 20), text("acorr"), fontSize(12)
 }
 
 groupbox bounds(5, 135, 640, 170), text("generate events with prob logic"), colour(25,45,30){
-button bounds(10, 25, 70, 30), text("voice_1"), channel("gen_voice1"), colour:0("green"), colour:1("red")
-button bounds(10, 60, 70, 30), text("daw_sync"), channel("daw_sync"), colour:0("green"), colour:1("red")
-nslider bounds(90, 25, 40, 25), channel("gen_r1_order"), range(0, 4, 2, 1, 0.5), fontSize(14)
-label bounds(90, 45, 60, 18), text("r1_ord"), fontSize(12), align("left")
-nslider bounds(155, 25, 40, 25), channel("gen_r2_order"), range(0, 4, 2, 1, 0.5), fontSize(14)
-label bounds(155, 45, 60, 18), text("r2_ord"), fontSize(12), align("left")
-nslider bounds(220, 25, 40, 25), channel("gen_pitch_order"), range(0, 4, 2, 1, 0.5), fontSize(14)
-label bounds(220, 45, 60, 18), text("ptch_ord"), fontSize(12), align("left")
-nslider bounds(285, 25, 40, 25), channel("gen_temperature"), range(0.01, 10, 0.2, 1, 0.01), fontSize(14)
-label bounds(285, 45, 60, 18), text("temp"), fontSize(12), align("left")
+; Voice 1
+label bounds(5, 25, 50, 18), text("Voice 1"), fontSize(12), align("left")
+button bounds(50, 25, 40, 20), text("on"), channel("gen_voice1"), colour:0("green"), colour:1("red")
+nslider bounds(100, 25, 40, 20), channel("gen_v1_duration_scale"), range(0.1, 2, 1), fontSize(14)
+label bounds(104, 45, 40, 18), text("dur"), fontSize(12), align("left")
+nslider bounds(145, 25, 40, 20), channel("gen_v1_deviation_scale"), range(0, 3, 0), fontSize(14)
+label bounds(140, 45, 65, 18), text("dviation"), fontSize(12), align("left")
 
-nslider bounds(90, 65, 40, 25), channel("gen_duration_scale"), range(0.1, 2, 1), fontSize(14)
-label bounds(90, 90, 60, 18), text("g_dur"), fontSize(12), align("left")
-nslider bounds(155, 65, 40, 25), channel("gen_deviation_scale"), range(0, 3, 0), fontSize(14)
-label bounds(155, 90, 60, 18), text("g_dev"), fontSize(12), align("left")
-nslider bounds(220, 65, 40, 25), channel("gen_interval_order"), range(0, 4, 2, 1, 0.5), fontSize(14)
-label bounds(220, 90, 60, 18), text("intv_ord"), fontSize(12), align("left")
-button bounds(265, 65, 55, 25), text("rel pitch"), channel("gen_relative_pitch"), colour:0("green"), colour:1("red")
+nslider bounds(190, 25, 40, 20), channel("gen_v1_pitch_offset"), range(-24, 24, 0, 1, 1), fontSize(14)
+label bounds(192, 45, 50, 18), text("transp"), fontSize(12), align("left")
+button bounds(235, 25, 55, 20), text("rel pitch"), channel("gen_v1_relative_pitch"), colour:0("green"), colour:1("red")
 
-button bounds(350, 25, 45, 25), text("metro"), channel("gen_metro_on"), colour:0("green"), colour:1("red"), latched(1)
-button bounds(350, 60, 45, 25), text("clock reset"), channel("beat_clock_reset"), colour:0("green"), colour:1("red"), latched(0)
+button bounds(300, 25, 35, 20), text("trig"), channel("beat_sync_1"), colour:0("green"), colour:1("red"), latched(1)
+label bounds(300, 45, 70, 18), text("sync -------"), fontSize(12), align("left")
+button bounds(340, 25, 35, 20), text("auto"), channel("beat_sync_auto_1"), colour:0("green"), colour:1("red"), latched(1)
 
-groupbox bounds(430, 98, 160, 72), text("beat clock modulation") {
+nslider bounds(380, 25, 25, 20), channel("v1_sync_min"), range(0, 10, 1, 1, 1), fontSize(14)
+label bounds(380, 45, 30, 18), text("min"), fontSize(12), align("left")
+nslider bounds(410, 25, 25, 20), channel("v1_sync_range"), range(0, 10, 1, 1, 1), fontSize(14)
+label bounds(410, 45, 35, 18), text("range"), fontSize(12), align("left")
+nslider bounds(590, 25, 40, 20), channel("gen_v1_temperature"), range(0.01, 10, 0.2, 1, 0.01), fontSize(14)
+label bounds(585, 45, 65, 18), text("tmprature"), fontSize(12), align("left")
+
+; Voice 2
+;button bounds(10, 115, 70, 23), text("voice 2"), channel("gen_voice2"), colour:0("green"), colour:1("red")
+label bounds(5, 65, 50, 18), text("Voice 2"), fontSize(12), align("left")
+button bounds(50, 65, 40, 20), text("on"), channel("gen_voice2"), colour:0("green"), colour:1("red")
+nslider bounds(100, 65, 40, 20), channel("gen_v2_duration_scale"), range(0.1, 2, 1), fontSize(14)
+nslider bounds(145, 65, 40, 20), channel("gen_v2_deviation_scale"), range(0, 3, 0), fontSize(14)
+nslider bounds(190, 65, 40, 20), channel("gen_v2_pitch_offset"), range(-24, 24, 12, 1, 1), fontSize(14)
+button bounds(235, 65, 55, 20), text("rel pitch"), channel("gen_v2_relative_pitch"), colour:0("green"), colour:1("red")
+
+button bounds(300, 65, 35, 20), text("trig"), channel("beat_sync_2"), colour:0("green"), colour:1("red"), latched(1)
+button bounds(340, 65, 35, 20), text("auto"), channel("beat_sync_auto_2"), colour:0("green"), colour:1("red"), latched(1)
+
+nslider bounds(380, 65, 25, 20), channel("v2_sync_min"), range(0, 10, 1, 1, 1), fontSize(14)
+nslider bounds(410, 65, 25, 20), channel("v2_sync_range"), range(0, 10, 1, 1, 1), fontSize(14)
+nslider bounds(590, 65, 40, 20), channel("gen_v2_temperature"), range(0.01, 10, 0.2, 1, 0.01), fontSize(14)
+
+
+nslider bounds(460, 125, 40, 22), channel("gen_r1_order"), range(0, 4, 2, 1, 0.5), fontSize(14)
+label bounds(460, 147, 60, 18), text("r1_ord"), fontSize(12), align("left")
+;nslider bounds(155, 25, 40, 25), channel("gen_r2_order"), range(0, 4, 2, 1, 0.5), fontSize(14)
+;label bounds(155, 45, 60, 18), text("r2_ord"), fontSize(12), align("left")
+nslider bounds(525, 125, 40, 22), channel("gen_pitch_order"), range(0, 4, 2, 1, 0.5), fontSize(14)
+label bounds(525, 147, 60, 18), text("ptch_ord"), fontSize(12), align("left")
+nslider bounds(590, 125, 40, 22), channel("gen_interval_order"), range(0, 4, 2, 1, 0.5), fontSize(14)
+label bounds(590, 147, 60, 18), text("intv_ord"), fontSize(12), align("left")
+
+
+groupbox bounds(0, 98, 160, 72), text("gen tempo") {
+button bounds(10, 25, 45, 18), text("metro"), channel("gen_metro_on"), colour:0("green"), colour:1("red"), latched(1)
+button bounds(10, 47, 20, 20), text(" "), channel("daw_sync"), colour:0("green"), colour:1("red")
+label bounds(30, 45, 60, 15), text("DAW"), fontSize(12), align("left")
+label bounds(30, 55, 60, 15), text("play sync"), fontSize(12), align("left")
+combobox bounds(95, 25, 60, 17), items("analyze", "host", "host_x2", "free"), channel("gen_tempo_mode"), value(2), fontSize(15)
+nslider bounds(95, 47, 60, 20), channel("gen_tempo_bpm"), range(1, 2999, 60), fontSize(14)
+}
+
+groupbox bounds(160, 98, 160, 72), text("beat clock modulation") {
 nslider bounds(10, 25, 40, 25), channel("beat_clock_mod_index"), range(0, 4, 0, 1), fontSize(14)
 label bounds(13, 50, 40, 18), text("indx"), fontSize(12), align("left")
 nslider bounds(60, 25, 40, 25), channel("beat_clock_mod_ratio"), range(0.5, 8, 1, 1, 0.5), fontSize(14)
@@ -83,20 +120,10 @@ nslider bounds(110, 25, 40, 25), channel("beat_clock_mod_phase"), range(0, 1, 0,
 label bounds(113, 50, 40, 18), text("phase"), fontSize(12), align("left")
 }
 
-button bounds(400, 25, 50, 20), text("sync_v1"), channel("beat_sync_1"), colour:0("green"), colour:1("red"), latched(1)
-button bounds(400, 50, 50, 20), text("sync_v2"), channel("beat_sync_2"), colour:0("green"), colour:1("red"), latched(1)
-combobox bounds(455, 25, 57, 17), items("analyze", "host", "host_x2", "free"), channel("gen_tempo_mode"), value(2), fontSize(15)
-nslider bounds(515, 25, 40, 25), channel("gen_tempo_bpm"), range(1, 2999, 60), fontSize(14)
-label bounds(460, 42, 60, 18), text("g_tempo"), fontSize(12), align("left")
 
 ; debug
-button bounds(580, 25, 50, 25), text("print stm"), channel("pl_print"), colour:0("green"), colour:1("red"), latched(0)
-
-
-; voice 2
-button bounds(10, 115, 70, 23), text("voice 2"), channel("gen_voice2"), colour:0("green"), colour:1("red")
-nslider bounds(90, 115, 40, 25), channel("gen_v2_pitch_offset"), range(-24, 24, 12, 1, 1), fontSize(14)
-label bounds(90, 135, 60, 18), text("transp"), fontSize(12), align("left")
+button bounds(560, 3, 75, 15), text("print stm"), channel("pl_print"), colour:0("green"), colour:1("red"), latched(0)
+button bounds(480, 3, 75, 15), text("clock reset"), channel("beat_clock_reset"), colour:0("green"), colour:1("red"), latched(0)
 
 
 }
@@ -317,16 +344,15 @@ instr 31
   kratio2_order chnget "gen_r2_order"
   knotenum_order chnget "gen_pitch_order"
   kinterval_order chnget "gen_interval_order"
-  ktemperature chnget "gen_temperature"
   kparm_update = changed(kbarlow_weight, kbenni_weight, knd_weight, kratio_dev_weight, 
                       kratio_dev_abs_max_weight, kgrid_dev_weight, 
                       kevidence_weight, kautocorr_weight, kratio1_order, 
-                      kratio2_order, knotenum_order, kinterval_order, ktemperature)
-  OSCsend kparm_update, "127.0.0.1", 9901, "/client_parametercontrols", "fffffffffffff", 
+                      kratio2_order, knotenum_order, kinterval_order)
+  OSCsend kparm_update, "127.0.0.1", 9901, "/client_parametercontrols", "ffffffffffff", 
                       kbarlow_weight, kbenni_weight, knd_weight, kratio_dev_weight, 
                       kratio_dev_abs_max_weight, kgrid_dev_weight, 
                       kevidence_weight, kautocorr_weight, kratio1_order, 
-                      kratio2_order, knotenum_order, kinterval_order, ktemperature
+                      kratio2_order, knotenum_order, kinterval_order
 
   ; receive trigger string from Python (only for playback of last recorded phrase)
   ktrig_sig init 0
@@ -442,10 +468,36 @@ instr 109
   ibeat_sync = 1
   cabbageSetValue Sbeat_sync, ibeat_sync
 
-  ktemperature chnget "gen_temperature"
-  kdur_scale chnget "gen_duration_scale"
-  kdeviation_scale chnget "gen_deviation_scale"
-  krelative_pitch chnget "gen_relative_pitch"
+  Sbeat_sync_auto sprintf "beat_sync_auto_%i", ivoice
+  kbeat_sync_auto chnget Sbeat_sync_auto
+  Sbeat_sync_auto_min sprintf "v%i_sync_min", ivoice
+  kbeat_sync_auto_min chnget Sbeat_sync_auto_min
+  Sbeat_sync_auto_range sprintf "v%i_sync_range", ivoice
+  kbeat_sync_auto_range chnget Sbeat_sync_auto_range
+  knext_sync_beat init 0
+  if kbeat_sync_auto > 0 then
+    kbeat_trig = changed(floor(kbeat_clock))
+    if (kbeat_trig > 0) && (kbeat_clock >= knext_sync_beat) then
+      knext_sync_beat random kbeat_sync_auto_min, kbeat_sync_auto_min+kbeat_sync_auto_range
+      knext_sync_beat = int(knext_sync_beat)+floor(kbeat_clock)
+      kbeat_sync = 1
+    endif
+  endif
+
+  Stemperature sprintf "gen_v%i_temperature", ivoice
+  ktemperature chnget Stemperature
+  Sdur_scale sprintf "gen_v%i_duration_scale", ivoice
+  kdur_scale chnget Sdur_scale
+  Sdeviation_scale sprintf "gen_v%i_deviation_scale", ivoice
+  kdeviation_scale chnget Sdeviation_scale
+  Srelative_pitch sprintf "gen_v%i_relative_pitch", ivoice
+  krelative_pitch chnget Srelative_pitch
+  krelative_pitch_range = 19 ; octave and fifth
+  krelative_pitch_trig trigger krelative_pitch, 0.5, 0
+  krelative_middle_note init 60
+  kgen_notenum init 0
+  krelative_middle_note = krelative_pitch_trig > 0 ? kgen_notenum : krelative_middle_note
+  krelative_pitch_inverter init 1
   iclock_resolution = 10000
 
   ; oddities
@@ -471,7 +523,7 @@ instr 109
   
   ; get event data from server
   if (kbeat_clock > knext_event_time) && (kpython_data_ready == 0) then
-    OSCsend kcount, "127.0.0.1", 9901, "/client_prob_gen", "ffff", ivoice, kgen_index, krequest_ratio, krequest_weight
+    OSCsend kcount, "127.0.0.1", 9901, "/client_prob_gen", "fffff", ivoice, kgen_index, krequest_ratio, krequest_weight, ktemperature
   nextmsg:
     Saddr sprintf "python_prob_gen_voice%i", ivoice
     kmess OSClisten gihandle, Saddr, "fffffff", kgen_index, kgen_ratio, kgen_deviation, kgen_duration, kgen_notenum, kgen_interval, kgen_velocity ; receive OSC data from Python
@@ -484,8 +536,8 @@ instr 109
   endif
 
   ; store events in queue for playback
-  ;Sdebug sprintfk "voice %i, beat clock %.2f, next event %.2f", ivoice, kbeat_clock, knext_event_time
-  ;puts Sdebug, knext_event_time
+  Sdebug sprintfk "voice %i, beat clock %.2f, next event %.2f", ivoice, kbeat_clock, knext_event_time
+  puts Sdebug, knext_event_time
   if (kbeat_clock > knext_event_time) && (kpython_data_ready == 1) then
   	knext_event_time += round(kprevious_ratio*iclock_resolution)/iclock_resolution ; prevent accumulative rounding errors
 		if kbeat_sync == 1 then
@@ -555,8 +607,16 @@ instr 109
 		;Sdebug sprintfk "play_index %i, e_queue_index %i, beat_clock %.2f, dir %i, time %.2f", kplay_index, keventqueue_index, kbeat_clock, kclock_direction, ktime
 		;puts Sdebug, ktime+1
     ;kEvent[] fillarray kgen_ratio, kgen_deviation, kgen_duration, kgen_notenum, kgen_interval, kgen_velocity
+    printk2 krelative_pitch_inverter
     if krelative_pitch > 0 then
-      kgen_notenum = kprev_notenum + kEvent_queue[keventqueue_index][4]
+      kgen_notenum = kprev_notenum + (kEvent_queue[keventqueue_index][4]*krelative_pitch_inverter)
+      if (kgen_notenum > (krelative_middle_note+krelative_pitch_range)) then
+        krelative_pitch_inverter *= -1
+        kgen_notenum -= 12
+      elseif (kgen_notenum < (krelative_middle_note-krelative_pitch_range)) then
+        krelative_pitch_inverter *= -1
+        kgen_notenum += 12
+      endif
     else
       kgen_notenum = kEvent_queue[keventqueue_index][3]
     endif
@@ -600,19 +660,22 @@ endin
 instr 121
   iamp = ampdbfs(-6)
   inote = p4
+  if inote == 0 then
+    turnoff
+    igoto skip
+  endif
   ivel = p5
   ichan = p6
-  ktranspose_voice2 chnget "gen_v2_pitch_offset"
-  if p6 == 2 then
-    inote += i(ktranspose_voice2)
-  endif
+  Sgen_pitch_offset sprintf "gen_v%i_pitch_offset", ichan
+  itranspose_voice chnget Sgen_pitch_offset
+  inote += itranspose_voice
   aenv expon 1, p3, 0.0001
   a1 oscili ivel/127, cpsmidinn(inote)
   a1 *= (aenv*iamp)
   outs a1, a1
   ; midi out
   noteondur ichan, inote, ivel, p3
-
+  skip:
 endin
 
 </CsInstruments>
