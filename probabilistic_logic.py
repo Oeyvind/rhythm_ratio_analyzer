@@ -108,8 +108,9 @@ class Probabilistic_logic:
         self.indx_container = np.zeros(self.maxsize*self.numparms)
         self.indx_container = np.reshape(self.indx_container, (self.maxsize,self.numparms))
         self.indices_prob_temp = np.zeros(self.maxsize+self.max_order)
+        self.request_mask = np.zeros(self.maxsize+self.max_order)
         self.prob = np.zeros(self.maxsize)
-
+        
     def analyze_single_event(self, i):
         for parm in self.prob_parms.keys():
             pe = self.prob_parms[parm][1]
@@ -151,6 +152,7 @@ class Probabilistic_logic:
 
     def generate(self, query, voice=1, temperature=0.2):
         next_item_index, request_next_item = query
+        print('query', query)
         temperature_coef = self.set_temperature(temperature)
         
         # need to update and keep track of previous events for higher orders
@@ -172,23 +174,36 @@ class Probabilistic_logic:
 
         # if we request a specific item, handle this here 
         if request_next_item[0]:
-            parm, value, weight = request_next_item
-            w_index = self.prob_parms[parm][2][0] #prob weight index for "zero" order (value request)
-            self.weights[w_index] = weight # might want to reset this to previous value?
-            pe = self.prob_parms[parm][1]
-            # in case we request a value that is not exactly equal to a key in the stm, we first find the closest match
-            keys = np.asarray(list(pe.stm.keys()))
-            request_next_item_closest = keys[np.abs(value-keys).argmin()]
-            offset = self.max_order+1
-            request = pe.next_items(request_next_item_closest)[offset:self.current_datasize+offset]
-            #print(f'* * * * * * requested value {request_next_item_closest} with weight {self.weights[w_index]}')
-            self.indx_container[:self.current_datasize, w_index] = request
-        
+            request_parm, request_value, request_weight = request_next_item
+            if request_parm == 'index':
+                print(request_value, self.current_datasize)
+                request_value = request_value%self.current_datasize # wrap index request to available range
+                self.request_mask = 0*self.request_mask[:self.current_datasize]
+                self.request_mask[int(request_value)] = 1
+            else:
+                pe = self.prob_parms[request_parm][1]
+                # in case we request a value that is not exactly equal to a key in the stm, we first find the closest match
+                keys = np.asarray(list(pe.stm.keys()))
+                request_next_item_closest = keys[np.abs(request_value-keys).argmin()]
+                offset = self.max_order+1
+                request = pe.next_items(request_next_item_closest)[offset:self.current_datasize+offset]
+                self.request_mask = request[:self.current_datasize]
+            print('request_mask',self.request_mask)
+            self.request_mask *= request_weight
+            self.request_mask += 1-request_weight
+            if np.amax(self.request_mask) == 0: # if all masks are zero
+                self.request_mask += 1 # disable masks
+            print('request scal',self.request_mask)
+
         # Scale by weights and sum: dot product indx_container and weight. Then adjust temperature
         self.prob = np.dot(self.indx_container[:self.current_datasize, :self.numparms], self.weights)
         if np.amax(self.prob) > 0:
             self.prob /= np.amax(self.prob) # normalize
             self.prob = np.power(self.prob, temperature_coef) # temperature adjustment
+            if request_next_item[0]:
+                self.prob *= self.request_mask
+            if np.amax(self.prob) == 0: # check to find if no values are available after masking
+                self.prob = self.request_mask # just give us one of the unmasked values
             sumprob = np.sum(self.prob)
             self.prob = self.prob/sumprob #normalize sum to 1
             next_item_index = np.random.choice(self.indices,p=self.prob)
@@ -198,7 +213,7 @@ class Probabilistic_logic:
             next_item_index = np.random.choice(self.indices)
             print('selected', next_item_index)
         next_item_index = int(next_item_index)
-        return [next_item_index, [None,0]]
+        return next_item_index
 
     def clear_all(self):
         # clear all prob encoder's stm
@@ -283,7 +298,7 @@ if __name__ == '__main__' :
         print(f'stm for {parm}')
         for key, value in pe.stm.items():
             print(key, value[2:pl.current_datasize+pl.max_order])
-    
+    '''
     # query
     print(f'The first item is {next_item} at index {start_index}')
     request_value = None
@@ -293,27 +308,33 @@ if __name__ == '__main__' :
     i = 0
     voice = 1
     while i < 10:
-        query = pl.generate(query, voice, temperature) #query probabilistic encoders for next event and update query for next iteration
-        next_item_index = query[0]
+        next_item_index = pl.generate(query, voice, temperature) #query probabilistic encoders for next event and update query for next iteration
         if request_value: query[1] = ['val1', request_value, 1]
         print(f"the next item is  {corpus[next_item_index,pnum_corpus['val1']]} at index {next_item_index}, prob {pl.prob}")
         i += 1
     print(f'generated {i} items')
-
+    '''
     # test voice 2
-        # query
-    start_index = 0#np.random.choice(indices)
+    # query
+    start_index = 1#np.random.choice(indices)
     next_item = corpus[start_index,pnum_corpus['val1']]
     print(f'The first item is {next_item} at index {start_index}')
-    request_value = None
-    if request_value: query = [start_index, ['val1', request_value, 1]]
-    else: query = [start_index, [None, 0, 0]]
+    request_item = 'index'
+    request_value = 1
+    request_weight = 0.5
+    if request_item: 
+        query = [start_index, [request_item, request_value, request_weight]]
+    else: 
+        query = [start_index, [None, 0, 0]]
     i = 0
     voice = 2
     while i < 10:
-        query = pl.generate(query, voice) #query probabilistic encoders for next event and update query for next iteration
-        next_item_index = query[0]
-        if request_value: query[1] = ['val1', request_value, 1]
+        next_item_index = pl.generate(query, voice) #query probabilistic encoders for next event and update query for next iteration
+        if request_item: 
+            request_value = next_item_index+1
+            query = [next_item_index, [request_item, request_value, request_weight]] #request index, and use next_item_index as the value to ask for
+        else: query = [next_item_index, [None, 0, 0]]
+
         print(f"the next item is  {corpus[next_item_index,pnum_corpus['val1']]} at index {next_item_index}, prob {pl.prob}")
         i += 1
     print(f'generated {i} items')

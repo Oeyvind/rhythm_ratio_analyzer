@@ -5,6 +5,7 @@ import numpy as np
 np.set_printoptions(suppress=True)
 np.set_printoptions(precision=2)
 
+
 def autocorr(data, offset):
     """Autocorrelation (non normalized), options to offset"""
     if offset == 'm':

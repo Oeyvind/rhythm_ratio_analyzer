@@ -36,9 +36,6 @@ class Osc_server():
         self.pl.weights[2] = 1 # 2nd order for best ratio
         self.ra = ratio_analyzer
 
-        # temporary!
-        self.query = [0, [None, 0, 0]] # initial probabilistic query. 
-
     def receive_eventdata(self, unused_addr, *osc_data):
         '''Message handler. This is called when we receive an OSC message'''
         index, timenow, on_off, notenum, velocity = osc_data # unpack the OSC data, must have the same number of variables as we have items in the data
@@ -129,17 +126,17 @@ class Osc_server():
 
     def pl_generate(self, unused_addr, *osc_data):
         '''Message handler. This is called when we receive an OSC message'''
-        voicenum, index, request_item, request_weight, temperature = osc_data
+        voicenum, index, request_item, request_value, request_weight, temperature = osc_data
         voicenum = int(voicenum)
-        if request_item < 0:
+        if request_item <= 0: # item 1 is None from Csound
             request = [None, 0, 0]
         else:
-            request = ['ratio_best', request_item, request_weight] # FIX/update
-        self.query = [index, request]
-        print('***pl_query', voicenum, self.query)
+            request_item = 'index'
+            request = [request_item, request_value, request_weight] # FIX/update
+        query = [index, request]
+        print('***pl_query', voicenum, query)
 
-        self.query = self.pl.generate(self.query, voicenum, temperature) #query probabilistic models for next event and update query for next iteration
-        next_item_index = self.query[0]
+        next_item_index = self.pl.generate(query, voicenum, temperature) #query probabilistic models for next event and update query for next iteration
         returnmsg = [int(next_item_index), 
                      float(self.corpus[next_item_index, self.pnum_corpus['ratio_best']]),
                      float(self.corpus[next_item_index, self.pnum_corpus['deviation_best']]),
