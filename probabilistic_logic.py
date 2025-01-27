@@ -174,26 +174,7 @@ class Probabilistic_logic:
 
         # if we request a specific item, handle this here 
         if request_next_item[0]:
-            request_parm, request_value, request_weight = request_next_item
-            if request_parm == 'index':
-                print(request_value, self.current_datasize)
-                request_value = request_value%self.current_datasize # wrap index request to available range
-                self.request_mask = 0*self.request_mask[:self.current_datasize]
-                self.request_mask[int(request_value)] = 1
-            else:
-                pe = self.prob_parms[request_parm][1]
-                # in case we request a value that is not exactly equal to a key in the stm, we first find the closest match
-                keys = np.asarray(list(pe.stm.keys()))
-                request_next_item_closest = keys[np.abs(request_value-keys).argmin()]
-                offset = self.max_order+1
-                request = pe.next_items(request_next_item_closest)[offset:self.current_datasize+offset]
-                self.request_mask = request[:self.current_datasize]
-            print('request_mask',self.request_mask)
-            self.request_mask *= request_weight
-            self.request_mask += 1-request_weight
-            if np.amax(self.request_mask) == 0: # if all masks are zero
-                self.request_mask += 1 # disable masks
-            print('request scal',self.request_mask)
+            self.get_request_mask(request_next_item)
 
         # Scale by weights and sum: dot product indx_container and weight. Then adjust temperature
         self.prob = np.dot(self.indx_container[:self.current_datasize, :self.numparms], self.weights)
@@ -214,6 +195,50 @@ class Probabilistic_logic:
             print('selected', next_item_index)
         next_item_index = int(next_item_index)
         return next_item_index
+
+    def get_request_mask(self, request_next_item):
+        request_parm, request_code, request_weight = request_next_item
+        request_type = request_code[0]
+        print('request_type', request_type)
+        self.request_mask = 0*self.request_mask[:self.current_datasize]
+        if request_parm == 'index':
+            keys = self.indices
+        else:
+            pe = self.prob_parms[request_parm][1]
+            keys = np.asarray(list(pe.stm.keys()))
+        if (request_type == '>') or (request_type == '<'):
+            val = request_code[1]
+            values = []
+            print('val', val)
+            if request_type == '>':
+                for k in keys:
+                    if k > val:
+                        values.append(k)
+            else:
+                for k in keys:
+                    print(k)
+                    if k < val:
+                        values.append(k)
+        if request_type == 'values':
+            values = request_code[1]
+        for val in values:
+            if request_parm == 'index':
+                print(val, self.current_datasize)
+                val = val%self.current_datasize # wrap index request to available range
+                self.request_mask[int(val)] = 1
+            else:
+                # in case we request a value that is not exactly equal to a key in the stm, we first find the closest match
+                request_next_item_closest = keys[np.abs(val-keys).argmin()]
+                offset = self.max_order+1
+                request = pe.next_items(request_next_item_closest)[offset:self.current_datasize+offset]
+                self.request_mask += request[:self.current_datasize]
+        #print('request_mask',self.request_mask)
+        self.request_mask *= request_weight
+        self.request_mask += 1-request_weight
+        if np.amax(self.request_mask) == 0: # if all masks are zero
+            self.request_mask += 1 # disable masks
+        #print('request scal',self.request_mask)
+        return self.request_mask
 
     def clear_all(self):
         # clear all prob encoder's stm
@@ -272,10 +297,10 @@ if __name__ == '__main__' :
     prob_parms = {'val1': [2, None, [0,1,2]],
                  'val2': [2, None, [3,4,5]]}
 
-    max_events = 20
+    max_events = 1010
     corpus = np.zeros((max_events,nparms_corpus), dtype=np.float32) # float32 faster than int or float64
-    list_val1 = [1,2,2,1,3,4,5, 3,4,5,1,2]
-    list_val2 = [1,1,1,1,1,1,1, 2,2,2,2,2]
+    list_val1 = [1,2,2,1,3,4,5, 3,4,5,-1,-2] #np.random.randint(0,10,1000)#
+    list_val2 = [1,1,1,1,1,1,1, 2,2,2,2,2] # np.random.randint(0,10,1000)#
     for i in range(len(list_val1)):
         corpus[i,pnum_corpus['val1']] = list_val1[i]
         corpus[i,pnum_corpus['val2']] = list_val2[i]
@@ -298,43 +323,55 @@ if __name__ == '__main__' :
         print(f'stm for {parm}')
         for key, value in pe.stm.items():
             print(key, value[2:pl.current_datasize+pl.max_order])
-    '''
+    
     # query
     print(f'The first item is {next_item} at index {start_index}')
-    request_value = None
-    if request_value: query = [start_index, ['val1', request_value, 1]]
-    else: query = [start_index, [None, 0, 0]]
-
+    query = [start_index, [None, [0], 0]]
+                          
     i = 0
     voice = 1
     while i < 10:
         next_item_index = pl.generate(query, voice, temperature) #query probabilistic encoders for next event and update query for next iteration
-        if request_value: query[1] = ['val1', request_value, 1]
+        query[0] = next_item_index
         print(f"the next item is  {corpus[next_item_index,pnum_corpus['val1']]} at index {next_item_index}, prob {pl.prob}")
         i += 1
     print(f'generated {i} items')
-    '''
-    # test voice 2
-    # query
-    start_index = 1#np.random.choice(indices)
+    
+    # test voice 2, with request specific value
+    print('** Voice2**')
+    start_index = 1
     next_item = corpus[start_index,pnum_corpus['val1']]
     print(f'The first item is {next_item} at index {start_index}')
     request_item = 'index'
+    request_type = 'values'
     request_value = 1
     request_weight = 0.5
     if request_item: 
-        query = [start_index, [request_item, request_value, request_weight]]
+        query = [start_index, [request_item, [request_type, [request_value]], request_weight]]
     else: 
-        query = [start_index, [None, 0, 0]]
+        query = [start_index, [None, [0, [0]], 0]]
     i = 0
     voice = 2
     while i < 10:
         next_item_index = pl.generate(query, voice) #query probabilistic encoders for next event and update query for next iteration
         if request_item: 
             request_value = next_item_index+1
-            query = [next_item_index, [request_item, request_value, request_weight]] #request index, and use next_item_index as the value to ask for
-        else: query = [next_item_index, [None, 0, 0]]
-
+            query = [next_item_index, [request_item, [request_type, [request_value]], request_weight]] #request index, and use next_item_index as the value to ask for
+        else: query = [next_item_index, [None, [0, [0]], 0]]
         print(f"the next item is  {corpus[next_item_index,pnum_corpus['val1']]} at index {next_item_index}, prob {pl.prob}")
         i += 1
     print(f'generated {i} items')
+
+        
+    print(pl.current_datasize)
+    #request_next_item = ['index', 1, 0.5]
+    #request_next_item = ['val1', ['values', [2.3]], 1] # list of one value
+    request_next_item = ['val1', ['values' ,[1,3]], 1] # list of values
+    #request_next_item = ['val1', ['>', [2]], 1] #mask high values, e.g. all x > zero
+    mask = pl.get_request_mask(request_next_item)
+    print('mask of values 1 and 3:\n', mask)
+
+    # profiling tests
+    #import cProfile
+    #cProfile.run('pl.get_request_mask(request_next_item)')
+    

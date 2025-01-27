@@ -132,7 +132,8 @@ class Osc_server():
             request = [None, 0, 0]
         else:
             request_item = 'index'
-            request = [request_item, request_value, request_weight] # FIX/update
+            request_type = 'values'
+            request = [request_item, [request_type, [request_value]], request_weight]
         query = [index, request]
         print('***pl_query', voicenum, query)
 
