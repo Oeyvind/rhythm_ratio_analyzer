@@ -73,12 +73,12 @@ label bounds(380, 45, 30, 18), text("min"), fontSize(12), align("left")
 nslider bounds(410, 25, 25, 20), channel("v1_sync_range"), range(0, 10, 1, 1, 1), fontSize(14)
 label bounds(410, 45, 35, 18), text("range"), fontSize(12), align("left")
 
-combobox bounds(455, 25, 60, 18), channel("request_item_v1"), items("none", "index");, "ratio", "pitch", "interval")
-label bounds(455, 45, 60, 18), text("req_item"), fontSize(12), align("left")
-;nslider bounds(515, 25, 40, 20), channel("request_value_v1"), range(-1, 999, 0), fontSize(14)
-;label bounds(520, 45, 40, 18), text("val"), fontSize(12), align("left")
-nslider bounds(515, 25, 40, 20), channel("request_weight_v1"), range(0, 1, 0), fontSize(14)
-label bounds(515, 45, 40, 18), text("weight"), fontSize(12), align("left")
+combobox bounds(445, 25, 60, 18), channel("request_item_v1"), items("none", "index", "phrase");, "ratio", "pitch", "interval")
+label bounds(448, 45, 60, 18), text("req_item"), fontSize(12), align("left")
+nslider bounds(508, 25, 37, 20), channel("request_value_v1"), range(-1, 999, 0, 1, 0.1), fontSize(14)
+label bounds(510, 45, 37, 18), text("val"), fontSize(12), align("left")
+nslider bounds(550, 25, 40, 20), channel("request_weight_v1"), range(0, 1, 0), fontSize(14)
+label bounds(550, 45, 40, 18), text("weight"), fontSize(12), align("left")
 
 nslider bounds(615, 25, 40, 20), channel("gen_v1_temperature"), range(0.01, 10, 0.2, 1, 0.01), fontSize(14)
 label bounds(610, 45, 65, 18), text("tmprature"), fontSize(12), align("left")
@@ -98,9 +98,9 @@ button bounds(340, 65, 35, 20), text("auto"), channel("beat_sync_auto_2"), colou
 nslider bounds(380, 65, 25, 20), channel("v2_sync_min"), range(0, 10, 1, 1, 1), fontSize(14)
 nslider bounds(410, 65, 25, 20), channel("v2_sync_range"), range(0, 10, 1, 1, 1), fontSize(14)
 
-combobox bounds(455, 65, 60, 18), channel("request_item_v2"), items("none", "index");, "ratio", "pitch", "interval")
-;nslider bounds(515, 65, 40, 20), channel("request_value_v2"), range(-1, 999, 0), fontSize(14)
-nslider bounds(515, 65, 40, 20), channel("request_weight_v2"), range(0, 1, 0), fontSize(14)
+combobox bounds(445, 65, 60, 18), channel("request_item_v2"), items("none", "index", "phrase");, "ratio", "pitch", "interval")
+nslider bounds(508, 65, 37, 20), channel("request_value_v2"), range(-1, 999, 0, 1, 0.1), fontSize(14)
+nslider bounds(550, 65, 40, 20), channel("request_weight_v2"), range(0, 1, 0), fontSize(14)
 nslider bounds(615, 65, 40, 20), channel("gen_v2_temperature"), range(0.01, 10, 0.2, 1, 0.01), fontSize(14)
 
 

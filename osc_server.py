@@ -131,7 +131,8 @@ class Osc_server():
         if request_item <= 0: # item 1 is None from Csound
             request = [None, 0, 0]
         else:
-            request_item = 'index'
+            request_items = ['index', 'phrase_num']
+            request_item = request_items[int(request_item)-1]
             request_type = 'values'
             request = [request_item, [request_type, [request_value]], request_weight]
         query = [index, request]

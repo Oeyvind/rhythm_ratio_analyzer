@@ -182,9 +182,9 @@ class Probabilistic_logic:
             self.prob /= np.amax(self.prob) # normalize
             self.prob = np.power(self.prob, temperature_coef) # temperature adjustment
             if request_next_item[0]:
-                self.prob *= self.request_mask
+                self.prob *= self.request_mask[:self.current_datasize]
             if np.amax(self.prob) == 0: # check to find if no values are available after masking
-                self.prob = self.request_mask # just give us one of the unmasked values
+                self.prob = self.request_mask[:self.current_datasize] # just give us one of the unmasked values
             sumprob = np.sum(self.prob)
             self.prob = self.prob/sumprob #normalize sum to 1
             next_item_index = np.random.choice(self.indices,p=self.prob)
@@ -199,8 +199,7 @@ class Probabilistic_logic:
     def get_request_mask(self, request_next_item):
         request_parm, request_code, request_weight = request_next_item
         request_type = request_code[0]
-        print('request_type', request_type)
-        self.request_mask = 0*self.request_mask[:self.current_datasize]
+        self.request_mask[:self.current_datasize] = 0*self.request_mask[:self.current_datasize]
         if request_parm == 'index':
             keys = self.indices
         else:
@@ -231,13 +230,11 @@ class Probabilistic_logic:
                 request_next_item_closest = keys[np.abs(val-keys).argmin()]
                 offset = self.max_order+1
                 request = pe.next_items(request_next_item_closest)[offset:self.current_datasize+offset]
-                self.request_mask += request[:self.current_datasize]
-        #print('request_mask',self.request_mask)
-        self.request_mask *= request_weight
-        self.request_mask += 1-request_weight
-        if np.amax(self.request_mask) == 0: # if all masks are zero
-            self.request_mask += 1 # disable masks
-        #print('request scal',self.request_mask)
+                self.request_mask[:self.current_datasize] += request[:self.current_datasize]
+        self.request_mask[:self.current_datasize] *= request_weight
+        self.request_mask[:self.current_datasize] += 1-request_weight
+        if np.amax(self.request_mask[:self.current_datasize]) == 0: # if all masks are zero
+            self.request_mask[:self.current_datasize] += 1 # disable masks
         return self.request_mask
 
     def clear_all(self):
