@@ -1,6 +1,6 @@
 # rhythm_ratio_analyzer
 Analyze a time series in terms of rational relationships between delta times. Generate new rhythms based on analysis.
-The program runs as a server, and we can use a VST plugin or other external program as a client.
+The program runs as a server, and we can use a VST plugin or other external program as a client. An example vst plugin can be found in the /csound directory.  
 Communication between client and server over OSC.
 
 Øyvind Brandtsegg & Daniel Formo, NTNU. 
@@ -17,7 +17,10 @@ The files:
 
 To use:  
 python main.py  
-Then load the plugin "rhythm_analyzer_vst" in a DAW, hit "record" and send midi notes to it. When you stop recording, analysis will be initiated. hit "play" to hear the best analysis suggestion. The "rank" dropdown will give access to next best suggestions.  Hit "generate" to use the probabilistic logic to generate a steram of events based on analysis of recorded events.
+Then load the plugin "rhythm_analyzer_vst" in a DAW, hit "record" and send midi notes to it.   
+When you stop recording, analysis will be initiated. hit "play" (under "last recorded phrase) to hear the best analysis suggestion played back as a series of noise impulses. 
+The vst has a GUI section named "generate events with prob logic" that can be used to generate new musical phrases based on the rhythmic and tonal material from recorded phrases. It has two independent voices. Each voice has some adjustable parameters: note duration scaling, rhythmic deviation scaling, absolute/relative pitch, beat sync (generated rhythms might over time turn out to land on offbeats), request events with a specific property (e.g. only use events from one recorded phrase), and adjustment of probabilistic temperature (low temperature is more deterministic).
+Hit "on" for voice 1 or 2 to use the probabilistic logic to generate a stream of events based on analysis of recorded events.
 
 Description of the rhythm ratio analyzer process:  
 The basic idea is to analyze a time series in terms of rational relationships between delta times. Rational expressions (ratios) are found by comparing one delta time to all other delta times in the sequence, representing the whole sequence as a series of ratios. Each of the delta times can be used as the reference delta, against which all other deltas are compared to form ratios. Thus, a number of competing theories/suggestions co-exist as possible rational representations of the sequence. The competing suggestions are then evaluated according to criteria for suitability. The score value thus attained for each suggestion is used to rank them. From the rational representation of the time series, one can deduce pulse and meter, which represent larger scale patterns in the series.
@@ -61,7 +64,7 @@ The client uses these OSC channels:
 "/client_parametercontrols" - set various parameters  
 "/client_memory" - admin/clear recorded data, clear all or clear last phrase  
 "/client_prob_gen" - query to generate one new event with the probabilistic logic  
-"/client_prob_print" - print state transition matrices for the probabilistic logic module  
+"/client_print" - print state transition matrices for the probabilistic logic module  
 
 The message format might change during development. Look at the relevant methods in rhythm_osc_server to find how many values each method expects.
 
