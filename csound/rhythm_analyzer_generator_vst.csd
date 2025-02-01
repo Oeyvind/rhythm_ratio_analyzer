@@ -461,7 +461,7 @@ reinit_clock:
   ; metro sound
   kmetro_on chnget "gen_metro_on"
   if (kmetro_on > 0) && (changed(floor(kbeat_clock)) > 0) then
-      event "i", 119, 0, 0.1
+      event "i", 119, 0, 0.1, kbeat_clock
   endif
 endin
 
@@ -659,10 +659,18 @@ endin
 instr 119
   iamp = ampdbfs(-1)
   aenv expon 1, p3, 0.0001
+  ibeat = p4
+  imodbeat_ratio chnget "beat_clock_mod_ratio"
+  inote = floor(ibeat)%imodbeat_ratio == 0 ? 69 : 57
+  icps = cpsmidinn(inote)
   a1 oscil 1, 440
   a1 *= aenv
   a1 *= iamp
   outs a1, a1
+  ; midi out
+  ichan = 16
+  ivel = 100
+  noteondur ichan, inote, ivel, p3
 endin
 
 ; rhythm trig player

@@ -9,7 +9,7 @@ import numpy as np
 np.set_printoptions(precision=2)
 import sys
 
-max_events = 100 # 100 for test, 10.000 for small scale production
+max_events = 10000 # 100 for test, 10.000 for small scale production
 
 # parameter names and their indices in the corpus
 pnum_corpus = {
