@@ -52,7 +52,7 @@ class Probabilistic_encoder:
             print('Empty Prob sequence')
             return [-1.0]
         # for the very first item, if we do not have any previous note, so let's choose one randomly
-        if not previous:
+        if previous == None:
             alternatives = self.empty_index_container
         else:
             alternatives = self.stm[previous] # get an index container of possible next items
@@ -198,20 +198,8 @@ class Probabilistic_logic:
 
     def get_request_mask(self, request_next_item):
         # request_parm = parameter name
-        # request code = type of request (can be exact value, < or > a threshold value, OR a gradient)
-        #   For request code 'gradient' we need to look at the values in the corpus rather than the index containers
-        #   A gradient can be aligned to prefer low values or high values, with increasing probability along the gradient
-        #   The request mask in this case is not a simple mask, but a floating point probability. Still using the same size and format as the request mask.
-        #   Special treatment of relative pitch, where we might want to request large (or small) intervals, regardless of sign (up or down intervals)
-        #   In that case, use absolute values of interval.
-        #   We might also want to request intervals with polarity (not taking abs() of value)
-        #   Suggest: 
-        #       - read all values of the parameter from corpus
-        #       - take abs() if required
-        #       - normalize values to 0-1 range
-        #       - invert if small values are requested
-        #       - we may want to raise the array to some power to create a desired shape (increased weight, different shape weight)
-        #       - use resulting array as "request mask" (with gradient)
+        # request code = type of request and the value(s) requested
+        # type of request (can be exact value, < or > a threshold value, OR a gradient)
         request_parm, request_code, request_weight = request_next_item
         request_type = request_code[0]
         self.request_mask[:self.current_datasize] = 0*self.request_mask[:self.current_datasize]
@@ -220,32 +208,53 @@ class Probabilistic_logic:
         else:
             pe = self.prob_parms[request_parm][1]
             keys = np.asarray(list(pe.stm.keys()))
-        if (request_type == '>') or (request_type == '<'):
-            val = request_code[1]
-            values = []
-            print('val', val)
-            if request_type == '>':
-                for k in keys:
-                    if k > val:
-                        values.append(k)
-            else:
-                for k in keys:
-                    print(k)
-                    if k < val:
-                        values.append(k)
         if request_type == 'values':
             values = request_code[1]
-        for val in values:
-            if request_parm == 'index':
-                print(val, self.current_datasize)
-                val = val%self.current_datasize # wrap index request to available range
-                self.request_mask[int(val)] = 1
-            else:
-                # in case we request a value that is not exactly equal to a key in the stm, we first find the closest match
-                request_next_item_closest = keys[np.abs(val-keys).argmin()]
-                offset = self.max_order+1
-                request = pe.next_items(request_next_item_closest)[offset:self.current_datasize+offset]
-                self.request_mask[:self.current_datasize] += request[:self.current_datasize]
+            for val in values:
+                if request_parm == 'index':
+                    val = val%self.current_datasize # wrap index request to available range
+                    self.request_mask[int(val)] = 1
+                else:
+                    # in case we request a value that is not exactly equal to a key in the stm, we first find the closest match
+                    # THIS SHOULD BE OPTIONAL, make argument selector to enable (if no exact values found, return flat probability)
+                    request_next_item_closest = keys[np.abs(val-keys).argmin()]
+                    print(f'closest val: {request_next_item_closest}')
+                    print('stm')
+                    for k,v in pe.stm.items(): print(k,v)
+                    print('the one')
+                    print(pe.stm[request_next_item_closest])
+                    offset = self.max_order+1
+                    request = pe.next_items(request_next_item_closest)[offset:self.current_datasize+offset]
+                    self.request_mask[:self.current_datasize] += request[:self.current_datasize]
+        
+        else: # request type is 'gradient', or > or <
+            # For request code 'gradient', '>' or '<', we need to look at the values in the corpus rather than the index containers
+            #   A gradient can be aligned to prefer low values or high values, with increasing probability along the gradient
+            #   The request mask in this case is not a simple mask, but a floating point probability. Still using the same size and format as the request mask.
+            #   Special treatment of relative pitch, where we might want to request large (or small) intervals, regardless of sign (up or down intervals)
+            #   In that case, use absolute values of interval.
+            #   We might also want to request intervals with polarity (not taking abs() of value)
+            # Request code < or > works similarly, but gives a binary mask (over/under threshold)
+            pvalues = self.corpus[:, self.pnum_corpus[request_parm]][:self.current_datasize]
+            if (request_type == '>') or (request_type == '<'):
+                val = request_code[1]
+                print('threshold', val)
+                if request_type == '>':
+                    pvalues = np.ma.masked_greater_equal(pvalues,val).mask
+                else:
+                    pvalues = np.ma.masked_less_equal(pvalues,val).mask
+            else: # if gradient
+                gradient_shape = request_code[1][0]
+                abs_gradient = request_code[1][1]
+                if abs_gradient == 'abs':
+                    pvalues = np.abs(pvalues)
+                amin = np.amin(pvalues)
+                pvalues = (pvalues-amin)/np.amax(pvalues-amin)
+                if gradient_shape < 0:
+                    pvalues = 1-pvalues # invert, we use the shape parameter both to determine gradient direction
+                pvalues = np.power(pvalues, abs(gradient_shape)) # ... and powershape
+            self.request_mask[:self.current_datasize] = pvalues
+        
         self.request_mask[:self.current_datasize] *= request_weight
         self.request_mask[:self.current_datasize] += 1-request_weight
         if np.amax(self.request_mask[:self.current_datasize]) == 0: # if all masks are zero
@@ -292,8 +301,11 @@ class Probabilistic_logic:
             pe.stm = data[i]
             i += 1
 
-# test
-if __name__ == '__main__' :
+#####################################################
+# Tests
+#####################################################
+
+def basic_test():
     # example with 2D data
     pnum_corpus = {
         'index': 0, # register indices for data points currently in use
@@ -383,7 +395,84 @@ if __name__ == '__main__' :
     mask = pl.get_request_mask(request_next_item)
     print('mask of values 1 and 3:\n', mask)
 
+def request_dev():
+    pnum_corpus = {
+        'index': 0, 
+        'val1' : 1, 
+        'val2': 2}
+    nparms_corpus = len(pnum_corpus.keys())
+    prob_parms = {'val1': [2, None, [0,1,2]],
+                 'val2': [2, None, [3,4,5]]}
+
+    max_events = 10
+    n_events = 8
+    corpus = np.zeros((max_events,nparms_corpus), dtype=np.float32) # float32 faster than int or float64
+    list_val1 = np.random.randint(-10,10,n_events)
+    list_val2 = np.random.randint(0,10,n_events)
+    for i in range(len(list_val1)):
+        corpus[i,pnum_corpus['val1']] = list_val1[i]
+        corpus[i,pnum_corpus['val2']] = list_val2[i]
+
+    pl = Probabilistic_logic(corpus, pnum_corpus, prob_parms, max_size=max_events, max_order=2, max_voices=2)
+    for i in range(len(list_val1)):
+        pl.corpus[i,pnum_corpus['index']] = i
+        pl.analyze_single_event(i)
+    print('done analyzing')
+    print(f'corpus:\n{pl.corpus}')
+    '''
+    request_next_item = ['index', ['values' ,[1]], 1]
+    print(f'request mask for {request_next_item}:')
+    mask = pl.get_request_mask(request_next_item)
+    print(f'mask: {mask}')
+    
+    request_next_item = ['val1', ['values', [2.3]], 1] # list of one value
+    print(f'request mask for {request_next_item}:')
+    mask = pl.get_request_mask(request_next_item)
+    print(f'mask: {mask}')
+    '''
+    request_next_item = ['val1', ['values' ,[1]], 1] # list of values
+    print(f'request mask for {request_next_item}:')
+    mask = pl.get_request_mask(request_next_item)
+    print(f'mask: {mask}')
+
+    '''
+    request_next_item = ['val1', ['>', [2]], 1] #mask high values, e.g. all x > zero
+    print(f'request mask for {request_next_item}:')
+    mask = pl.get_request_mask(request_next_item)
+    print(f'mask: {mask}')
+
+    request_next_item = ['val1', ['gradient', [1, 'normal']], 1] 
+    print(f'request mask for {request_next_item}:')
+    mask = pl.get_request_mask(request_next_item)
+    print(f'mask: {mask}')
+
+    request_next_item = ['val1', ['gradient', [2, 'normal']], 1] 
+    print(f'request mask for {request_next_item}:')
+    mask = pl.get_request_mask(request_next_item)
+    print(f'mask: {mask}')
+
+    request_next_item = ['val1', ['gradient', [-2, 'normal']], 1] 
+    print(f'request mask for {request_next_item}:')
+    mask = pl.get_request_mask(request_next_item)
+    print(f'mask: {mask}')
+
+    request_next_item = ['val1', ['gradient', [2, 'abs']], 1] 
+    print(f'request mask for {request_next_item}:')
+    mask = pl.get_request_mask(request_next_item)
+    print(f'mask: {mask}')
+
+    request_next_item = ['val1', ['gradient', [-2, 'abs']], 1] 
+    print(f'request mask for {request_next_item}:')
+    mask = pl.get_request_mask(request_next_item)
+    print(f'mask: {mask}')
+    '''
+# test
+if __name__ == '__main__' :
+    #basic_test()
+
+    request_dev()
     # profiling tests
     #import cProfile
     #cProfile.run('pl.get_request_mask(request_next_item)')
-    
+
+    #        if previous == None:
