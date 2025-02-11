@@ -197,6 +197,21 @@ class Probabilistic_logic:
         return next_item_index
 
     def get_request_mask(self, request_next_item):
+        # request_parm = parameter name
+        # request code = type of request (can be exact value, < or > a threshold value, OR a gradient)
+        #   For request code 'gradient' we need to look at the values in the corpus rather than the index containers
+        #   A gradient can be aligned to prefer low values or high values, with increasing probability along the gradient
+        #   The request mask in this case is not a simple mask, but a floating point probability. Still using the same size and format as the request mask.
+        #   Special treatment of relative pitch, where we might want to request large (or small) intervals, regardless of sign (up or down intervals)
+        #   In that case, use absolute values of interval.
+        #   We might also want to request intervals with polarity (not taking abs() of value)
+        #   Suggest: 
+        #       - read all values of the parameter from corpus
+        #       - take abs() if required
+        #       - normalize values to 0-1 range
+        #       - invert if small values are requested
+        #       - we may want to raise the array to some power to create a desired shape (increased weight, different shape weight)
+        #       - use resulting array as "request mask" (with gradient)
         request_parm, request_code, request_weight = request_next_item
         request_type = request_code[0]
         self.request_mask[:self.current_datasize] = 0*self.request_mask[:self.current_datasize]
