@@ -219,10 +219,6 @@ class Probabilistic_logic:
                     # THIS SHOULD BE OPTIONAL, make argument selector to enable (if no exact values found, return flat probability)
                     request_next_item_closest = keys[np.abs(val-keys).argmin()]
                     print(f'closest val: {request_next_item_closest}')
-                    print('stm')
-                    for k,v in pe.stm.items(): print(k,v)
-                    print('the one')
-                    print(pe.stm[request_next_item_closest])
                     offset = self.max_order+1
                     request = pe.next_items(request_next_item_closest)[offset:self.current_datasize+offset]
                     self.request_mask[:self.current_datasize] += request[:self.current_datasize]
@@ -419,7 +415,7 @@ def request_dev():
         pl.analyze_single_event(i)
     print('done analyzing')
     print(f'corpus:\n{pl.corpus}')
-    '''
+
     request_next_item = ['index', ['values' ,[1]], 1]
     print(f'request mask for {request_next_item}:')
     mask = pl.get_request_mask(request_next_item)
@@ -429,13 +425,12 @@ def request_dev():
     print(f'request mask for {request_next_item}:')
     mask = pl.get_request_mask(request_next_item)
     print(f'mask: {mask}')
-    '''
+
     request_next_item = ['val1', ['values' ,[1]], 1] # list of values
     print(f'request mask for {request_next_item}:')
     mask = pl.get_request_mask(request_next_item)
     print(f'mask: {mask}')
 
-    '''
     request_next_item = ['val1', ['>', [2]], 1] #mask high values, e.g. all x > zero
     print(f'request mask for {request_next_item}:')
     mask = pl.get_request_mask(request_next_item)
@@ -465,7 +460,7 @@ def request_dev():
     print(f'request mask for {request_next_item}:')
     mask = pl.get_request_mask(request_next_item)
     print(f'mask: {mask}')
-    '''
+
 # test
 if __name__ == '__main__' :
     #basic_test()
