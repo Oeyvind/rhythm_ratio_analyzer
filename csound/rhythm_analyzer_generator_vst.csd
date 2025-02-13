@@ -159,6 +159,7 @@ nchnls = 2
 massign -1, 2
 pgmassign 0, -1 ; ignore program change
 gkactivenote init 0; stores the note number of the active note, for polyphony control for rhythm analyzer
+giChord[] init 6 ; hold chord notes
 
 gitrig_ftab ftgen 0, 0, 4096, 2, 0
 gitrig_ftab_empty ftgen 0, 0, 4096, 2, 0
@@ -233,13 +234,34 @@ instr 2
   chnset ivel, "velocity"
   inst_num = 3+(inum*0.001)
   krelease lastcycle
-  iactive active 3
-  if iactive > 0 then
-    ifrac = i(gkactivenote)*0.001
-    event_i "i", -3-ifrac, 0, .1
-    chnset 1, "event_force_off"
+
+  ;thresh function
+  ithresh = 0.050 ; thresh time in seconds
+  itime times
+  iprev_time chnget "previous_time"
+  idelta = itime-iprev_time
+  chnset itime, "previous_time"
+  if idelta > ithresh then
+    ;gitime = itime
+    iChord[] init lenarray(giChord)
+    giChord = iChord
+    ichord_index = 0
+    chnset ichord_index, "chord_index"
+    iactive active 3
+    if iactive > 0 then
+      ifrac = i(gkactivenote)*0.001
+      event_i "i", -3-ifrac, 0, .1
+      chnset 1, "event_force_off"
+    endif
+    event_i "i", inst_num, 0, -1, inum
+  else
+    ichord_index chnget "chord_index"
+    print ichord_index, lenarray(giChord)
+    giChord[ichord_index] = inum
+    printarray giChord
+    chnset ichord_index+1, "chord_index"
   endif
-  event_i "i", inst_num, 0, -1, inum
+
   if (krelease > 0) && (inum == gkactivenote) then 
       event "i", -inst_num, 0, .1
       chnset krelease, "event_off"
@@ -733,7 +755,7 @@ endin
 </CsInstruments>
 <CsScore>
 i1 0 86400 ; Gui handling
-i4 0 86400 ; midi debug test
+;i4 0 86400 ; midi debug test
 i31 0 86400 ; OSC processing
 </CsScore>
 </CsoundSynthesizer>
