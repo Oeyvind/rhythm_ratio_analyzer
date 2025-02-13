@@ -1,5 +1,5 @@
 <Cabbage>
-form size(770, 460), caption("Rhythm Analyzer"), pluginId("rtm1"), guiMode("queue"), colour(46,45,52)
+form size(670, 460), caption("Rhythm Analyzer"), pluginId("rtm1"), guiMode("queue"), colour(46,45,52)
 
 ; recording and analysis
 button bounds(5, 5, 70, 50), text("record","recording"), channel("record_enable"), colour:0("green"), colour:1("red")
@@ -51,7 +51,7 @@ nslider bounds(350, 25, 40, 20), channel("autocorr_weight"), range(0, 1, 1), fon
 label bounds(350, 45, 40, 20), text("acorr"), fontSize(12)
 }
 
-groupbox bounds(5, 135, 760, 170), text("generate events with prob logic"), colour(25,45,30){
+groupbox bounds(5, 135, 660, 170), text("generate events with prob logic"), colour(25,45,30){
 ; Voice 1
 label bounds(5, 25, 50, 18), text("Voice 1"), fontSize(12), align("left")
 button bounds(50, 25, 40, 20), text("on"), channel("gen_voice1"), colour:0("green"), colour:1("red")
@@ -71,19 +71,17 @@ button bounds(340, 25, 35, 20), text("auto"), channel("beat_sync_auto_1"), colou
 nslider bounds(380, 25, 25, 20), channel("v1_sync_min"), range(0, 10, 1, 1, 1), fontSize(14)
 label bounds(380, 45, 30, 18), text("min"), fontSize(12), align("left")
 nslider bounds(410, 25, 25, 20), channel("v1_sync_range"), range(0, 10, 1, 1, 1), fontSize(14)
-label bounds(409, 45, 35, 18), text("range"), fontSize(12), align("left")
+label bounds(410, 45, 35, 18), text("range"), fontSize(12), align("left")
 
-combobox bounds(450, 26, 58, 18), channel("request_type_v1"), items("none", "next", "prev", "==", ">", "<", "gradient", "gr_abs")
-label bounds(450, 45, 60, 18), text("req_type"), fontSize(12), align("left")
-combobox bounds(510, 26, 58, 18), channel("request_parm_v1"), items("index", "rhythm", "pitch", "interval", "phrase")
-label bounds(510, 45, 60, 18), text("req_parm"), fontSize(12), align("left")
-nslider bounds(570, 25, 37, 20), channel("request_value_v1"), range(-999, 999, 0, 1, 0.1), fontSize(14)
-label bounds(575, 45, 37, 18), text("val"), fontSize(12), align("left")
-nslider bounds(610, 25, 40, 20), channel("request_weight_v1"), range(0, 1, 0), fontSize(14)
-label bounds(610, 45, 40, 18), text("weight"), fontSize(12), align("left")
+combobox bounds(445, 25, 60, 18), channel("request_item_v1"), items("none", "index", "phrase", ">", "<", "gradient", "gradi_abs");, "ratio", "pitch", "interval")
+label bounds(448, 45, 60, 18), text("req_item"), fontSize(12), align("left")
+nslider bounds(508, 25, 37, 20), channel("request_value_v1"), range(-1, 999, 0, 1, 0.1), fontSize(14)
+label bounds(510, 45, 37, 18), text("val"), fontSize(12), align("left")
+nslider bounds(550, 25, 40, 20), channel("request_weight_v1"), range(0, 1, 0), fontSize(14)
+label bounds(550, 45, 40, 18), text("weight"), fontSize(12), align("left")
 
-nslider bounds(715, 25, 40, 20), channel("gen_v1_temperature"), range(0.01, 10, 0.2, 1, 0.01), fontSize(14)
-label bounds(710, 45, 65, 18), text("tmprature"), fontSize(12), align("left")
+nslider bounds(615, 25, 40, 20), channel("gen_v1_temperature"), range(0.01, 10, 0.2, 1, 0.01), fontSize(14)
+label bounds(610, 45, 65, 18), text("tmprature"), fontSize(12), align("left")
 
 ; Voice 2
 ;button bounds(10, 115, 70, 23), text("voice 2"), channel("gen_voice2"), colour:0("green"), colour:1("red")
@@ -100,10 +98,10 @@ button bounds(340, 65, 35, 20), text("auto"), channel("beat_sync_auto_2"), colou
 nslider bounds(380, 65, 25, 20), channel("v2_sync_min"), range(0, 10, 1, 1, 1), fontSize(14)
 nslider bounds(410, 65, 25, 20), channel("v2_sync_range"), range(0, 10, 1, 1, 1), fontSize(14)
 
-;combobox bounds(445, 65, 60, 18), channel("request_item_v2"), items("none", "index", "phrase", ">", "<", "gradient", "gradi_abs");, "ratio", "pitch", "interval")
-;nslider bounds(508, 65, 37, 20), channel("request_value_v2"), range(-1, 999, 0, 1, 0.1), fontSize(14)
-;nslider bounds(550, 65, 40, 20), channel("request_weight_v2"), range(0, 1, 0), fontSize(14)
-;nslider bounds(615, 65, 40, 20), channel("gen_v2_temperature"), range(0.01, 10, 0.2, 1, 0.01), fontSize(14)
+combobox bounds(445, 65, 60, 18), channel("request_item_v2"), items("none", "index", "phrase", ">", "<", "gradient", "gradi_abs");, "ratio", "pitch", "interval")
+nslider bounds(508, 65, 37, 20), channel("request_value_v2"), range(-1, 999, 0, 1, 0.1), fontSize(14)
+nslider bounds(550, 65, 40, 20), channel("request_weight_v2"), range(0, 1, 0), fontSize(14)
+nslider bounds(615, 65, 40, 20), channel("gen_v2_temperature"), range(0.01, 10, 0.2, 1, 0.01), fontSize(14)
 
 
 nslider bounds(460, 125, 40, 22), channel("gen_r1_order"), range(0, 4, 2, 1, 0.5), fontSize(14)
@@ -498,16 +496,9 @@ instr 109
     endif
   endif
 
-  Srequest_type_ sprintf "request_type_v%i", ivoice
-  krequest_type chnget Srequest_type_
-  Srequest_types[] fillarray "none", "none", "next", "prev", "==", ">", "<", "gradient", "gr_abs" ; pad (copy) item at index zero, as combobox init to 0 but uses 1-indexing thereafter
-  Srequest_type = Srequest_types[krequest_type]
-  
-  Srequest_parm_ sprintf "request_parm_v%i", ivoice
-  krequest_parm chnget Srequest_parm_
-  Srequest_parms[] fillarray "index", "index", "rhythm", "pitch", "interval", "phrase"
-  Srequest_parm = Srequest_parms[krequest_parm]
-
+  Srequest_item sprintf "request_item_v%i", ivoice
+  krequest_item chnget Srequest_item
+  krequest_item -= 1 ; correct 1-based indexing of combobox
   Srequest_value sprintf "request_value_v%i", ivoice
   krequest_value chnget Srequest_value
   Srequest_weight sprintf "request_weight_v%i", ivoice
@@ -548,16 +539,11 @@ instr 109
   
   ; get event data from server
   if (kbeat_clock > knext_event_time) && (kpython_data_ready == 0) then
-    if strcmpk(Srequest_parm, "index") == 0 then 
-      if strcmpk(Srequest_type, "next") == 0 then
-        krequest_value = kgen_index+1; request next index
-        cabbageSetValue Srequest_value, krequest_value, changed(krequest_value)
-      elseif strcmpk(Srequest_type, "prev") == 0 then 
-        krequest_value = kgen_index-1; request previous index
-        cabbageSetValue Srequest_value, krequest_value, changed(krequest_value)
-      endif
+    if krequest_item == 1 then ; request type index
+      krequest_value = kgen_index+1; request next index
+      cabbageSetValue Srequest_value, krequest_value, changed(krequest_value)
     endif
-    OSCsend kcount, "127.0.0.1", 9901, "/client_prob_gen", "ffssfff", ivoice, kgen_index, Srequest_type, Srequest_parm, krequest_value, krequest_weight, ktemperature
+    OSCsend kcount, "127.0.0.1", 9901, "/client_prob_gen", "ffffff", ivoice, kgen_index, krequest_item, krequest_value, krequest_weight, ktemperature
   nextmsg:
     Saddr sprintf "python_prob_gen_voice%i", ivoice
     kmess OSClisten gihandle, Saddr, "fffffff", kgen_index, kgen_ratio, kgen_deviation, kgen_duration, kgen_notenum, kgen_interval, kgen_velocity ; receive OSC data from Python

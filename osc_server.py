@@ -126,15 +126,18 @@ class Osc_server():
 
     def pl_generate(self, unused_addr, *osc_data):
         '''Message handler. This is called when we receive an OSC message'''
-        voicenum, index, request_item, request_value, request_weight, temperature = osc_data
+        voicenum, index, request_type, request_parm, request_value, request_weight, temperature = osc_data
         voicenum = int(voicenum)
-        if request_item <= 0: # item 1 is None from Csound
-            request = [None, 0, 0]
-        else:
-            request_items = ['index', 'phrase_num']
-            request_item = request_items[int(request_item)-1]
-            request_type = 'values'
-            request = [request_item, [request_type, [request_value]], request_weight]
+        
+        if request_type in ['none', '-']: # no request
+            request =  [None]
+        else: 
+            # translation of gui labels to data container labels
+            if request_parm == 'rhythm': request_parm = 'ratio_best'
+            if request_parm == 'pitch': request_parm = 'notenum'
+            if request_parm == 'interval': request_parm = 'notenum_relative'
+            if request_parm == 'phrase': request_parm = 'phrase_num'
+            request = [request_parm, [request_type, [request_value]], 1]
         query = [index, request]
         print('***pl_query', voicenum, query)
 

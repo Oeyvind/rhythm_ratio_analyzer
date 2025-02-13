@@ -173,7 +173,7 @@ class Probabilistic_logic:
                     self.indx_container[:self.current_datasize, w_index] = self.indices_prob_temp[:self.current_datasize]
 
         # if we request a specific item, handle this here 
-        if request_next_item[0]:
+        if request_next_item[0] != None:
             self.get_request_mask(request_next_item)
 
         # Scale by weights and sum: dot product indx_container and weight. Then adjust temperature
@@ -208,7 +208,7 @@ class Probabilistic_logic:
         else:
             pe = self.prob_parms[request_parm][1]
             keys = np.asarray(list(pe.stm.keys()))
-        if request_type == 'values':
+        if request_type == '==':
             values = request_code[1]
             for val in values:
                 if request_parm == 'index':
@@ -228,21 +228,18 @@ class Probabilistic_logic:
             #   A gradient can be aligned to prefer low values or high values, with increasing probability along the gradient
             #   The request mask in this case is not a simple mask, but a floating point probability. Still using the same size and format as the request mask.
             #   Special treatment of relative pitch, where we might want to request large (or small) intervals, regardless of sign (up or down intervals)
-            #   In that case, use absolute values of interval.
-            #   We might also want to request intervals with polarity (not taking abs() of value)
+            #   In that case, use absolute values of interval (request code = 'gr_abs').
             # Request code < or > works similarly, but gives a binary mask (over/under threshold)
             pvalues = self.corpus[:, self.pnum_corpus[request_parm]][:self.current_datasize]
             if (request_type == '>') or (request_type == '<'):
                 val = request_code[1]
-                print('threshold', val)
                 if request_type == '>':
                     pvalues = np.ma.masked_greater_equal(pvalues,val).mask
                 else:
                     pvalues = np.ma.masked_less_equal(pvalues,val).mask
             else: # if gradient
-                gradient_shape = request_code[1][0]
-                abs_gradient = request_code[1][1]
-                if abs_gradient == 'abs':
+                gradient_shape = request_code[1][0] # request value in gui
+                if request_type == 'gr_abs':
                     pvalues = np.abs(pvalues)
                 amin = np.amin(pvalues)
                 pvalues = (pvalues-amin)/np.amax(pvalues-amin)
@@ -346,7 +343,7 @@ def basic_test():
     
     # query
     print(f'The first item is {next_item} at index {start_index}')
-    query = [start_index, [None, [0], 0]]
+    query = [start_index, [None]]
                           
     i = 0
     voice = 1
@@ -416,17 +413,17 @@ def request_dev():
     print('done analyzing')
     print(f'corpus:\n{pl.corpus}')
 
-    request_next_item = ['index', ['values' ,[1]], 1]
+    request_next_item = ['index', ['==' ,[1]], 1]
     print(f'request mask for {request_next_item}:')
     mask = pl.get_request_mask(request_next_item)
     print(f'mask: {mask}')
     
-    request_next_item = ['val1', ['values', [2.3]], 1] # list of one value
+    request_next_item = ['val1', ['==', [2.3]], 1] # list of one value
     print(f'request mask for {request_next_item}:')
     mask = pl.get_request_mask(request_next_item)
     print(f'mask: {mask}')
 
-    request_next_item = ['val1', ['values' ,[1]], 1] # list of values
+    request_next_item = ['val1', ['==' ,[1]], 1] # list of values
     print(f'request mask for {request_next_item}:')
     mask = pl.get_request_mask(request_next_item)
     print(f'mask: {mask}')
@@ -436,27 +433,27 @@ def request_dev():
     mask = pl.get_request_mask(request_next_item)
     print(f'mask: {mask}')
 
-    request_next_item = ['val1', ['gradient', [1, 'normal']], 1] 
+    request_next_item = ['val1', ['gradient', [1]], 1] 
     print(f'request mask for {request_next_item}:')
     mask = pl.get_request_mask(request_next_item)
     print(f'mask: {mask}')
 
-    request_next_item = ['val1', ['gradient', [2, 'normal']], 1] 
+    request_next_item = ['val1', ['gradient', [2]], 1] 
     print(f'request mask for {request_next_item}:')
     mask = pl.get_request_mask(request_next_item)
     print(f'mask: {mask}')
 
-    request_next_item = ['val1', ['gradient', [-2, 'normal']], 1] 
+    request_next_item = ['val1', ['gradient', [-2]], 1] 
     print(f'request mask for {request_next_item}:')
     mask = pl.get_request_mask(request_next_item)
     print(f'mask: {mask}')
 
-    request_next_item = ['val1', ['gradient', [2, 'abs']], 1] 
+    request_next_item = ['val1', ['gr_abs', [2]], 1] 
     print(f'request mask for {request_next_item}:')
     mask = pl.get_request_mask(request_next_item)
     print(f'mask: {mask}')
 
-    request_next_item = ['val1', ['gradient', [-2, 'abs']], 1] 
+    request_next_item = ['val1', ['gr_abs', [-2]], 1] 
     print(f'request mask for {request_next_item}:')
     mask = pl.get_request_mask(request_next_item)
     print(f'mask: {mask}')
@@ -464,7 +461,6 @@ def request_dev():
 # test
 if __name__ == '__main__' :
     #basic_test()
-
     request_dev()
     # profiling tests
     #import cProfile
