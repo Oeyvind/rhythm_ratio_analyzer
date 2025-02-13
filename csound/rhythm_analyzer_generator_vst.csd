@@ -256,6 +256,22 @@ instr 3
   ;outs a1, a1
 endin
 
+instr 4
+  kevent_on chnget "event_on"
+  kevent_off chnget "event_off"
+  kevent_force_off chnget "event_force_off" ; force off when we have overlapping notes in input
+  kprint_enable init 1
+  kprint_enable = kprint_enable+kevent_on+kevent_off+kevent_force_off
+  ktime timeinsts
+  Sdebug sprintfk "t=%.2f on %i, off %i, force_off %i", ktime, kevent_on, kevent_off, kevent_force_off
+  puts Sdebug, kprint_enable
+  ;printk2 kevent_on
+  kzero = 0
+  chnset kzero, "event_off"
+  chnset kzero, "event_force_off"
+
+endin
+
 ; play trigger rhythm
 instr 5
   ktempo chnget "tempo_triggerseq"
@@ -325,12 +341,6 @@ instr 31
     if kevent_trig > 0 then
       OSCsend ksend_osc, "127.0.0.1", 9901, "/client_eventdata", "fffff", kindex, ktime, kevent_onoff, knotenum, kvelocity
     endif
-    ; if Python skips an index (due to invalid data), we update our index counter so it is equal to the index counter in Python
-    skipindex:
-      kskipindex OSClisten gihandle, "python_skipindex", "i", kindex  ; if Python skipped this index, update our index
-      if kskipindex == 0 goto done_skipindex
-      kgoto skipindex ; jump back to the OSC listen line, to see if there are more messages waiting in the network buffer
-    done_skipindex:
     if kevent_on > 0 then
       cabbageSetValue "index_last_event", kindex
       cabbageSetValue "velocity_last_event", kvelocity
@@ -641,7 +651,7 @@ instr 109
 		;Sdebug sprintfk "play_index %i, e_queue_index %i, beat_clock %.2f, dir %i, time %.2f", kplay_index, keventqueue_index, kbeat_clock, kclock_direction, ktime
 		;puts Sdebug, ktime+1
     ;kEvent[] fillarray kgen_ratio, kgen_deviation, kgen_duration, kgen_notenum, kgen_interval, kgen_velocity
-    printk2 krelative_pitch_inverter
+    ;printk2 krelative_pitch_inverter
     if krelative_pitch > 0 then
       kgen_notenum = kprev_notenum + (kEvent_queue[keventqueue_index][4]*krelative_pitch_inverter)
       if (kgen_notenum > (krelative_middle_note+krelative_pitch_range)) then
@@ -723,6 +733,7 @@ endin
 </CsInstruments>
 <CsScore>
 i1 0 86400 ; Gui handling
+i4 0 86400 ; midi debug test
 i31 0 86400 ; OSC processing
 </CsScore>
 </CsoundSynthesizer>

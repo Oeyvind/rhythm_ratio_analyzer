@@ -51,21 +51,19 @@ class Osc_server():
                 self.corpus[index, self.pnum_corpus['velocity']] = velocity
                 self.pending_analysis.append(index)
             else:
-                if timenow > (self.corpus[index-1, self.pnum_corpus['timestamp']] + (self.minimum_delta_time/1000)):
-                    self.corpus[index,self.pnum_corpus['timestamp']] = timenow
-                    self.corpus[index, self.pnum_corpus['notenum']] = notenum
-                    self.corpus[index, self.pnum_corpus['velocity']] = velocity
-                    # relative notenumber and velocity
-                    if self.previous_notenum > -1:
-                        self.corpus[index, self.pnum_corpus['notenum_relative']] = notenum-self.previous_notenum
-                    if self.previous_velocity > -1:
-                        self.corpus[index, self.pnum_corpus['velocity_relative']] = velocity-self.previous_velocity
-                    self.previous_notenum = notenum
-                    self.previous_velocity = velocity
-                    self.pending_analysis.append(index)
-                else:
-                    logging.debug('skipped double trig event: {}, {}'.format(index, timenow))
-                    osc_io.sendOSC("python_skipindex", index) # send OSC back to client
+                if timenow < (self.corpus[index-1, self.pnum_corpus['timestamp']] + (self.minimum_delta_time/1000)):
+                    timenow += (self.minimum_delta_time/1000)
+                self.corpus[index,self.pnum_corpus['timestamp']] = timenow
+                self.corpus[index, self.pnum_corpus['notenum']] = notenum
+                self.corpus[index, self.pnum_corpus['velocity']] = velocity
+                # relative notenumber and velocity
+                if self.previous_notenum > -1:
+                    self.corpus[index, self.pnum_corpus['notenum_relative']] = notenum-self.previous_notenum
+                if self.previous_velocity > -1:
+                    self.corpus[index, self.pnum_corpus['velocity_relative']] = velocity-self.previous_velocity
+                self.previous_notenum = notenum
+                self.previous_velocity = velocity
+                self.pending_analysis.append(index)
 
     def analyze(self, unused_addr, *osc_data):
         '''Message handler. This is called when we receive an OSC message'''
