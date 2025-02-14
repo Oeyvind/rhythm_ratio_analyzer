@@ -114,7 +114,7 @@ class Probabilistic_logic:
     def analyze_single_event(self, i):
         for parm in self.prob_parms.keys():
             pe = self.prob_parms[parm][1]
-            #print(f'pe.analyze: {pe.name}, {self.corpus[i, self.pnum_corpus[parm]]}')
+            print(f'pe.analyze: {pe.name}, {self.corpus[i, self.pnum_corpus[parm]]}')
             pe.analyze(self.corpus[i, self.pnum_corpus[parm]], i)
         self.current_datasize += 1
         self.indices = self.corpus[:self.current_datasize, self.pnum_corpus['index']]
