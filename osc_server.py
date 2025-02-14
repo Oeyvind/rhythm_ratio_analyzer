@@ -21,7 +21,6 @@ class Osc_server():
 
     def __init__(self, dc, ratio_analyzer, pl_instance):
         self.dc = dc # data container
-        self.corpus = dc.corpus # the main data container for events
         self.pnum_corpus = dc.pnum_corpus # dict for parameter_name:index in corpus
         self.pending_analysis = [] # indices for events not yet enelyzed
         self.last_analyzed_phrase = [] # indices for events in the last analyzed phrase
@@ -30,7 +29,8 @@ class Osc_server():
         self.previous_notenum = -1
         self.previous_velocity = -1
         self.phrase_number = 0
-        
+        self.chord_on = 1
+
         self.pl = pl_instance # probabilistic logic instance
         self.pl.weights[1] = 1 # first order for best ratio
         self.pl.weights[2] = 1 # 2nd order for best ratio
@@ -42,28 +42,45 @@ class Osc_server():
         index = int(index)
         logging.debug(f'received: {index}, {timenow:.2f}, {on_off}, {notenum}, {velocity}')
         if on_off == 0:
-            self.corpus[index, self.pnum_corpus['time_off']] = timenow
+            self.dc.corpus[index, self.pnum_corpus['time_off']] = timenow
         if on_off == 1:
             # put events in analysis queue
             if index == 0:
-                self.corpus[index, self.pnum_corpus['timestamp']] = timenow
-                self.corpus[index, self.pnum_corpus['notenum']] = notenum
-                self.corpus[index, self.pnum_corpus['velocity']] = velocity
+                self.dc.corpus[index, self.pnum_corpus['timestamp']] = timenow
+                self.dc.corpus[index, self.pnum_corpus['notenum']] = notenum
+                self.dc.corpus[index, self.pnum_corpus['velocity']] = velocity
                 self.pending_analysis.append(index)
             else:
-                if timenow < (self.corpus[index-1, self.pnum_corpus['timestamp']] + (self.minimum_delta_time/1000)):
+                if timenow < (self.dc.corpus[index-1, self.pnum_corpus['timestamp']] + (self.minimum_delta_time/1000)):
                     timenow += (self.minimum_delta_time/1000)
-                self.corpus[index,self.pnum_corpus['timestamp']] = timenow
-                self.corpus[index, self.pnum_corpus['notenum']] = notenum
-                self.corpus[index, self.pnum_corpus['velocity']] = velocity
+                self.dc.corpus[index,self.pnum_corpus['timestamp']] = timenow
+                self.dc.corpus[index, self.pnum_corpus['notenum']] = notenum
+                self.dc.corpus[index, self.pnum_corpus['velocity']] = velocity
                 # relative notenumber and velocity
                 if self.previous_notenum > -1:
-                    self.corpus[index, self.pnum_corpus['notenum_relative']] = notenum-self.previous_notenum
+                    self.dc.corpus[index, self.pnum_corpus['notenum_relative']] = notenum-self.previous_notenum
                 if self.previous_velocity > -1:
-                    self.corpus[index, self.pnum_corpus['velocity_relative']] = velocity-self.previous_velocity
+                    self.dc.corpus[index, self.pnum_corpus['velocity_relative']] = velocity-self.previous_velocity
                 self.previous_notenum = notenum
                 self.previous_velocity = velocity
                 self.pending_analysis.append(index)
+    
+    def receive_eventchord(self, unused_addr, *osc_data):
+        '''Receive chord data, i.e. when several notes occur simultaneously (within time window of i.e. 50 ms) in the input data'''
+        index, chord_index, note, velocity, delta_time = osc_data
+        index = int(index)
+        chord_index = int(chord_index)
+        self.dc.corpus[index, self.pnum_corpus['chord_index']] = chord_index+1 # 1-indexed, as zero means no chord
+        base_note = self.dc.corpus[index, self.pnum_corpus['notenum']] 
+        base_velocity = self.dc.corpus[index, self.pnum_corpus['velocity']]
+        chord_note = [note-base_note, velocity/base_velocity, delta_time]
+        if len(self.dc.chord_list) <= chord_index:
+            self.dc.chord_list.append([chord_note]) # the first note in a chord
+        else:
+            self.dc.chord_list[chord_index].append(chord_note) # next notes in previously existing chord
+        #print('chord_list:')
+        #for chord in self.dc.chord_list:
+        #    print(chord)
 
     def analyze(self, unused_addr, *osc_data):
         '''Message handler. This is called when we receive an OSC message'''
@@ -74,7 +91,7 @@ class Osc_server():
             return
         self.last_analyzed_phrase = self.pending_analysis # keep it so we can delete it if clear_last_phrase is called
         start, end = self.pending_analysis[0], self.pending_analysis[-1]
-        timedata = self.corpus[start:end+1,self.pnum_corpus['timestamp']]
+        timedata = self.dc.corpus[start:end+1,self.pnum_corpus['timestamp']]
         print('timedata:', timedata-timedata[0])
         self.phrase_number += 1
         ratios_reduced, ranked_unique_representations, rankscores, trigseq, ticktempo_bpm, tempo_tendency, pulseposition = self.ra.analyze(timedata)
@@ -107,17 +124,17 @@ class Osc_server():
         next_best = ranked_unique_representations[1]
         for i in range(len(self.pending_analysis)-1): 
             indx = self.pending_analysis[i]
-            self.corpus[indx,self.pnum_corpus['index']] = indx
-            self.corpus[indx,self.pnum_corpus['ratio_best']] = (ratios_reduced[best,i,0]/ratios_reduced[best,i,1])*tempo_factor # ratio as float
-            self.corpus[indx,self.pnum_corpus['deviation_best']] = ratios_reduced[best,i,2]*tempo_factor # deviation
-            self.corpus[indx,self.pnum_corpus['ratio_2nd_best']] = ratios_reduced[next_best,i,0]/ratios_reduced[next_best,i,1] # ratio as float
-            self.corpus[indx,self.pnum_corpus['phrase_num']] = self.phrase_number
+            self.dc.corpus[indx,self.pnum_corpus['index']] = indx
+            self.dc.corpus[indx,self.pnum_corpus['ratio_best']] = (ratios_reduced[best,i,0]/ratios_reduced[best,i,1])*tempo_factor # ratio as float
+            self.dc.corpus[indx,self.pnum_corpus['deviation_best']] = ratios_reduced[best,i,2]*tempo_factor # deviation
+            self.dc.corpus[indx,self.pnum_corpus['ratio_2nd_best']] = ratios_reduced[next_best,i,0]/ratios_reduced[next_best,i,1] # ratio as float
+            self.dc.corpus[indx,self.pnum_corpus['phrase_num']] = self.phrase_number
             # event duration relative to time until next event
-            self.corpus[indx,self.pnum_corpus['duration']] = \
-                (self.corpus[indx,self.pnum_corpus['time_off']] \
-                - self.corpus[indx,self.pnum_corpus['timestamp']]) \
-                / (self.corpus[indx+1,self.pnum_corpus['timestamp']] \
-                - self.corpus[indx,self.pnum_corpus['timestamp']])
+            self.dc.corpus[indx,self.pnum_corpus['duration']] = \
+                (self.dc.corpus[indx,self.pnum_corpus['time_off']] \
+                - self.dc.corpus[indx,self.pnum_corpus['timestamp']]) \
+                / (self.dc.corpus[indx+1,self.pnum_corpus['timestamp']] \
+                - self.dc.corpus[indx,self.pnum_corpus['timestamp']])
             # probabilistic model encoding
             self.pl.analyze_single_event(indx)
         self.pending_analysis = [] # clear
@@ -141,15 +158,29 @@ class Osc_server():
 
         next_item_index = self.pl.generate(query, voicenum, temperature) #query probabilistic models for next event and update query for next iteration
         returnmsg = [int(next_item_index), 
-                     float(self.corpus[next_item_index, self.pnum_corpus['ratio_best']]),
-                     float(self.corpus[next_item_index, self.pnum_corpus['deviation_best']]),
-                     float(self.corpus[next_item_index, self.pnum_corpus['duration']]),
-                     float(self.corpus[next_item_index, self.pnum_corpus['notenum']]),
-                     float(self.corpus[next_item_index, self.pnum_corpus['notenum_relative']]),
-                     float(self.corpus[next_item_index, self.pnum_corpus['velocity']])]
+                     float(self.dc.corpus[next_item_index, self.pnum_corpus['ratio_best']]),
+                     float(self.dc.corpus[next_item_index, self.pnum_corpus['deviation_best']]),
+                     float(self.dc.corpus[next_item_index, self.pnum_corpus['duration']]),
+                     float(self.dc.corpus[next_item_index, self.pnum_corpus['notenum']]),
+                     float(self.dc.corpus[next_item_index, self.pnum_corpus['notenum_relative']]),
+                     float(self.dc.corpus[next_item_index, self.pnum_corpus['velocity']])]
         #print('next item', next_item_index)
         print(returnmsg)
         osc_io.sendOSC(f"python_prob_gen_voice{voicenum}", returnmsg) # send OSC back to client
+        chord_index = self.dc.corpus[next_item_index, self.pnum_corpus['chord_index']]
+        if chord_index > 0:
+            for event in self.dc.chord_list[int(chord_index-1)]:
+                returnmsg = [int(next_item_index), 
+                             0.0, # ratio
+                             event[2], # deviation (...)
+                             float(self.dc.corpus[next_item_index, self.pnum_corpus['duration']]),
+                             event[0]+float(self.dc.corpus[next_item_index, self.pnum_corpus['notenum']]),
+                             event[0]+float(self.dc.corpus[next_item_index, self.pnum_corpus['notenum_relative']]),
+                             event[1]*float(self.dc.corpus[next_item_index, self.pnum_corpus['velocity']])]
+                print('chord event', returnmsg)
+                if self.chord_on > 0:
+                    osc_io.sendOSC(f"python_prob_gen_voice{voicenum}", returnmsg) # send OSC back to client
+        
 
     def printstuff(self, unused_addr, *osc_data):
         '''Message handler. This is called when we receive an OSC message'''
@@ -160,12 +191,17 @@ class Osc_server():
                 print(pe, pe.name)
                 for key, value in pe.stm.items():
                     print(key, value[pe.max_order:pe.size+pe.max_order])
+            print('corpus')
+            for i in range(20):
+                print(i, self.dc.corpus[i])
+            print('chord list: \n', self.dc.chord_list)
+
         elif printcode == 2:
             print('last_phrase: indx, ratio1, ratio2')
             print(self.pnum_corpus['index'], self.pnum_corpus['ratio_best'], self.pnum_corpus['ratio_2nd_best'], self.last_analyzed_phrase)
             parmindxs = [self.pnum_corpus['index'], self.pnum_corpus['ratio_best'], self.pnum_corpus['ratio_2nd_best']]
             for i in self.last_analyzed_phrase[:-1]:
-                print(self.corpus[[i,i,i],parmindxs])
+                print(self.dc.corpus[[i,i,i],parmindxs])
         else:
             print(f'unknown print code: {printcode}')
 
@@ -187,6 +223,7 @@ class Osc_server():
             self.pl.clear_all()
             self.previous_notenum = -1
             self.previous_velocity = -1
+            self.dc.chord_list = []
         if save_all > 0:
             self.dc.save_corpus()
             self.pl.save_all()
@@ -197,7 +234,7 @@ class Osc_server():
         kbarlow_weight, kbenni_weight, knd_weight, kratio_dev_weight, \
             kratio_dev_abs_max_weight, kgrid_dev_weight, \
             kevidence_weight, kautocorr_weight, kratio1_order, \
-            kratio2_order, knotenum_order, kinterval_order = osc_data
+            kratio2_order, knotenum_order, kinterval_order, kchord_on = osc_data
         
         ratio_analyzer_weights = [kbarlow_weight, kbenni_weight, knd_weight, kratio_dev_weight, \
                                   kratio_dev_abs_max_weight, kgrid_dev_weight, \
@@ -207,11 +244,13 @@ class Osc_server():
         self.pl.set_weights_pname('ratio_best', kratio1_order)         
         self.pl.set_weights_pname('ratio_2nd_best', kratio2_order) 
         self.pl.set_weights_pname('notenum', knotenum_order) 
-        self.pl.set_weights_pname('notenum_relative', kinterval_order) 
+        self.pl.set_weights_pname('notenum_relative', kinterval_order)
+        self.chord_on = kchord_on 
         logging.debug('receive_parameter_controls {}'.format(osc_data))
 
     def start_server(self):
         osc_io.dispatcher.map("/client_eventdata", self.receive_eventdata) # here we assign the function to be called when we receive OSC on this address
+        osc_io.dispatcher.map("/client_eventchord", self.receive_eventchord) 
         osc_io.dispatcher.map("/client_analyze_trig", self.analyze) # 
         osc_io.dispatcher.map("/client_parametercontrols", self.receive_parameter_controls) # 
         osc_io.dispatcher.map("/client_memory", self.eventdata_admin) # 

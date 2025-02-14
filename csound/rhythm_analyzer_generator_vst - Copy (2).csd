@@ -106,6 +106,8 @@ nslider bounds(410, 65, 25, 20), channel("v2_sync_range"), range(0, 10, 1, 1, 1)
 ;nslider bounds(615, 65, 40, 20), channel("gen_v2_temperature"), range(0.01, 10, 0.2, 1, 0.01), fontSize(14)
 
 
+button bounds(390, 125, 45, 18), text("chord"), channel("chords_on"), colour:0("green"), colour:1("red"), latched(1)
+
 nslider bounds(460, 125, 40, 22), channel("gen_r1_order"), range(0, 4, 2, 1, 0.5), fontSize(14)
 label bounds(460, 147, 60, 18), text("r1_ord"), fontSize(12), align("left")
 ;nslider bounds(155, 25, 40, 25), channel("gen_r2_order"), range(0, 4, 2, 1, 0.5), fontSize(14)
@@ -397,15 +399,16 @@ instr 31
   kratio2_order chnget "gen_r2_order"
   knotenum_order chnget "gen_pitch_order"
   kinterval_order chnget "gen_interval_order"
+  kchords_on chnget "chords_on"
   kparm_update = changed(kbarlow_weight, kbenni_weight, knd_weight, kratio_dev_weight, 
                       kratio_dev_abs_max_weight, kgrid_dev_weight, 
                       kevidence_weight, kautocorr_weight, kratio1_order, 
-                      kratio2_order, knotenum_order, kinterval_order)
-  OSCsend kparm_update, "127.0.0.1", 9901, "/client_parametercontrols", "ffffffffffff", 
+                      kratio2_order, knotenum_order, kinterval_order, kchords_on)
+  OSCsend kparm_update, "127.0.0.1", 9901, "/client_parametercontrols", "fffffffffffff", 
                       kbarlow_weight, kbenni_weight, knd_weight, kratio_dev_weight, 
                       kratio_dev_abs_max_weight, kgrid_dev_weight, 
                       kevidence_weight, kautocorr_weight, kratio1_order, 
-                      kratio2_order, knotenum_order, kinterval_order
+                      kratio2_order, knotenum_order, kinterval_order, kchords_on
 
   ; receive trigger string from Python (only for playback of last recorded phrase)
   ktrig_sig init 0
@@ -606,33 +609,34 @@ instr 109
     kmess OSClisten gihandle, Saddr, "fffffff", kgen_index, kgen_ratio, kgen_deviation, kgen_duration, kgen_notenum, kgen_interval, kgen_velocity ; receive OSC data from Python
     if kmess > 0 then
         kpython_data_ready = 1
+        ; store events in queue for playback
+        ;Sdebug sprintfk "voice %i, ndx %i, beat clock %.2f, next event %.2f, ratio %.2f, note %i vel %.2f", ivoice, kgen_index, kbeat_clock, knext_event_time, kgen_ratio, kgen_notenum, kgen_velocity
+        ;puts Sdebug, knext_event_time+kgen_ratio+kgen_deviation+kgen_notenum
+        if kgen_ratio > 0 then ; if it is not a chord event
+          knext_event_time += round(kprevious_ratio*iclock_resolution)/iclock_resolution ; prevent accumulative rounding errors
+	        if kbeat_sync == 1 then
+             knext_event_time = ceil(kbeat_clock) ; sync to whole beat clock if enabled
+             kzero = 0
+             cabbageSetValue Sbeat_sync, kzero, changed(knext_event_time)
+          endif
+          kprevious_ratio = kgen_ratio
+        endif
+	      kdeviation = kgen_deviation * kdeviation_scale 
+        kEvent_queue[kcount % lenarray(kEvent_queue)][0] = knext_event_time + (kgen_ratio*kdeviation)*(60/ktempo_bpm); store this event time with deviation, for correct playback
+        kEvent_queue[kcount % lenarray(kEvent_queue)][2] = kgen_duration*(60/ktempo_bpm)
+        kEvent_queue[kcount % lenarray(kEvent_queue)][3] = kgen_notenum
+        kEvent_queue[kcount % lenarray(kEvent_queue)][4] = kgen_interval
+        kEvent_queue[kcount % lenarray(kEvent_queue)][5] = kgen_velocity
+        ;kDebug[] getrow kEvent_queue, kcount % lenarray(kEvent_queue)
+        ;printarray(kDebug)
+	      kgen_once = 0
+        kcount += 1
+        kpython_data_ready = 0
     endif
     if kmess == 0 goto done
     kgoto nextmsg ; make sure we read all messages in the network buffer
   done:
   endif
-
-  ; store events in queue for playback
-  Sdebug sprintfk "voice %i, ndx %i, beat clock %.2f, next event %.2f, notenum %i", ivoice, kgen_index, kbeat_clock, knext_event_time, kgen_notenum
-  puts Sdebug, knext_event_time
-  if (kbeat_clock > knext_event_time) && (kpython_data_ready == 1) then
-  	knext_event_time += round(kprevious_ratio*iclock_resolution)/iclock_resolution ; prevent accumulative rounding errors
-		if kbeat_sync == 1 then
-      knext_event_time = ceil(kbeat_clock) ; sync to whole beat clock if enabled
-      kzero = 0
-      cabbageSetValue Sbeat_sync, kzero, changed(knext_event_time)
-    endif
-	  kdeviation = kgen_deviation * kdeviation_scale 
-		kprevious_ratio = kgen_ratio
-    kEvent_queue[kcount % lenarray(kEvent_queue)][0] = knext_event_time + (kgen_ratio*kdeviation)*(60/ktempo_bpm); store this event time with deviation, for correct playback
-    kEvent_queue[kcount % lenarray(kEvent_queue)][2] = kgen_duration*(60/ktempo_bpm)
-    kEvent_queue[kcount % lenarray(kEvent_queue)][3] = kgen_notenum
-    kEvent_queue[kcount % lenarray(kEvent_queue)][4] = kgen_interval
-    kEvent_queue[kcount % lenarray(kEvent_queue)][5] = kgen_velocity
-		kgen_once = 0
-    kcount += 1
-    kpython_data_ready = 0
-	endif
 
 	; event playback
   kplay_index init 0
@@ -676,6 +680,8 @@ instr 109
 	; play event and update
   kprev_notenum init 60
 	if kplay_trig > 0 then
+    ; add loop here to play chord events...
+  chord_loop: ; looping for chords, otherwise just normal events
 		if kclock_direction < 0 then 
 			keventqueue_index wrap kplay_index-1, 0, lenarray(kEvent_queue)
 		else
@@ -701,9 +707,18 @@ instr 109
 		kgen_velocity = kEvent_queue[keventqueue_index][5]
     kdur = kEvent_queue[keventqueue_index][2]*kdur_scale
   	event "i", igen_instr, 0, kdur, kgen_notenum, kgen_velocity, ivoice
-		kplay_index += kclock_direction		
+    kthis_event_time = kEvent_queue[wrap(kplay_index, 0, lenarray(kEvent_queue))][0]
+  	kplay_index += kclock_direction		
+    knext_event_time = kEvent_queue[wrap(kplay_index, 0, lenarray(kEvent_queue))][0]
+    ;if kthis_event_time == knext_event_time then
+    ;  printk2 kplay_index
+    ;  kgoto chord_loop
+    ;endif
+    printk2 kthis_event_time
+    printk2 knext_event_time, 5
 		kplay_trig = 0
-	endif
+	
+  endif
 
 endin
 
@@ -745,6 +760,7 @@ endin
 instr 121
   iamp = ampdbfs(-6)
   inote = p4
+  print p1, p2, p3, p4
   if inote == 0 then
     turnoff
     igoto skip

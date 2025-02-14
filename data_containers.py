@@ -25,7 +25,8 @@ pnum_corpus = {
   'velocity': 9,
   'velocity_relative': 10, 
   'notenum': 11,
-  'notenum_relative': 12 
+  'notenum_relative': 12,
+  'chord_index': 13
 }
 print('pnum_corpus keys', pnum_corpus.keys())
 # corpus is the main data container for events
@@ -41,7 +42,11 @@ def clear_corpus_item(index):
 def clear_corpus():
   # reset the whole corpus to zeros
   global corpus
+  print('before clear corpus')
+  print(corpus[1])
   corpus = np.zeros((max_events,nparms_corpus), dtype=np.float32) # float32 faster than int or float64
+  print('after clear corpus')
+  print(corpus[1])
 
 def save_corpus():
   # save corpus to file
@@ -83,3 +88,8 @@ print('* prob parms and weight indices:')
 for key,value in prob_parms.items():
   print(f'{key}: {value}')
 
+# chord list, an appendix to the corpus, for events that contain several simultaneous notes
+# as the size of the chord may vary, we only store a chord index in the corpus, pointing to an index in the chord list
+# format for entries:
+# [[relative_note, relative_velocity, relative_time],[same for next notes in chord]]
+chord_list = []
