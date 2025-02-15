@@ -1,5 +1,5 @@
 <Cabbage>
-form size(770, 460), caption("Rhythm Analyzer"), pluginId("rtm1"), guiMode("queue"), colour(46,45,52)
+form size(770, 660), caption("Rhythm Analyzer"), pluginId("rtm1"), guiMode("queue"), colour(46,45,52)
 
 ; recording and analysis
 button bounds(5, 5, 70, 50), text("record","recording"), channel("record_enable"), colour:0("green"), colour:1("red")
@@ -143,7 +143,7 @@ button bounds(480, 3, 75, 15), text("clock reset"), channel("beat_clock_reset"),
 
 
 }
-csoundoutput bounds(5, 315, 560, 140)
+csoundoutput bounds(5, 315, 760, 340)
 </Cabbage>
 
 <CsoundSynthesizer>
@@ -230,52 +230,59 @@ endin
 
 ; rhythm recording instr, triggered by midi input
 instr 2
+  krecord_enable chnget "record_enable"
   inum notnum
   chnset inum, "notenum"
   ivel veloc
   chnset ivel, "velocity"
   inst_num = 3+(inum*0.001)
   krelease lastcycle
+  if krecord_enable > 0 then
 
-  ;thresh function
-  ithresh = 0.050 ; thresh time in seconds
-  itime times
-  iprev_time chnget "previous_time"
-  idelta = itime-iprev_time
-  chnset itime, "previous_time"
-  if idelta > ithresh then
-    ;iChord[] init lenarray(giChord)
-    ;giChord = iChord
-    ichord_note_index = 0 ; new chord, or no chord
-    chnset ichord_note_index, "chord_note_index"
-    iactive active 3
-    if iactive > 0 then
-      ifrac = i(gkactivenote)*0.001
-      event_i "i", -3-ifrac, 0, .1
-      chnset 1, "event_force_off"
+    ;thresh function
+    ithresh = 0.050 ; thresh time in seconds
+    itime times
+    iprev_time chnget "previous_time"
+    idelta = itime-iprev_time
+    chnset itime, "previous_time"
+    if idelta > ithresh then
+      ;iChord[] init lenarray(giChord)
+      ;giChord = iChord
+      ichord_note_index = 0 ; new chord, or no chord
+      chnset ichord_note_index, "chord_note_index"
+      iactive active 3
+      if iactive > 0 then
+        ifrac = i(gkactivenote)*0.001
+        event_i "i", -3-ifrac, 0, .1
+        chnset 1, "event_force_off"
+      endif
+      event_i "i", inst_num, 0, -1, inum
+    else
+      ichord_note_index chnget "chord_note_index"
+      ;print ichord_note_index, lenarray(giChord)
+      ;giChord[ichord_note_index] = inum
+      ;printarray giChord
+      chnset ichord_note_index+1, "chord_note_index"
+      index chnget "index_last_event"
+      ichord_index chnget "chord_index"
+      if ichord_note_index == 0 then
+        ichord_index += 1
+        chnset ichord_index, "chord_index"
+      endif
+      OSCsend 1, "127.0.0.1", 9901, "/client_eventchord", "fffff", index, ichord_index, inum, ivel, idelta
+      print index, ichord_index, ichord_note_index
     endif
-    event_i "i", inst_num, 0, -1, inum
-  else
-    ichord_note_index chnget "chord_note_index"
-    ;print ichord_note_index, lenarray(giChord)
-    ;giChord[ichord_note_index] = inum
-    ;printarray giChord
-    chnset ichord_note_index+1, "chord_note_index"
-    index chnget "index_last_event"
-    ichord_index chnget "chord_index"
-    if ichord_note_index == 0 then
-      ichord_index += 1
-      chnset ichord_index, "chord_index"
-    endif
-    OSCsend 1, "127.0.0.1", 9901, "/client_eventchord", "fffff", index, ichord_index, inum, ivel, idelta
-    print index, ichord_index, ichord_note_index
-  endif
 
-  if (krelease > 0) && (inum == gkactivenote) then 
-      event "i", -inst_num, 0, .1
-      chnset krelease, "event_off"
+    if (krelease > 0) && (inum == gkactivenote) then 
+        event "i", -inst_num, 0, .1
+        chnset krelease, "event_off"
+    endif
   endif
-  
+  krecord_off trigger krecord_enable, 0.5, 1
+  if krecord_off > 0 then
+    event "i", -inst_num, 0, .1
+    chnset krelease, "event_off"
+  endif
 endin
 
 instr 3
@@ -627,7 +634,13 @@ instr 109
         kEvent_queue[kcount % lenarray(kEvent_queue)][3] = kgen_notenum
         kEvent_queue[kcount % lenarray(kEvent_queue)][4] = kgen_interval
         kEvent_queue[kcount % lenarray(kEvent_queue)][5] = kgen_velocity
+        Sdebug sprintfk "Event_queue count %i, count-1 and count+1", kcount % lenarray(kEvent_queue)
+        puts Sdebug, kcount
+        kDebug[] getrow kEvent_queue, (kcount-1) % lenarray(kEvent_queue)
+        printarray(kDebug)
         kDebug[] getrow kEvent_queue, kcount % lenarray(kEvent_queue)
+        printarray(kDebug)
+        kDebug[] getrow kEvent_queue, (kcount+1) % lenarray(kEvent_queue)
         printarray(kDebug)
 	      kgen_once = 0
         kcount += 1
