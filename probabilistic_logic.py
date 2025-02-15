@@ -24,6 +24,7 @@ class Probabilistic_encoder:
         self.size = size
         self.max_order = max_order # we use this to pad the index_container, so we later can use array views for higher order lookup
         self.empty_index_container = np.zeros(self.size+max_order, dtype=np.float32) 
+        self.wraparound = 0 # wraparound or random choice on dead end
         self.wraparound_index_container = np.copy(self.empty_index_container)
         self.wraparound_index_container[max_order] = 1 # to use for avoiding dead ends
         self.previous_item = None 
@@ -45,9 +46,15 @@ class Probabilistic_encoder:
     def next_items(self, previous=None):
         # as we are live recording items for analysis, dead ends are likely, and needs to be dealt with
         if previous and (previous not in self.stm.keys()):
-            print(f'Prob_encoder: {self.name} dead end at key {previous}, wrap around ')
-            print(f'key: {previous}, allkeys: {self.stm.keys()}')
-            return self.wraparound_index_container
+            if self.wraparound == 1:
+                print(f'Prob_encoder: {self.name} dead end at key {previous}, wrap around ')
+                print(f'key: {previous}, allkeys: {self.stm.keys()}')
+                return self.wraparound_index_container
+            else:
+                print(f'Prob_encoder: {self.name} dead end at key {previous}, choose randomly')
+                print(f'key: {previous}, allkeys: {self.stm.keys()}')
+                return self.empty_index_container
+        
         if len(self.stm.keys()) == 0:
             print('Empty Prob sequence')
             return [-1.0]
@@ -73,18 +80,18 @@ class Probabilistic_encoder:
 class Probabilistic_logic:
     # coordinate several queries (different orders, and different dimensions/parameters) to the Probabilistic encoder
 
-    def __init__(self, corpus, pnum_corpus, prob_parms, max_size=100, max_order=2, max_voices=10):
+    def __init__(self, dc, max_size=100, max_order=2, max_voices=10):
         self.maxsize = max_size # allocate more space than we need, we will add more data later
         self.max_order = max_order
         print('max order', self.max_order)
+        self.dc = dc #pointer to data containers
         
         # get number of parameters and instantiate analyzer classes
-        self.prob_parms = prob_parms
         numparms = 0
-        for parm in self.prob_parms.keys():
-            numparms += (self.prob_parms[parm][0]+1) # 1 for each order, plus the "request value"
+        for parm in self.dc.prob_parms.keys():
+            numparms += (self.dc.prob_parms[parm][0]+1) # 1 for each order, plus the "request value"
             pe = Probabilistic_encoder(size=self.maxsize, max_order=self.max_order, name=parm)
-            self.prob_parms[parm][1] = pe
+            self.dc.prob_parms[parm][1] = pe
         self.numparms = numparms
         print('number of parameters in probabilistic logic:', self.numparms)
         
@@ -96,15 +103,13 @@ class Probabilistic_logic:
             self.prob_history.append(self.no_prob_history) #make separate history for each voice
         self.weights = np.zeros(self.numparms)
         # set default weights to first order for all parameters
-        for pname in self.prob_parms.keys():
+        for pname in self.dc.prob_parms.keys():
             self.set_weights_pname(pname, 1, printit=False)
         print(f'prob weights set to {self.weights}')
 
         # set data and allocate data containers
-        self.current_datasize = 0
-        self.corpus = corpus
-        self.pnum_corpus = pnum_corpus
-        self.indices = self.corpus[:self.current_datasize, self.pnum_corpus['index']]
+        self.current_datasize = 0 
+        self.indices = self.dc.corpus[:self.current_datasize, self.dc.pnum_corpus['index']]
         self.indx_container = np.zeros(self.maxsize*self.numparms)
         self.indx_container = np.reshape(self.indx_container, (self.maxsize,self.numparms))
         self.indices_prob_temp = np.zeros(self.maxsize+self.max_order)
@@ -112,23 +117,23 @@ class Probabilistic_logic:
         self.prob = np.zeros(self.maxsize)
         
     def analyze_single_event(self, i):
-        for parm in self.prob_parms.keys():
-            pe = self.prob_parms[parm][1]
-            print(f'pe.analyze: {pe.name}, {self.corpus[i, self.pnum_corpus[parm]]}')
-            pe.analyze(self.corpus[i, self.pnum_corpus[parm]], i)
+        for parm in self.dc.prob_parms.keys():
+            pe = self.dc.prob_parms[parm][1]
+            print(f'pe.analyze: {pe.name}, {self.dc.corpus[i, self.dc.pnum_corpus[parm]]}')
+            pe.analyze(self.dc.corpus[i, self.dc.pnum_corpus[parm]], i)
         self.current_datasize += 1
-        self.indices = self.corpus[:self.current_datasize, self.pnum_corpus['index']]
+        self.indices = self.dc.corpus[:self.current_datasize, self.dc.pnum_corpus['index']]
 
     def set_weights(self, weights):
         self.weights = weights
 
     def set_weights_pname(self, pname, order, printit=True):
         # set weights according to parameter name and desired order
-        if pname in self.prob_parms.keys():
-            max_order = self.prob_parms[pname][0]
+        if pname in self.dc.prob_parms.keys():
+            max_order = self.dc.prob_parms[pname][0]
             if order <= max_order:
                 for i in range(1, max_order+1):
-                    w_index = self.prob_parms[pname][2][0] + i
+                    w_index = self.dc.prob_parms[pname][2][0] + i
                     w = np.clip(1+order-i, 0, 1)
                     self.weights[w_index] = w
                 if printit:
@@ -159,16 +164,16 @@ class Probabilistic_logic:
         self.prob_history[voice-1] = self.update_history(self.prob_history[voice-1], next_item_index)
 
         # get alternatives from Probabilistic encoder
-        for parm in self.prob_parms.keys():
-            pe = self.prob_parms[parm][1]
-            for ord in range(1,self.prob_parms[parm][0]+1): # will skip for specific request (order 0)
-                w_index = self.prob_parms[parm][2][ord] #prob weight index
+        for parm in self.dc.prob_parms.keys():
+            pe = self.dc.prob_parms[parm][1]
+            for ord in range(1,self.dc.prob_parms[parm][0]+1): # will skip for specific request (order 0)
+                w_index = self.dc.prob_parms[parm][2][ord] #prob weight index
                 if self.weights[w_index] != 0:
                     offset = self.max_order+1-ord
                     if not self.prob_history[voice-1][-ord]:
                         query_item = None
                     else:
-                        query_item = self.corpus[self.prob_history[voice-1][-ord], self.pnum_corpus[parm]]
+                        query_item = self.dc.corpus[self.prob_history[voice-1][-ord], self.dc.pnum_corpus[parm]]
                     self.indices_prob_temp = pe.next_items(query_item)[offset:self.current_datasize+offset]
                     self.indx_container[:self.current_datasize, w_index] = self.indices_prob_temp[:self.current_datasize]
 
@@ -206,7 +211,7 @@ class Probabilistic_logic:
         if request_parm == 'index':
             keys = self.indices
         else:
-            pe = self.prob_parms[request_parm][1]
+            pe = self.dc.prob_parms[request_parm][1]
             keys = np.asarray(list(pe.stm.keys()))
         if request_type == '==':
             values = request_code[1]
@@ -230,7 +235,7 @@ class Probabilistic_logic:
             #   Special treatment of relative pitch, where we might want to request large (or small) intervals, regardless of sign (up or down intervals)
             #   In that case, use absolute values of interval (request code = 'gr_abs').
             # Request code < or > works similarly, but gives a binary mask (over/under threshold)
-            pvalues = self.corpus[:, self.pnum_corpus[request_parm]][:self.current_datasize]
+            pvalues = self.dc.corpus[:, self.dc.pnum_corpus[request_parm]][:self.current_datasize]
             if (request_type == '>') or (request_type == '<'):
                 val = request_code[1]
                 if request_type == '>':
@@ -257,19 +262,19 @@ class Probabilistic_logic:
     def clear_all(self):
         # clear all prob encoder's stm
         print('clear all prob encoder stm')
-        for parm in self.prob_parms.keys():
-            pe = self.prob_parms[parm][1]
+        for parm in self.dc.prob_parms.keys():
+            pe = self.dc.prob_parms[parm][1]
             pe.clear()
         self.current_datasize = 0
-        self.indices = self.corpus[:self.current_datasize, self.pnum_corpus['index']]
+        self.indices = self.dc.corpus[:self.current_datasize, self.dc.pnum_corpus['index']]
     
     def clear_phrase(self, indices):
         # clear last recorded phrase
-        for parm in self.prob_parms.keys():
-            pe = self.prob_parms[parm][1]
+        for parm in self.dc.prob_parms.keys():
+            pe = self.dc.prob_parms[parm][1]
             pe.clear_phrase(indices)
         self.current_datasize -= len(indices)
-        self.indices = self.corpus[:self.current_datasize, self.pnum_corpus['index']]
+        self.indices = self.dc.corpus[:self.current_datasize, self.dc.pnum_corpus['index']]
     
     def save_all(self):
         # save all prob encoders to file
@@ -277,8 +282,8 @@ class Probabilistic_logic:
         print('NOT IMPLEMENTED, need to convert stm keys to float')
         return
         data = []
-        for parm in self.prob_parms.keys():
-            pe = self.prob_parms[parm][1]
+        for parm in self.dc.prob_parms.keys():
+            pe = self.dc.prob_parms[parm][1]
             data.append(pe.stm)
         with open("prob_encoders.json", "w") as fp:
             json.dump(data, fp)  
@@ -289,8 +294,8 @@ class Probabilistic_logic:
         with open("prob_encoders.json", "r") as fp:
             data = json.load(fp)  
         i = 0
-        for parm in self.prob_parms.keys():
-            pe = self.prob_parms[parm][1]
+        for parm in self.dc.prob_parms.keys():
+            pe = self.dc.prob_parms[parm][1]
             pe.stm = data[i]
             i += 1
 
@@ -298,33 +303,43 @@ class Probabilistic_logic:
 # Tests
 #####################################################
 
+class Datacontainer_test():
+    def __init__(self, max_events, random_population=0): 
+        # example with 2D data
+        self.pnum_corpus = {
+            'index': 0, # register indices for data points currently in use
+            'val1' : 1, 
+            'val2': 2}
+        # corpus is the main data container for events
+        self.nparms_corpus = len(self.pnum_corpus.keys())
+        # parameter names and max_order in the probabilistic logic module
+        # zero order just means give us all indices where the value occurs
+        # higher orders similar to markov order
+        # the second item in the values is the analyzer instance for that parameter
+        # the third is a list of indices used for probability calculation, corresponds to weight indices
+        self.prob_parms = {'val1': [2, None, [0,1,2]],
+                     'val2': [2, None, [3,4,5]]}
+
+        self.max_events = max_events
+        self.corpus = np.zeros((self.max_events, self.nparms_corpus), dtype=np.float32) # float32 faster than int or float64
+        
+        if random_population == 0:
+            self.list_val1 = [1,2,2,1,3,4,5, 3,4,5,-1,-2] 
+            self.list_val2 = [1,1,1,1,1,1,1, 2,2,2,2,2] 
+        else:
+            self.list_val1 = np.random.randint(-10,10,random_population)
+            self.list_val2 = np.random.randint(0,10,random_population)
+
+        for i in range(len(self.list_val1)):
+            self.corpus[i, self.pnum_corpus['val1']] = self.list_val1[i]
+            self.corpus[i, self.pnum_corpus['val2']] = self.list_val2[i]
+
 def basic_test():
-    # example with 2D data
-    pnum_corpus = {
-        'index': 0, # register indices for data points currently in use
-        'val1' : 1, 
-        'val2': 2}
-    # corpus is the main data container for events
-    nparms_corpus = len(pnum_corpus.keys())
-    # parameter names and max_order in the probabilistic logic module
-    # zero order just means give us all indices where the value occurs
-    # higher orders similar to markov order
-    # the second item in the values is the analyzer instance for that parameter
-    # the third is a list of indices used for probability calculation, corresponds to weight indices
-    prob_parms = {'val1': [2, None, [0,1,2]],
-                 'val2': [2, None, [3,4,5]]}
-
-    max_events = 1010
-    corpus = np.zeros((max_events,nparms_corpus), dtype=np.float32) # float32 faster than int or float64
-    list_val1 = [1,2,2,1,3,4,5, 3,4,5,-1,-2] #np.random.randint(0,10,1000)#
-    list_val2 = [1,1,1,1,1,1,1, 2,2,2,2,2] # np.random.randint(0,10,1000)#
-    for i in range(len(list_val1)):
-        corpus[i,pnum_corpus['val1']] = list_val1[i]
-        corpus[i,pnum_corpus['val2']] = list_val2[i]
-
-    pl = Probabilistic_logic(corpus, pnum_corpus, prob_parms, max_size=max_events, max_order=2, max_voices=2)
-    for i in range(len(list_val1)):
-        pl.corpus[i,pnum_corpus['index']] = i
+    max_events = 1000
+    dc = Datacontainer_test(max_events)
+    pl = Probabilistic_logic(dc, max_size=max_events, max_order=2, max_voices=2)
+    for i in range(len(dc.list_val1)):
+        dc.corpus[i, dc.pnum_corpus['index']] = i
         pl.analyze_single_event(i)
     print('done analyzing')
     
@@ -332,10 +347,10 @@ def basic_test():
     pl.set_weights_pname('val1', 1.5)
     temperature = 0.2 # low (<1.0) is deterministic, high (>1.0) is more random
     start_index = 0#np.random.choice(indices)
-    next_item = corpus[start_index,pnum_corpus['val1']]
+    next_item = dc.corpus[start_index, dc.pnum_corpus['val1']]
     # for debug only
-    for parm in prob_parms.keys():
-        pe = prob_parms[parm][1]
+    for parm in dc.prob_parms.keys():
+        pe = dc.prob_parms[parm][1]
         # FIX HERE
         print(f'stm for {parm}')
         for key, value in pe.stm.items():
@@ -350,14 +365,14 @@ def basic_test():
     while i < 10:
         next_item_index = pl.generate(query, voice, temperature) #query probabilistic encoders for next event and update query for next iteration
         query[0] = next_item_index
-        print(f"the next item is  {corpus[next_item_index,pnum_corpus['val1']]} at index {next_item_index}, prob {pl.prob}")
+        print(f"the next item is  {dc.corpus[next_item_index,dc.pnum_corpus['val1']]} at index {next_item_index}, prob {pl.prob}")
         i += 1
     print(f'generated {i} items')
     
     # test voice 2, with request specific value
     print('** Voice2**')
     start_index = 1
-    next_item = corpus[start_index,pnum_corpus['val1']]
+    next_item = dc.corpus[start_index, dc.pnum_corpus['val1']]
     print(f'The first item is {next_item} at index {start_index}')
     request_item = 'index'
     request_type = 'values'
@@ -375,7 +390,7 @@ def basic_test():
             request_value = next_item_index+1
             query = [next_item_index, [request_item, [request_type, [request_value]], request_weight]] #request index, and use next_item_index as the value to ask for
         else: query = [next_item_index, [None, [0, [0]], 0]]
-        print(f"the next item is  {corpus[next_item_index,pnum_corpus['val1']]} at index {next_item_index}, prob {pl.prob}")
+        print(f"the next item is  {dc.corpus[next_item_index, dc.pnum_corpus['val1']]} at index {next_item_index}, prob {pl.prob}")
         i += 1
     print(f'generated {i} items')
 
@@ -389,29 +404,14 @@ def basic_test():
     print('mask of values 1 and 3:\n', mask)
 
 def request_dev():
-    pnum_corpus = {
-        'index': 0, 
-        'val1' : 1, 
-        'val2': 2}
-    nparms_corpus = len(pnum_corpus.keys())
-    prob_parms = {'val1': [2, None, [0,1,2]],
-                 'val2': [2, None, [3,4,5]]}
-
     max_events = 10
-    n_events = 8
-    corpus = np.zeros((max_events,nparms_corpus), dtype=np.float32) # float32 faster than int or float64
-    list_val1 = np.random.randint(-10,10,n_events)
-    list_val2 = np.random.randint(0,10,n_events)
-    for i in range(len(list_val1)):
-        corpus[i,pnum_corpus['val1']] = list_val1[i]
-        corpus[i,pnum_corpus['val2']] = list_val2[i]
-
-    pl = Probabilistic_logic(corpus, pnum_corpus, prob_parms, max_size=max_events, max_order=2, max_voices=2)
-    for i in range(len(list_val1)):
-        pl.corpus[i,pnum_corpus['index']] = i
+    dc = Datacontainer_test(max_events, random_population=8)
+    pl = Probabilistic_logic(dc, max_size=max_events, max_order=2, max_voices=2)
+    for i in range(len(dc.list_val1)):
+        dc.corpus[i,dc.pnum_corpus['index']] = i
         pl.analyze_single_event(i)
     print('done analyzing')
-    print(f'corpus:\n{pl.corpus}')
+    print(f'corpus:\n{dc.corpus}')
 
     request_next_item = ['index', ['==' ,[1]], 1]
     print(f'request mask for {request_next_item}:')
