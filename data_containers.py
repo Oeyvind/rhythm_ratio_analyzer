@@ -81,12 +81,9 @@ class DataContainers:
   
   def clear_corpus(self):
     # reset the whole corpus to zeros
-    print('before clear corpus')
-    print(self.corpus[1])
     self.corpus = np.zeros((self.max_events, self.nparms_corpus), dtype=np.float32) # float32 faster than int or float64
-    print('after clear corpus')
-    print(self.corpus[1])
-  
+    self.chord_list = []
+    
   def save_corpus(self):
     # save corpus to file
     np.save('saved_corpus.npy', self.corpus)

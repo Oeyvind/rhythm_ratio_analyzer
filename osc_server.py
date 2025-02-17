@@ -12,6 +12,7 @@ OSC server, communication between Client (e.g. Csound) and Python
 import osc_io # osc server and client 
 import numpy as np
 np.set_printoptions(precision=2)
+np.set_printoptions(linewidth=np.inf)
 
 import logging 
 #logging.basicConfig(filename="logging.log", filemode='w', level=logging.DEBUG)
@@ -151,7 +152,7 @@ class Osc_server():
             if request_parm == 'pitch': request_parm = 'notenum'
             if request_parm == 'interval': request_parm = 'notenum_relative'
             if request_parm == 'phrase': request_parm = 'phrase_num'
-            request = [request_parm, [request_type, [request_value]], 1]
+            request = [request_parm, [request_type, [request_value]], request_weight]
         query = [index, request]
         print('***pl_query', voicenum, query)
 
@@ -164,7 +165,7 @@ class Osc_server():
                      float(self.dc.corpus[next_item_index, self.dc.pnum_corpus['notenum_relative']]),
                      float(self.dc.corpus[next_item_index, self.dc.pnum_corpus['velocity']])]
         #print('next item', next_item_index)
-        print(returnmsg)
+        print(f'gen returnmsg:{returnmsg}')
         osc_io.sendOSC(f"python_prob_gen_voice{voicenum}", returnmsg) # send OSC back to client
         chord_index = self.dc.corpus[next_item_index, self.dc.pnum_corpus['chord_index']]
         print(f'debug: chord_index {chord_index}, chord_list {self.dc.chord_list}')
@@ -190,7 +191,8 @@ class Osc_server():
                 pe = self.dc.prob_parms[parm][1] # prob encoder instance
                 print(pe, pe.name)
                 for key, value in pe.stm.items():
-                    print(key, value[pe.max_order:pe.size+pe.max_order])
+                    #print(key, value[pe.max_order:pe.size+pe.max_order])
+                    print(key, value[pe.max_order:pe.max_order+20])
             print('corpus')
             for i in range(20):
                 print(i, self.dc.corpus[i])
@@ -223,7 +225,6 @@ class Osc_server():
             self.pl.clear_all()
             self.previous_notenum = -1
             self.previous_velocity = -1
-            self.dc.chord_list = []
         if save_all > 0:
             self.dc.save_corpus()
             self.pl.save_all()

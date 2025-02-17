@@ -177,35 +177,39 @@ class Probabilistic_logic:
                     self.indices_prob_temp = pe.next_items(query_item)[offset:self.current_datasize+offset]
                     self.indx_container[:self.current_datasize, w_index] = self.indices_prob_temp[:self.current_datasize]
 
-        # if we request a specific item, handle this here 
-        if request_next_item[0] != None:
-            self.get_request_mask(request_next_item)
-
-        # Scale by weights and sum: dot product indx_container and weight. Then adjust temperature
+        # Scale by weights for each prob dimension and sum: dot product indx_container and weight. Then adjust temperature
         self.prob = np.dot(self.indx_container[:self.current_datasize, :self.numparms], self.weights)
         if np.amax(self.prob) > 0:
             self.prob /= np.amax(self.prob) # normalize
             self.prob = np.power(self.prob, temperature_coef) # temperature adjustment
-            if request_next_item[0]:
-                self.prob *= self.request_mask[:self.current_datasize]
-            if np.amax(self.prob) == 0: # check to find if no values are available after masking
-                self.prob = self.request_mask[:self.current_datasize] # just give us one of the unmasked values
-            sumprob = np.sum(self.prob)
-            self.prob = self.prob/sumprob #normalize sum to 1
-            next_item_index = np.random.choice(self.indices,p=self.prob)
         else:
             print(f'Prob encoder zero probability from query {query}, choose one at random')
-            print('indices', self.indices)
-            next_item_index = np.random.choice(self.indices)
-            print('selected', next_item_index)
-        next_item_index = int(next_item_index)
+            self.prob = np.ones(self.current_datasize)
+
+        print('prob and mask:')
+        print(self.prob)
+        print(self.request_mask[:self.current_datasize])
+        # if we request a specific item, handle this here 
+        if request_next_item[0] != None:
+            self.request_mask, request_weight = self.get_request_mask(request_next_item)
+            if request_weight == 1:
+                self.prob *= self.request_mask[:self.current_datasize]
+            else:        
+                self.prob = (self.request_mask[:self.current_datasize]*request_weight) + self.prob*(1-request_weight)
+            if np.amax(self.prob) == 0: # check to find if no values are available after masking
+                print('no prob!')
+                self.prob += self.request_mask[:self.current_datasize] # just use mask
+        sumprob = np.sum(self.prob)
+        self.prob = self.prob/sumprob #normalize sum to 1
+        print('prob again\n', self.prob)
+        next_item_index = int(np.random.choice(self.indices,p=self.prob))
         return next_item_index
 
     def get_request_mask(self, request_next_item):
         # request_parm = parameter name
         # request code = type of request and the value(s) requested
         # type of request (can be exact value, < or > a threshold value, OR a gradient)
-        request_parm, request_code, request_weight = request_next_item
+        request_parm, request_code, request_weight = request_next_item 
         request_type = request_code[0]
         self.request_mask[:self.current_datasize] = 0*self.request_mask[:self.current_datasize]
         if request_parm == 'index':
@@ -214,20 +218,26 @@ class Probabilistic_logic:
             pe = self.dc.prob_parms[request_parm][1]
             keys = np.asarray(list(pe.stm.keys()))
         if request_type == '==':
-            values = request_code[1]
-            for val in values:
-                if request_parm == 'index':
-                    val = val%self.current_datasize # wrap index request to available range
-                    self.request_mask[int(val)] = 1
-                else:
-                    # in case we request a value that is not exactly equal to a key in the stm, we first find the closest match
-                    # THIS SHOULD BE OPTIONAL, make argument selector to enable (if no exact values found, return flat probability)
-                    request_next_item_closest = keys[np.abs(val-keys).argmin()]
-                    print(f'closest val: {request_next_item_closest}')
-                    offset = self.max_order+1
-                    request = pe.next_items(request_next_item_closest)[offset:self.current_datasize+offset]
-                    self.request_mask[:self.current_datasize] += request[:self.current_datasize]
-        
+            val = request_code[1][0]
+            if request_parm == 'index':
+                val = val%self.current_datasize # wrap index request to available range
+                self.request_mask[int(val)] = 1
+            else:
+                # in case we request a value that is not exactly equal to a key in the stm, we first find the closest match
+                # THIS SHOULD BE OPTIONAL, make argument selector to enable (if no exact values found, return flat probability)
+                request_next_item_closest = keys[np.abs(val-keys).argmin()]
+                print(f'closest val: {request_next_item_closest}')
+                offset = self.max_order+1
+                request = pe.next_items(request_next_item_closest)[offset:self.current_datasize+offset]
+                self.request_mask[:self.current_datasize] += request[:self.current_datasize]
+        elif request_type == 'next':
+            if request_parm == 'index':
+                val = (request_code[1][0]+1)%self.current_datasize # wrap index request to available range
+                self.request_mask[int(val)] = 1
+        elif request_type == 'prev':
+            if request_parm == 'index':
+                val = (request_code[1][0]-1)%self.current_datasize # wrap index request to available range
+                self.request_mask[int(val)] = 1
         else: # request type is 'gradient', or > or <
             # For request code 'gradient', '>' or '<', we need to look at the values in the corpus rather than the index containers
             #   A gradient can be aligned to prefer low values or high values, with increasing probability along the gradient
@@ -252,12 +262,9 @@ class Probabilistic_logic:
                     pvalues = 1-pvalues # invert, we use the shape parameter both to determine gradient direction
                 pvalues = np.power(pvalues, abs(gradient_shape)) # ... and powershape
             self.request_mask[:self.current_datasize] = pvalues
-        
-        self.request_mask[:self.current_datasize] *= request_weight
-        self.request_mask[:self.current_datasize] += 1-request_weight
         if np.amax(self.request_mask[:self.current_datasize]) == 0: # if all masks are zero
             self.request_mask[:self.current_datasize] += 1 # disable masks
-        return self.request_mask
+        return self.request_mask, request_weight
 
     def clear_all(self):
         # clear all prob encoder's stm
