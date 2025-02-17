@@ -64,13 +64,13 @@ nslider bounds(190, 25, 40, 20), channel("gen_v1_pitch_offset"), range(-24, 24, 
 label bounds(192, 45, 50, 18), text("transp"), fontSize(12), align("left")
 button bounds(235, 25, 55, 20), text("rel pitch"), channel("gen_v1_relative_pitch"), colour:0("green"), colour:1("red")
 
-button bounds(300, 25, 35, 20), text("trig"), channel("beat_sync_1"), colour:0("green"), colour:1("red"), latched(1)
+button bounds(300, 25, 35, 20), text("trig"), channel("beat_sync_v1"), colour:0("green"), colour:1("red"), latched(1)
 label bounds(300, 45, 70, 18), text("sync -------"), fontSize(12), align("left")
-button bounds(340, 25, 35, 20), text("auto"), channel("beat_sync_auto_1"), colour:0("green"), colour:1("red"), latched(1)
+button bounds(340, 25, 35, 20), text("auto"), channel("beat_sync_auto_v1"), colour:0("green"), colour:1("red"), latched(1)
 
-nslider bounds(380, 25, 25, 20), channel("v1_sync_min"), range(0, 10, 1, 1, 1), fontSize(14)
+nslider bounds(380, 25, 25, 20), channel("sync_min_v1"), range(0, 10, 1, 1, 1), fontSize(14)
 label bounds(380, 45, 30, 18), text("min"), fontSize(12), align("left")
-nslider bounds(410, 25, 25, 20), channel("v1_sync_range"), range(0, 10, 1, 1, 1), fontSize(14)
+nslider bounds(410, 25, 25, 20), channel("sync_range_v1"), range(0, 10, 1, 1, 1), fontSize(14)
 label bounds(409, 45, 35, 18), text("range"), fontSize(12), align("left")
 
 combobox bounds(450, 26, 58, 18), channel("request_parm_v1"), items("index", "rhythm", "pitch", "interval", "phrase")
@@ -86,7 +86,6 @@ nslider bounds(715, 25, 40, 20), channel("gen_v1_temperature"), range(0.01, 10, 
 label bounds(710, 45, 65, 18), text("tmprature"), fontSize(12), align("left")
 
 ; Voice 2
-;button bounds(10, 115, 70, 23), text("voice 2"), channel("gen_voice2"), colour:0("green"), colour:1("red")
 label bounds(5, 65, 50, 18), text("Voice 2"), fontSize(12), align("left")
 button bounds(50, 65, 40, 20), text("on"), channel("gen_voice2"), colour:0("green"), colour:1("red")
 nslider bounds(100, 65, 40, 20), channel("gen_v2_duration_scale"), range(0.1, 2, 1), fontSize(14)
@@ -94,17 +93,17 @@ nslider bounds(145, 65, 40, 20), channel("gen_v2_deviation_scale"), range(0, 3, 
 nslider bounds(190, 65, 40, 20), channel("gen_v2_pitch_offset"), range(-24, 24, 12, 1, 1), fontSize(14)
 button bounds(235, 65, 55, 20), text("rel pitch"), channel("gen_v2_relative_pitch"), colour:0("green"), colour:1("red")
 
-button bounds(300, 65, 35, 20), text("trig"), channel("beat_sync_2"), colour:0("green"), colour:1("red"), latched(1)
-button bounds(340, 65, 35, 20), text("auto"), channel("beat_sync_auto_2"), colour:0("green"), colour:1("red"), latched(1)
+button bounds(300, 65, 35, 20), text("trig"), channel("beat_sync_v2"), colour:0("green"), colour:1("red"), latched(1)
+button bounds(340, 65, 35, 20), text("auto"), channel("beat_sync_auto_v2"), colour:0("green"), colour:1("red"), latched(1)
 
-nslider bounds(380, 65, 25, 20), channel("v2_sync_min"), range(0, 10, 1, 1, 1), fontSize(14)
-nslider bounds(410, 65, 25, 20), channel("v2_sync_range"), range(0, 10, 1, 1, 1), fontSize(14)
+nslider bounds(380, 65, 25, 20), channel("sync_min_v2"), range(0, 10, 1, 1, 1), fontSize(14)
+nslider bounds(410, 65, 25, 20), channel("sync_range_v2"), range(0, 10, 1, 1, 1), fontSize(14)
 
-;combobox bounds(445, 65, 60, 18), channel("request_item_v2"), items("none", "index", "phrase", ">", "<", "gradient", "gradi_abs");, "ratio", "pitch", "interval")
-;nslider bounds(508, 65, 37, 20), channel("request_value_v2"), range(-1, 999, 0, 1, 0.1), fontSize(14)
-;nslider bounds(550, 65, 40, 20), channel("request_weight_v2"), range(0, 1, 0), fontSize(14)
-;nslider bounds(615, 65, 40, 20), channel("gen_v2_temperature"), range(0.01, 10, 0.2, 1, 0.01), fontSize(14)
-
+combobox bounds(450, 66, 58, 18), channel("request_parm_v2"), items("index", "rhythm", "pitch", "interval", "phrase")
+combobox bounds(510, 66, 58, 18), channel("request_type_v2"), items("none", "next", "prev", "==", ">", "<", "gradient", "gr_abs")
+nslider bounds(570, 65, 37, 20), channel("request_value_v2"), range(-999, 999, 0, 1, 0.1), fontSize(14)
+nslider bounds(610, 65, 40, 20), channel("request_weight_v2"), range(0, 1, 0), fontSize(14)
+nslider bounds(715, 65, 40, 20), channel("gen_v2_temperature"), range(0.01, 10, 0.2, 1, 0.01), fontSize(14)
 
 button bounds(390, 125, 45, 18), text("chord"), channel("chords_on"), colour:0("green"), colour:1("red"), latched(1)
 
@@ -241,6 +240,7 @@ instr 2
 
     ;thresh function
     ithresh = 0.050 ; thresh time in seconds
+    chnset ithresh, "chord_timethresh"
     itime times
     iprev_time chnget "previous_time"
     idelta = itime-iprev_time
@@ -266,6 +266,7 @@ instr 2
       chnset ichord_note_index+1, "chord_note_index"
       index chnget "index_last_event"
       ichord_index chnget "chord_index"
+      ;print ichord_index
       if ichord_note_index == 0 then
         ichord_index += 1
         chnset ichord_index, "chord_index"
@@ -463,7 +464,7 @@ instr 31
   puts "reset index", changed(kclear_last_phrase, kclear_all)
   ; clear chord index
   kchord_index chnget "chord_index"
-  kchord_index = changed(kclear_all) > 0 ? -1 : kchord_index
+  kchord_index = changed(kclear_all) > 0 ? 0 : kchord_index
   chnset kchord_index, "chord_index"
 
 endin
@@ -532,16 +533,17 @@ instr 109
 	kbeat_clock_dry chnget "beat_clock_dry"
 	kclock_direction chnget "beat_clock_direction"
 	kEvent_queue[] init 30, 6 ; 30 events, 6 parameters each
-  Sbeat_sync sprintf "beat_sync_%i", ivoice
+  Sbeat_sync sprintf "beat_sync_v%i", ivoice
   kbeat_sync chnget Sbeat_sync
+  printk2 kbeat_sync
   ibeat_sync = 1
   cabbageSetValue Sbeat_sync, ibeat_sync
 
-  Sbeat_sync_auto sprintf "beat_sync_auto_%i", ivoice
+  Sbeat_sync_auto sprintf "beat_sync_auto_v%i", ivoice
   kbeat_sync_auto chnget Sbeat_sync_auto
-  Sbeat_sync_auto_min sprintf "v%i_sync_min", ivoice
+  Sbeat_sync_auto_min sprintf "sync_min_v%i", ivoice
   kbeat_sync_auto_min chnget Sbeat_sync_auto_min
-  Sbeat_sync_auto_range sprintf "v%i_sync_range", ivoice
+  Sbeat_sync_auto_range sprintf "sync_range_v%i", ivoice
   kbeat_sync_auto_range chnget Sbeat_sync_auto_range
   knext_sync_beat init 0
   if kbeat_sync_auto > 0 then
@@ -692,9 +694,10 @@ instr 109
 	; play event and update
   kprev_notenum init 60
 	if kplay_trig > 0 then
-    ; add loop here to play chord events...
-    ; might be: do ... while time for next event == time for current event
+    kis_chord_basenote = 1 ; is this the base note of a chord 
+    ; loop here to play chord events...
     chord_loop: ; looping for chords, otherwise just normal events
+    ;printk2 kis_chord_basenote, 30
 		if kclock_direction < 0 then 
 			keventqueue_index wrap kplay_index-1, 0, lenarray(kEvent_queue)
 		else
@@ -704,8 +707,16 @@ instr 109
 		;puts Sdebug, ktime+1
     ;kEvent[] fillarray kgen_ratio, kgen_deviation, kgen_duration, kgen_notenum, kgen_interval, kgen_velocity
     ;printk2 krelative_pitch_inverter
+    ;kDebug[] getrow kEvent_queue, keventqueue_index
+    ;printarray kDebug
+    kchord_base_notenum init 60 ; in the unlikely case we enable relative pitch in between chord notes the first time a chord has been played
     if krelative_pitch > 0 then
-      kgen_notenum = kprev_notenum + (kEvent_queue[keventqueue_index][4]*krelative_pitch_inverter)
+      if kis_chord_basenote > 0 then
+        kgen_notenum = kprev_notenum + (kEvent_queue[keventqueue_index][4]*krelative_pitch_inverter)
+        kchord_base_notenum = kgen_notenum
+      else
+        kgen_notenum = kchord_base_notenum + (kEvent_queue[keventqueue_index][4]) ; not invert chord
+      endif
       if (kgen_notenum > (krelative_middle_note+krelative_pitch_range)) then
         krelative_pitch_inverter *= -1
         kgen_notenum -= 12
@@ -716,7 +727,9 @@ instr 109
     else
       kgen_notenum = kEvent_queue[keventqueue_index][3]
     endif
-    kprev_notenum = kgen_notenum
+    if kis_chord_basenote > 0 then 
+      kprev_notenum = kgen_notenum
+    endif
 		kgen_velocity = kEvent_queue[keventqueue_index][5]
     kdur = kEvent_queue[keventqueue_index][2]*kdur_scale
   	event "i", igen_instr, 0, kdur, kgen_notenum, kgen_velocity, ivoice
@@ -726,8 +739,10 @@ instr 109
     knext_event_time_test = kEvent_queue[wrap(kplay_index, 0, lenarray(kEvent_queue))][0]
     ;printk2 kthis_event_time_test
     ;printk2 knext_event_time_test, 5
-    if (kthis_event_time_test == knext_event_time_test) && (knext_event_time_test != 0) then
-      printk2 kplay_index
+    kchord_timethresh chnget "chord_timethresh"; max time spaceing between chord events 
+    if (abs(kthis_event_time_test - knext_event_time_test) < kchord_timethresh) && (knext_event_time_test != 0) then
+      ;printk2 kplay_index
+      kis_chord_basenote = 0
       kgoto chord_loop
     endif
 

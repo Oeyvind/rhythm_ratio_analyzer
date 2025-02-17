@@ -157,7 +157,7 @@ class Probabilistic_logic:
 
     def generate(self, query, voice=1, temperature=0.2):
         next_item_index, request_next_item = query
-        print('query', query)
+        #print('query', query)
         temperature_coef = self.set_temperature(temperature)
         
         # need to update and keep track of previous events for higher orders
@@ -188,10 +188,11 @@ class Probabilistic_logic:
 
         print('prob and mask:')
         print(self.prob)
-        print(self.request_mask[:self.current_datasize])
         # if we request a specific item, handle this here 
         if request_next_item[0] != None:
-            self.request_mask, request_weight = self.get_request_mask(request_next_item)
+            request_parm, request_code, request_weight = request_next_item
+            self.set_request_mask(request_parm, request_code)
+            print(self.request_mask[:self.current_datasize])
             if request_weight == 1:
                 self.prob *= self.request_mask[:self.current_datasize]
             else:        
@@ -205,12 +206,12 @@ class Probabilistic_logic:
         next_item_index = int(np.random.choice(self.indices,p=self.prob))
         return next_item_index
 
-    def get_request_mask(self, request_next_item):
+    def set_request_mask(self, request_parm, request_code):
         # request_parm = parameter name
         # request code = type of request and the value(s) requested
         # type of request (can be exact value, < or > a threshold value, OR a gradient)
-        request_parm, request_code, request_weight = request_next_item 
         request_type = request_code[0]
+        val = request_code[1][0]
         self.request_mask[:self.current_datasize] = 0*self.request_mask[:self.current_datasize]
         if request_parm == 'index':
             keys = self.indices
@@ -218,7 +219,6 @@ class Probabilistic_logic:
             pe = self.dc.prob_parms[request_parm][1]
             keys = np.asarray(list(pe.stm.keys()))
         if request_type == '==':
-            val = request_code[1][0]
             if request_parm == 'index':
                 val = val%self.current_datasize # wrap index request to available range
                 self.request_mask[int(val)] = 1
@@ -232,11 +232,11 @@ class Probabilistic_logic:
                 self.request_mask[:self.current_datasize] += request[:self.current_datasize]
         elif request_type == 'next':
             if request_parm == 'index':
-                val = (request_code[1][0]+1)%self.current_datasize # wrap index request to available range
+                val = (val+1)%self.current_datasize # wrap index request to available range
                 self.request_mask[int(val)] = 1
         elif request_type == 'prev':
             if request_parm == 'index':
-                val = (request_code[1][0]-1)%self.current_datasize # wrap index request to available range
+                val = (val-1)%self.current_datasize # wrap index request to available range
                 self.request_mask[int(val)] = 1
         else: # request type is 'gradient', or > or <
             # For request code 'gradient', '>' or '<', we need to look at the values in the corpus rather than the index containers
@@ -247,7 +247,6 @@ class Probabilistic_logic:
             # Request code < or > works similarly, but gives a binary mask (over/under threshold)
             pvalues = self.dc.corpus[:, self.dc.pnum_corpus[request_parm]][:self.current_datasize]
             if (request_type == '>') or (request_type == '<'):
-                val = request_code[1]
                 if request_type == '>':
                     pvalues = np.ma.masked_greater_equal(pvalues,val).mask
                 else:
@@ -264,7 +263,7 @@ class Probabilistic_logic:
             self.request_mask[:self.current_datasize] = pvalues
         if np.amax(self.request_mask[:self.current_datasize]) == 0: # if all masks are zero
             self.request_mask[:self.current_datasize] += 1 # disable masks
-        return self.request_mask, request_weight
+        
 
     def clear_all(self):
         # clear all prob encoder's stm

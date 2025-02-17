@@ -18,6 +18,9 @@ import logging
 #logging.basicConfig(filename="logging.log", filemode='w', level=logging.DEBUG)
 logging.basicConfig(level=logging.DEBUG)
 
+import time
+time_at_start = time.time()
+
 class Osc_server():
 
     def __init__(self, dc, ratio_analyzer, pl_instance):
@@ -29,7 +32,7 @@ class Osc_server():
         self.previous_notenum = -1
         self.previous_velocity = -1
         self.phrase_number = 0
-        self.chord_on = 1
+        self.chord_on = 0
 
         self.pl = pl_instance # probabilistic logic instance
         self.pl.weights[1] = 1 # first order for best ratio
@@ -70,7 +73,8 @@ class Osc_server():
         index, chord_index, note, velocity, delta_time = osc_data
         index = int(index)
         chord_index = int(chord_index)
-        self.dc.corpus[index, self.dc.pnum_corpus['chord_index']] = chord_index+1 # 1-indexed, as zero means no chord
+        print('receive_chord index', chord_index)
+        self.dc.corpus[index, self.dc.pnum_corpus['chord_index']] = chord_index # 1-indexed, as zero means no chord
         base_note = self.dc.corpus[index, self.dc.pnum_corpus['notenum']] 
         base_velocity = self.dc.corpus[index, self.dc.pnum_corpus['velocity']]
         chord_note = [note-base_note, velocity/base_velocity, delta_time]
@@ -143,7 +147,9 @@ class Osc_server():
         '''Message handler. This is called when we receive an OSC message'''
         voicenum, index, request_type, request_parm, request_value, request_weight, temperature = osc_data
         voicenum = int(voicenum)
-        
+        t = time.time()
+        time_since_start = t-time_at_start
+        print(f't {time_since_start:.2f}')
         if request_type in ['none', '-']: # no request
             request =  [None]
         else: 
@@ -176,7 +182,7 @@ class Osc_server():
                              event[2], # deviation (...)
                              float(self.dc.corpus[next_item_index, self.dc.pnum_corpus['duration']]),
                              event[0]+float(self.dc.corpus[next_item_index, self.dc.pnum_corpus['notenum']]),
-                             event[0]+float(self.dc.corpus[next_item_index, self.dc.pnum_corpus['notenum_relative']]),
+                             event[0],
                              event[1]*float(self.dc.corpus[next_item_index, self.dc.pnum_corpus['velocity']])]
                 print('chord event', returnmsg)
                 if self.chord_on > 0:
