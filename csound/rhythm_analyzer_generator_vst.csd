@@ -82,6 +82,9 @@ label bounds(575, 45, 37, 18), text("val"), fontSize(12), align("left")
 nslider bounds(610, 25, 40, 20), channel("request_weight_v1"), range(0, 1, 0), fontSize(14)
 label bounds(610, 45, 40, 18), text("weight"), fontSize(12), align("left")
 
+nslider bounds(665, 25, 40, 20), channel("clock_multiplier_v1"), range(-1.0, 1, 1, 1, 0.01), fontSize(14)
+label bounds(665, 45, 65, 18), text("clkdev"), fontSize(12), align("left")
+
 nslider bounds(715, 25, 40, 20), channel("gen_v1_temperature"), range(0.01, 10, 0.2, 1, 0.01), fontSize(14)
 label bounds(710, 45, 65, 18), text("tmprature"), fontSize(12), align("left")
 
@@ -530,7 +533,19 @@ instr 109
 	; gen and play events
 	ktempo_bpm chnget "gen_tempo_bpm"
   kbeat_clock chnget "beat_clock"  
+  
+  Sclock_multiplier sprintf "clock_multiplier_v%i", ivoice
+  kclock_multiplier chnget Sclock_multiplier
+  printk2 kclock_multiplier
+  ibeat_clock chnget "kbeat_clock"
+  kprevious_clock init ibeat_clock
+  kclockstep = kbeat_clock-kprevious_clock
+  kbeat_clock = kbeat_clock+(kclockstep*kclock_multiplier)
+
 	kbeat_clock_dry chnget "beat_clock_dry"
+  printk2 floor(kbeat_clock_dry), 10
+  printk2 floor(kbeat_clock), 20
+
 	kclock_direction chnget "beat_clock_direction"
 	kEvent_queue[] init 30, 6 ; 30 events, 6 parameters each
   Sbeat_sync sprintf "beat_sync_v%i", ivoice
