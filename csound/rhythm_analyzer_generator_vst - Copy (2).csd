@@ -24,8 +24,8 @@ button bounds(467, 30, 70, 23), text("save_all","saving"), channel("save_all"), 
 groupbox bounds(5, 60, 240, 65), text("last recorded event"), colour(20,30,45){
   nslider bounds(5,25,60,20), channel("timestamp_last_event"), fontSize(14), range(0,99999999, 0, 1, 0.1)
   label bounds(5,45,50,20), text("time"), fontSize(12)
-  nslider bounds(70,25,50,20), channel("index_this_event"), fontSize(14), range(-1,9999,-1,1,1)
-  label bounds(70,45,50,20), text("index_this_event"), fontSize(12)
+  nslider bounds(70,25,50,20), channel("index_last_event"), fontSize(14), range(0,9999,0,1,1)
+  label bounds(70,45,50,20), text("index_last_event"), fontSize(12)
   nslider bounds(125,25,50,20), channel("notenum_last_event"), fontSize(14), range(0,127,0,1,1)
   label bounds(125,45,50,20), text("num"), fontSize(12)
   nslider bounds(180,25,50,20), channel("velocity_last_event"), fontSize(14), range(0,127,0,1,1)
@@ -234,11 +234,13 @@ endin
 instr 2
   krecord_enable = 1;chnget "record_enable"
   inum notnum
+  chnset inum, "notenum"
   ivel veloc
+  chnset ivel, "velocity"
   inst_num = 3+(inum*0.001)
   krelease lastcycle
   if krecord_enable > 0 then
-    index chnget "index_this_event"
+
     ;thresh function
     ithresh = 0.050 ; thresh time in seconds
     chnset ithresh, "chord_timethresh"
@@ -247,11 +249,9 @@ instr 2
     idelta = itime-iprev_time
     chnset itime, "previous_time"
     if idelta > ithresh then
-      print inum
-      chnset inum, "notenum"
-      chnset ivel, "velocity"
-      index += 1
-      cabbageSetValue "index_this_event", index
+      ;iChord[] init lenarray(giChord)
+      ;giChord = iChord
+      ;print inum
       ichord_note_index = 0 ; new chord, or no chord
       chnset ichord_note_index, "chord_note_index"
       iactive active 3
@@ -267,17 +267,15 @@ instr 2
       ;giChord[ichord_note_index] = inum
       ;printarray giChord
       chnset ichord_note_index+1, "chord_note_index"
-      
+      index chnget "index_last_event"
       ichord_index chnget "chord_index"
       ;print ichord_index
       if ichord_note_index == 0 then
         ichord_index += 1
         chnset ichord_index, "chord_index"
       endif
-      ichord_send_instr = 4
-      isend_delay = ithresh ; delay chord note send so we are sure the base note have arrived before it
-      event_i "i", ichord_send_instr, isend_delay, 0.1, index, ichord_index, inum, ivel, idelta
-      print index, ichord_index, ichord_note_index, inum
+      OSCsend 1, "127.0.0.1", 9901, "/client_eventchord", "fffff", index, ichord_index, inum, ivel, idelta
+      ;print index, ichord_index, ichord_note_index, inum
     endif
 
     if (krelease > 0) && (inum == gkactivenote) then 
@@ -302,14 +300,19 @@ instr 3
 endin
 
 instr 4
-  ; send chord note event to Python
-  index = p4
-  ichord_index = p5
-  inum = p6
-  ivel = p7
-  idelta = p8
-  OSCsend 1, "127.0.0.1", 9901, "/client_eventchord", "fffff", index, ichord_index, inum, ivel, idelta
-  
+  kevent_on chnget "event_on"
+  kevent_off chnget "event_off"
+  kevent_force_off chnget "event_force_off" ; force off when we have overlapping notes in input
+  kprint_enable init 1
+  kprint_enable = kprint_enable+kevent_on+kevent_off+kevent_force_off
+  ktime timeinsts
+  Sdebug sprintfk "t=%.2f on %i, off %i, force_off %i", ktime, kevent_on, kevent_off, kevent_force_off
+  puts Sdebug, kprint_enable
+  ;printk2 kevent_on
+  kzero = 0
+  chnset kzero, "event_off"
+  chnset kzero, "event_force_off"
+
 endin
 
 ; play trigger rhythm
@@ -377,18 +380,12 @@ instr 31
     
   ; send time data to Python
   if krecord_enable > 0 then
-    kindex chnget "index_this_event"
+    kindex += kevent_on
     if kevent_trig > 0 then
-      if kevent_force_off == 1 then
-        kindex_send = kindex-1
-      else
-        kindex_send = kindex
-      endif
-      Sdebug sprintfk "rec: %i, %.2f, %i, %i, %i", kindex_send, ktime, kevent_onoff, knotenum, kvelocity
-      puts Sdebug, ksend_osc
-      OSCsend ksend_osc, "127.0.0.1", 9901, "/client_eventdata", "fffff", kindex_send, ktime, kevent_onoff, knotenum, kvelocity
+      OSCsend ksend_osc, "127.0.0.1", 9901, "/client_eventdata", "fffff", kindex, ktime, kevent_onoff, knotenum, kvelocity
     endif
     if kevent_on > 0 then
+      cabbageSetValue "index_last_event", kindex
       cabbageSetValue "velocity_last_event", kvelocity
       cabbageSetValue "notenum_last_event", knotenum
       cabbageSetValue "timestamp_last_event", ktime
@@ -466,8 +463,7 @@ instr 31
   kindex = changed(kclear_all) > 0 ? -1 : kindex
   kclear_phrase_trig trigger kclear_last_phrase, 0.5, 0
   kindex = kclear_phrase_trig > 0 ? kindex-kphraselen : kindex
-  kinit_clear_index = 1 ; clear index when starting
-  cabbageSetValue "index_this_event", kindex, changed(kclear_last_phrase, kclear_all, kinit_clear_index)
+  cabbageSetValue "index_last_event", kindex, changed(kclear_last_phrase, kclear_all)
   puts "reset index", changed(kclear_last_phrase, kclear_all)
   ; clear chord index
   kchord_index chnget "chord_index"
@@ -551,10 +547,8 @@ instr 109
   printk2 floor(kbeat_clock), 20
 
 	kclock_direction chnget "beat_clock_direction"
-	kEvent_queue[] init 30, 7 ; 30 events, 6 parameters each
+	kEvent_queue[] init 30, 6 ; 30 events, 6 parameters each
   kChord_queue[] init 30, 4 ; 30 events, 4 parameters each
-  kChord_event[] getrow kChord_queue, 0
-
   Sbeat_sync sprintf "beat_sync_v%i", ivoice
   kbeat_sync chnget Sbeat_sync
   printk2 kbeat_sync
@@ -638,6 +632,8 @@ instr 109
   nextmsg:
     Saddr sprintf "python_prob_gen_voice%i", ivoice
     kmess OSClisten gihandle, Saddr, "fffffff", kgen_index, kgen_ratio, kgen_deviation, kgen_duration, kgen_notenum, kgen_interval, kgen_velocity ; receive OSC data from Python
+    printk2 kmess
+    printk2 kgen_index, 10
     if kmess == 0 goto done
       kpython_data_ready = 1
       ; store events in queue for playback
@@ -657,21 +653,24 @@ instr 109
         kEvent_queue[kcount % lenarray(kEvent_queue)][3] = kgen_notenum
         kEvent_queue[kcount % lenarray(kEvent_queue)][4] = kgen_interval
         kEvent_queue[kcount % lenarray(kEvent_queue)][5] = kgen_velocity
-        kEvent_queue[kcount % lenarray(kEvent_queue)][6] = -1 ; is not a chord
-        kcount += 1
       else
         kdeviation = kgen_deviation * kdeviation_scale 
-        kChord_event[0] = (kcount-1) % lenarray(kEvent_queue) ; we use the kcount event counter to synchronize base events and chord events on playback
-        kChord_event[1] = kdeviation
-        kChord_event[2] = kgen_interval
-        kChord_event[3] = kgen_velocity
+        kChord_event[] fillarray kcount, kdeviation, kgen_interval, kgen_velocity ; we use the kcount event counter to synchronize base events and chord events on playback
         kChord_queue setrow kChord_event, kchord_count
-        if changed(kcount) > 0 then
-          kEvent_queue[(kcount-1) % lenarray(kEvent_queue)][6] = kchord_count ; store chord event index with base event
-        endif
         kchord_count = (kchord_count+1)%lenarray(kChord_queue)
       endif
+      /*
+      Sdebug sprintfk "Event_queue count %i, count-1 and count+1", kcount % lenarray(kEvent_queue)
+      puts Sdebug, kcount
+      kDebug[] getrow kEvent_queue, (kcount-1) % lenarray(kEvent_queue)
+      printarray(kDebug)
+      kDebug[] getrow kEvent_queue, kcount % lenarray(kEvent_queue)
+      printarray(kDebug)
+      kDebug[] getrow kEvent_queue, (kcount+1) % lenarray(kEvent_queue)
+      printarray(kDebug)
+      */
 	    kgen_once = 0
+      kcount += 1
       kpython_data_ready = 0
       kgoto nextmsg ; make sure we read all messages in the network buffer
   done:
@@ -719,13 +718,29 @@ instr 109
 	; play event and update
   kprev_notenum init 60
 	if kplay_trig > 0 then
+    ;kis_chord_basenote = 1 ; is this the base note of a chord 
+    ; loop here to play chord events...
+    ;chord_loop: ; looping for chords, otherwise just normal events
+    ;printk2 kis_chord_basenote, 30
 		if kclock_direction < 0 then 
 			keventqueue_index wrap kplay_index-1, 0, lenarray(kEvent_queue)
 		else
 			keventqueue_index wrap kplay_index, 0, lenarray(kEvent_queue)
 		endif
+		;Sdebug sprintfk "play_index %i, e_queue_index %i, beat_clock %.2f, dir %i, time %.2f", kplay_index, keventqueue_index, kbeat_clock, kclock_direction, ktime
+		;puts Sdebug, ktime+1
+    ;kEvent[] fillarray kgen_ratio, kgen_deviation, kgen_duration, kgen_notenum, kgen_interval, kgen_velocity
+    ;printk2 krelative_pitch_inverter
+    ;kDebug[] getrow kEvent_queue, keventqueue_index
+    ;printarray kDebug
+    ;kchord_base_notenum init 60 ; in the unlikely case we enable relative pitch in between chord notes the first time a chord has been played
     if krelative_pitch > 0 then
+      ;if kis_chord_basenote > 0 then
         kgen_notenum = kprev_notenum + (kEvent_queue[keventqueue_index][4]*krelative_pitch_inverter)
+      ;  kchord_base_notenum = kgen_notenum
+      ;else
+        ;kgen_notenum = kchord_base_notenum + (kEvent_queue[keventqueue_index][4]) ; not invert chord
+      ;endif
       if (kgen_notenum > (krelative_middle_note+krelative_pitch_range)) then
         krelative_pitch_inverter *= -1
         kgen_notenum -= 12
@@ -736,35 +751,25 @@ instr 109
     else
       kgen_notenum = kEvent_queue[keventqueue_index][3]
     endif
-    kprev_notenum = kgen_notenum
+    ;if kis_chord_basenote > 0 then 
+      kprev_notenum = kgen_notenum
+    ;endif
 		kgen_velocity = kEvent_queue[keventqueue_index][5]
     kdur = kEvent_queue[keventqueue_index][2]*kdur_scale
   	event "i", igen_instr, 0, kdur, kgen_notenum, kgen_velocity, ivoice
-    kchords_on chnget "chords_on"
-    if kchords_on > 0 then
-      ; play chord events here
-      ; if event is not a chord, it will have -1 in the chord flag of the event data
-      kchord_index = kEvent_queue[keventqueue_index][6]
-      if kchord_index > -1 then
-        ; check Chord queue for events where the first value [0] in the array equals keventqueue_index
-        ; play all of those with matching value
-        imax_chordnotes = 10
-        knum_chordnotes = 0
-        play_chord:
-        if kChord_queue[kchord_index][0] == keventqueue_index then
-          kchordnote_timedev = kChord_queue[kchord_index][1]
-          kchordnote_notenum = kChord_queue[kchord_index][2]+kgen_notenum
-          kchordnote_velocity = kChord_queue[kchord_index][3]
-          event "i", igen_instr, kchordnote_timedev, kdur, kchordnote_notenum, kchordnote_velocity, ivoice
-          kchord_index = (kchord_index+1)%lenarray(kChord_queue)
-          knum_chordnotes += 1
-          if knum_chordnotes < imax_chordnotes then ; just make sure we are not stuck here on accidental garbage data (probably never needed)
-            kgoto play_chord
-          endif
-        endif
-      endif
-    endif
+    
+    ;kthis_event_time_test = kEvent_queue[wrap(kplay_index, 0, lenarray(kEvent_queue))][0]
   	kplay_index += kclock_direction		
+    ;knext_event_time_test = kEvent_queue[wrap(kplay_index, 0, lenarray(kEvent_queue))][0]
+    ;printk2 kthis_event_time_test
+    ;printk2 knext_event_time_test, 5
+    ;kchord_timethresh chnget "chord_timethresh"; max time spaceing between chord events 
+    ;if (abs(kthis_event_time_test - knext_event_time_test) < kchord_timethresh) && (knext_event_time_test != 0) then
+      ;printk2 kplay_index
+      ;kis_chord_basenote = 0
+      ;kgoto chord_loop
+    ;endif
+
 		kplay_trig = 0
 	endif
 
@@ -830,6 +835,7 @@ endin
 </CsInstruments>
 <CsScore>
 i1 0 86400 ; Gui handling
+;i4 0 86400 ; midi debug test
 i31 0 86400 ; OSC processing
 </CsScore>
 </CsoundSynthesizer>

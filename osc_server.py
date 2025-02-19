@@ -73,18 +73,19 @@ class Osc_server():
         index, chord_index, note, velocity, delta_time = osc_data
         index = int(index)
         chord_index = int(chord_index)
-        print('receive_chord index', chord_index)
+        print('receive index, chord_index', index, chord_index)
         self.dc.corpus[index, self.dc.pnum_corpus['chord_index']] = chord_index # 1-indexed, as zero means no chord
         base_note = self.dc.corpus[index, self.dc.pnum_corpus['notenum']] 
         base_velocity = self.dc.corpus[index, self.dc.pnum_corpus['velocity']]
         chord_note = [note-base_note, velocity/base_velocity, delta_time]
-        if len(self.dc.chord_list) <= chord_index:
+        print('chord_list before:', self.dc.chord_list)
+        if len(self.dc.chord_list) < chord_index:
             self.dc.chord_list.append([chord_note]) # the first note in a chord
         else:
-            self.dc.chord_list[chord_index].append(chord_note) # next notes in previously existing chord
-        #print('chord_list:')
-        #for chord in self.dc.chord_list:
-        #    print(chord)
+            self.dc.chord_list[chord_index-1].append(chord_note) # next notes in previously existing chord
+        print('chord_list:')
+        for chord in self.dc.chord_list:
+            print(chord)
 
     def analyze(self, unused_addr, *osc_data):
         '''Message handler. This is called when we receive an OSC message'''
