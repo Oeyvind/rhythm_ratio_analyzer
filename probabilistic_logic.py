@@ -24,7 +24,7 @@ class Probabilistic_encoder:
         self.size = size
         self.max_order = max_order # we use this to pad the index_container, so we later can use array views for higher order lookup
         self.empty_index_container = np.zeros(self.size+max_order, dtype=np.float32) 
-        self.wraparound = 0 # wraparound or random choice on dead end
+        self.wraparound = 1 # wraparound or random choice on dead end
         self.wraparound_index_container = np.copy(self.empty_index_container)
         self.wraparound_index_container[max_order] = 1 # to use for avoiding dead ends
         self.previous_item = None 
@@ -47,12 +47,12 @@ class Probabilistic_encoder:
         # as we are live recording items for analysis, dead ends are likely, and needs to be dealt with
         if previous and (previous not in self.stm.keys()):
             if self.wraparound == 1:
-                print(f'Prob_encoder: {self.name} dead end at key {previous}, wrap around ')
-                print(f'key: {previous}, allkeys: {self.stm.keys()}')
+                #print(f'Prob_encoder: {self.name} dead end at key {previous}, wrap around ')
+                #print(f'key: {previous}, allkeys: {self.stm.keys()}')
                 return self.wraparound_index_container
             else:
-                print(f'Prob_encoder: {self.name} dead end at key {previous}, choose randomly')
-                print(f'key: {previous}, allkeys: {self.stm.keys()}')
+                #print(f'Prob_encoder: {self.name} dead end at key {previous}, choose randomly')
+                #print(f'key: {previous}, allkeys: {self.stm.keys()}')
                 return self.empty_index_container
         
         if len(self.stm.keys()) == 0:
@@ -61,7 +61,7 @@ class Probabilistic_encoder:
         # for the very first item, if we do not have any previous note, so let's choose one randomly
         # same applies if we ask for a nonexisting key
         if (previous == None) or (previous not in self.stm.keys()):
-            print(f'Prob_encoder: {self.name} previous {previous} not in stm.keys')
+            #print(f'Prob_encoder: {self.name} previous {previous} not in stm.keys')
             alternatives = self.empty_index_container
         else:
             alternatives = self.stm[previous] # get an index container of possible next items
@@ -85,7 +85,6 @@ class Probabilistic_logic:
     def __init__(self, dc, max_size=100, max_order=2, max_voices=10):
         self.maxsize = max_size # allocate more space than we need, we will add more data later
         self.max_order = max_order
-        print('max order', self.max_order)
         self.dc = dc #pointer to data containers
         
         # get number of parameters and instantiate analyzer classes
@@ -189,13 +188,13 @@ class Probabilistic_logic:
             print(f'Prob encoder zero probability from query {query}, choose one at random')
             self.prob = np.ones(self.current_datasize)
 
-        print('prob and mask:')
-        print(self.prob)
+        #print('prob and mask:')
+        #print(self.prob)
         # if we request a specific item, handle this here 
         if request_next_item[0] != None:
             request_parm, request_code, request_weight = request_next_item
             self.set_request_mask(request_parm, request_code)
-            print(self.request_mask[:self.current_datasize])
+            #print(self.request_mask[:self.current_datasize])
             if request_weight == 1:
                 self.prob *= self.request_mask[:self.current_datasize]
             else:        
@@ -205,7 +204,7 @@ class Probabilistic_logic:
                 self.prob += self.request_mask[:self.current_datasize] # just use mask
         sumprob = np.sum(self.prob)
         self.prob = self.prob/sumprob #normalize sum to 1
-        print('prob again\n', self.prob)
+        #print('prob again\n', self.prob)
         next_item_index = int(np.random.choice(self.indices,p=self.prob))
         return next_item_index
 

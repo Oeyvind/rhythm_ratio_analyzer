@@ -247,29 +247,23 @@ instr 2
     idelta = itime-iprev_time
     chnset itime, "previous_time"
     if idelta > ithresh then
-      print inum
       chnset inum, "notenum"
       chnset ivel, "velocity"
       index += 1
       cabbageSetValue "index_this_event", index
       ichord_note_index = 0 ; new chord, or no chord
       chnset ichord_note_index, "chord_note_index"
-      iactive active 3
+      iactive active floor(inst_num)
       if iactive > 0 then
         ifrac = i(gkactivenote)*0.001
-        event_i "i", -3-ifrac, 0, .1
+        event_i "i", -floor(inst_num)-ifrac, 0, .1
         chnset 1, "event_force_off"
       endif
       event_i "i", inst_num, 0, -1, inum
     else
       ichord_note_index chnget "chord_note_index"
-      ;print ichord_note_index, lenarray(giChord)
-      ;giChord[ichord_note_index] = inum
-      ;printarray giChord
       chnset ichord_note_index+1, "chord_note_index"
-      
       ichord_index chnget "chord_index"
-      ;print ichord_index
       if ichord_note_index == 0 then
         ichord_index += 1
         chnset ichord_index, "chord_index"
@@ -277,7 +271,7 @@ instr 2
       ichord_send_instr = 4
       isend_delay = ithresh ; delay chord note send so we are sure the base note have arrived before it
       event_i "i", ichord_send_instr, isend_delay, 0.1, index, ichord_index, inum, ivel, idelta
-      print index, ichord_index, ichord_note_index, inum
+      ;print index, ichord_index, ichord_note_index, inum
     endif
 
     if (krelease > 0) && (inum == gkactivenote) then 
@@ -297,8 +291,6 @@ instr 3
   chnset kon, "event_on"
   kon = 0
   gkactivenote = p4
-  ;a1 oscil 0.1, cpsmidinn(p4)
-  ;outs a1, a1
 endin
 
 instr 4
@@ -308,8 +300,7 @@ instr 4
   inum = p6
   ivel = p7
   idelta = p8
-  OSCsend 1, "127.0.0.1", 9901, "/client_eventchord", "fffff", index, ichord_index, inum, ivel, idelta
-  
+  OSCsend 1, "127.0.0.1", 9901, "/client_eventchord", "fffff", index, ichord_index, inum, ivel, idelta  
 endin
 
 ; play trigger rhythm
@@ -384,8 +375,8 @@ instr 31
       else
         kindex_send = kindex
       endif
-      Sdebug sprintfk "rec: %i, %.2f, %i, %i, %i", kindex_send, ktime, kevent_onoff, knotenum, kvelocity
-      puts Sdebug, ksend_osc
+      ;Sdebug sprintfk "rec: %i, %.2f, %i, %i, %i", kindex_send, ktime, kevent_onoff, knotenum, kvelocity
+      ;puts Sdebug, ksend_osc
       OSCsend ksend_osc, "127.0.0.1", 9901, "/client_eventdata", "fffff", kindex_send, ktime, kevent_onoff, knotenum, kvelocity
     endif
     if kevent_on > 0 then
@@ -623,11 +614,9 @@ instr 109
   kchord_count init 0
   igen_instr = 121
   ktime timeinsts ; for debug
-  ;printk2 floor(kbeat_clock)
-  kpython_data_ready init 0
   
   ; get event data from server
-  if (kbeat_clock > knext_event_time) && (kpython_data_ready == 0) then
+  if (kbeat_clock > knext_event_time) then
     if strcmpk(Srequest_parm, "index") == 0 then 
       if (strcmpk(Srequest_type, "next") == 0) || (strcmpk(Srequest_type, "prev") == 0) then
         krequest_value = kgen_index ; request next/previous index
@@ -639,7 +628,6 @@ instr 109
     Saddr sprintf "python_prob_gen_voice%i", ivoice
     kmess OSClisten gihandle, Saddr, "fffffff", kgen_index, kgen_ratio, kgen_deviation, kgen_duration, kgen_notenum, kgen_interval, kgen_velocity ; receive OSC data from Python
     if kmess == 0 goto done
-      kpython_data_ready = 1
       ; store events in queue for playback
       if kgen_ratio > 0 then ; if it is not a chord event
         knext_event_time += round(kprevious_ratio*iclock_resolution)/iclock_resolution ; prevent accumulative rounding errors
@@ -648,8 +636,8 @@ instr 109
            kzero = 0
            cabbageSetValue Sbeat_sync, kzero, changed(knext_event_time)
         endif
-        Sdebug sprintfk "receive: voice %i, ndx %i, beat clock %.2f, next event %.2f, ratio %.2f, note %i vel %.2f dur %.2f", ivoice, kgen_index, kbeat_clock, knext_event_time, kgen_ratio, kgen_notenum, kgen_velocity, kgen_duration
-        puts Sdebug, knext_event_time+kgen_ratio+kgen_deviation+kgen_notenum
+        ;Sdebug sprintfk "receive: voice %i, ndx %i, beat clock %.2f, next event %.2f, ratio %.2f, note %i vel %.2f dur %.2f", ivoice, kgen_index, kbeat_clock, knext_event_time, kgen_ratio, kgen_notenum, kgen_velocity, kgen_duration
+        ;puts Sdebug, knext_event_time+kgen_ratio+kgen_deviation+kgen_notenum
         kprevious_ratio = kgen_ratio
 	      kdeviation = kgen_deviation * kdeviation_scale 
         kEvent_queue[kcount % lenarray(kEvent_queue)][0] = knext_event_time + (kgen_ratio*kdeviation)*(60/ktempo_bpm); store this event time with deviation, for correct playback
@@ -673,7 +661,6 @@ instr 109
         kchord_count = (kchord_count+1)%lenarray(kChord_queue)
       endif
 	    kgen_once = 0
-      kpython_data_ready = 0
       kgoto nextmsg ; make sure we read all messages in the network buffer
   done:
   endif

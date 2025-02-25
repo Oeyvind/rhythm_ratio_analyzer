@@ -73,20 +73,15 @@ class Osc_server():
         index, chord_index, note, velocity, delta_time = osc_data
         index = int(index)
         chord_index = int(chord_index)
-        print('receive index, chord_index', index, chord_index)
         self.dc.corpus[index, self.dc.pnum_corpus['chord_index']] = chord_index # 1-indexed, as zero means no chord
         base_note = self.dc.corpus[index, self.dc.pnum_corpus['notenum']] 
         base_velocity = self.dc.corpus[index, self.dc.pnum_corpus['velocity']]
         chord_note = [note-base_note, velocity/base_velocity, delta_time]
-        print('chord_list before:', self.dc.chord_list)
         if len(self.dc.chord_list) < chord_index:
             self.dc.chord_list.append([chord_note]) # the first note in a chord
         else:
             self.dc.chord_list[chord_index-1].append(chord_note) # next notes in previously existing chord
-        print('chord_list:')
-        for chord in self.dc.chord_list:
-            print(chord)
-
+        
     def analyze(self, unused_addr, *osc_data):
         '''Message handler. This is called when we receive an OSC message'''
         # trigger analysis and send result back to client
@@ -155,7 +150,6 @@ class Osc_server():
         voicenum = int(voicenum)
         t = time.time()
         time_since_start = t-time_at_start
-        print(f't {time_since_start:.2f}')
         if request_type in ['none', '-']: # no request
             request =  [None]
         else: 
@@ -176,11 +170,10 @@ class Osc_server():
                      float(self.dc.corpus[next_item_index, self.dc.pnum_corpus['notenum']]),
                      float(self.dc.corpus[next_item_index, self.dc.pnum_corpus['notenum_relative']]),
                      float(self.dc.corpus[next_item_index, self.dc.pnum_corpus['velocity']])]
-        #print('next item', next_item_index)
-        print(f'gen returnmsg:{returnmsg}')
+        #print(f'gen returnmsg:{returnmsg}')
         osc_io.sendOSC(f"python_prob_gen_voice{voicenum}", returnmsg) # send OSC back to client
         chord_index = self.dc.corpus[next_item_index, self.dc.pnum_corpus['chord_index']]
-        print(f'debug: chord_index {chord_index}, chord_list {self.dc.chord_list}')
+        #print(f'debug: chord_index {chord_index}, chord_list {self.dc.chord_list}')
         if chord_index > 0:
             for event in self.dc.chord_list[int(chord_index-1)]:
                 returnmsg = [int(next_item_index), 
@@ -190,7 +183,7 @@ class Osc_server():
                              event[0]+float(self.dc.corpus[next_item_index, self.dc.pnum_corpus['notenum']]),
                              event[0],
                              event[1]*float(self.dc.corpus[next_item_index, self.dc.pnum_corpus['velocity']])]
-                print('chord event', returnmsg)
+                #print('chord event', returnmsg)
                 if self.chord_on > 0:
                     osc_io.sendOSC(f"python_prob_gen_voice{voicenum}", returnmsg) # send OSC back to client
         
