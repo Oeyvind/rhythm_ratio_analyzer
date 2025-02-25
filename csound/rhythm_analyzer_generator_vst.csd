@@ -82,8 +82,8 @@ label bounds(575, 45, 37, 18), text("val"), fontSize(12), align("left")
 nslider bounds(610, 25, 40, 20), channel("request_weight_v1"), range(0, 1, 0), fontSize(14)
 label bounds(610, 45, 40, 18), text("weight"), fontSize(12), align("left")
 
-nslider bounds(665, 25, 40, 20), channel("clock_multiplier_v1"), range(-1.0, 1, 1, 1, 0.01), fontSize(14)
-label bounds(665, 45, 65, 18), text("clkdev"), fontSize(12), align("left")
+;nslider bounds(665, 25, 40, 20), channel("clock_multiplier_v1"), range(-1.0, 1, 1, 1, 0.01), fontSize(14)
+;label bounds(665, 45, 65, 18), text("clkdev"), fontSize(12), align("left")
 
 nslider bounds(715, 25, 40, 20), channel("gen_v1_temperature"), range(0.01, 10, 0.2, 1, 0.01), fontSize(14)
 label bounds(710, 45, 65, 18), text("tmprature"), fontSize(12), align("left")
@@ -463,12 +463,13 @@ instr 31
   kmem_trig_count init 0
   kmem_trig_count += kmem_trig
   OSCsend kmem_trig_count, "127.0.0.1", 9901, "/client_memory", "iii", kclear_last_phrase, kclear_all, ksave_all
-  kindex = changed(kclear_all) > 0 ? -1 : kindex
+  kinit_clear_index = 1 ; clear index when starting
+  kindex = changed(kclear_all, kinit_clear_index) > 0 ? -1 : kindex
   kclear_phrase_trig trigger kclear_last_phrase, 0.5, 0
   kindex = kclear_phrase_trig > 0 ? kindex-kphraselen : kindex
-  kinit_clear_index = 1 ; clear index when starting
-  cabbageSetValue "index_this_event", kindex, changed(kclear_last_phrase, kclear_all, kinit_clear_index)
-  puts "reset index", changed(kclear_last_phrase, kclear_all)
+  
+  cabbageSetValue "index_this_event", kindex, changed(kclear_last_phrase, kclear_all, kinit_clear_index)+1
+  puts "reset index", changed(kclear_last_phrase, kclear_all)+1
   ; clear chord index
   kchord_index chnget "chord_index"
   kchord_index = changed(kclear_all) > 0 ? 0 : kchord_index
@@ -537,27 +538,27 @@ instr 109
 	; gen and play events
 	ktempo_bpm chnget "gen_tempo_bpm"
   kbeat_clock chnget "beat_clock"  
-  
+
+  /* clock multiplier needs another solution
   Sclock_multiplier sprintf "clock_multiplier_v%i", ivoice
   kclock_multiplier chnget Sclock_multiplier
-  printk2 kclock_multiplier
   ibeat_clock chnget "kbeat_clock"
   kprevious_clock init ibeat_clock
   kclockstep = kbeat_clock-kprevious_clock
   kbeat_clock = kbeat_clock+(kclockstep*kclock_multiplier)
-
-	kbeat_clock_dry chnget "beat_clock_dry"
-  printk2 floor(kbeat_clock_dry), 10
-  printk2 floor(kbeat_clock), 20
+  */
+	
+  kbeat_clock_dry chnget "beat_clock_dry"
+  ;printk2 floor(kbeat_clock_dry), 10
+  ;printk2 floor(kbeat_clock), 20
 
 	kclock_direction chnget "beat_clock_direction"
-	kEvent_queue[] init 30, 7 ; 30 events, 6 parameters each
+	kEvent_queue[] init 10, 7 ; 30 events, 6 parameters each
   kChord_queue[] init 30, 4 ; 30 events, 4 parameters each
   kChord_event[] getrow kChord_queue, 0
 
   Sbeat_sync sprintf "beat_sync_v%i", ivoice
   kbeat_sync chnget Sbeat_sync
-  printk2 kbeat_sync
   ibeat_sync = 1
   cabbageSetValue Sbeat_sync, ibeat_sync
 
@@ -641,8 +642,6 @@ instr 109
     if kmess == 0 goto done
       kpython_data_ready = 1
       ; store events in queue for playback
-      ;Sdebug sprintfk "voice %i, ndx %i, beat clock %.2f, next event %.2f, ratio %.2f, note %i vel %.2f", ivoice, kgen_index, kbeat_clock, knext_event_time, kgen_ratio, kgen_notenum, kgen_velocity
-      ;puts Sdebug, knext_event_time+kgen_ratio+kgen_deviation+kgen_notenum
       if kgen_ratio > 0 then ; if it is not a chord event
         knext_event_time += round(kprevious_ratio*iclock_resolution)/iclock_resolution ; prevent accumulative rounding errors
 	      if kbeat_sync == 1 then
@@ -650,15 +649,18 @@ instr 109
            kzero = 0
            cabbageSetValue Sbeat_sync, kzero, changed(knext_event_time)
         endif
+        Sdebug sprintfk "receive: voice %i, ndx %i, beat clock %.2f, next event %.2f, ratio %.2f, note %i vel %.2f dur %.2f", ivoice, kgen_index, kbeat_clock, knext_event_time, kgen_ratio, kgen_notenum, kgen_velocity, kgen_duration
+        puts Sdebug, knext_event_time+kgen_ratio+kgen_deviation+kgen_notenum
         kprevious_ratio = kgen_ratio
 	      kdeviation = kgen_deviation * kdeviation_scale 
         kEvent_queue[kcount % lenarray(kEvent_queue)][0] = knext_event_time + (kgen_ratio*kdeviation)*(60/ktempo_bpm); store this event time with deviation, for correct playback
-        kEvent_queue[kcount % lenarray(kEvent_queue)][2] = kgen_duration*(60/ktempo_bpm)
+        kEvent_queue[kcount % lenarray(kEvent_queue)][2] = kgen_duration*(kgen_ratio*(60/ktempo_bpm))
         kEvent_queue[kcount % lenarray(kEvent_queue)][3] = kgen_notenum
         kEvent_queue[kcount % lenarray(kEvent_queue)][4] = kgen_interval
         kEvent_queue[kcount % lenarray(kEvent_queue)][5] = kgen_velocity
         kEvent_queue[kcount % lenarray(kEvent_queue)][6] = -1 ; is not a chord
         kcount += 1
+        ;printarray kEvent_queue
       else
         kdeviation = kgen_deviation * kdeviation_scale 
         kChord_event[0] = (kcount-1) % lenarray(kEvent_queue) ; we use the kcount event counter to synchronize base events and chord events on playback
@@ -724,6 +726,7 @@ instr 109
 		else
 			keventqueue_index wrap kplay_index, 0, lenarray(kEvent_queue)
 		endif
+    ;printk2 keventqueue_index
     if krelative_pitch > 0 then
         kgen_notenum = kprev_notenum + (kEvent_queue[keventqueue_index][4]*krelative_pitch_inverter)
       if (kgen_notenum > (krelative_middle_note+krelative_pitch_range)) then
@@ -736,9 +739,11 @@ instr 109
     else
       kgen_notenum = kEvent_queue[keventqueue_index][3]
     endif
+    ;kDebug_play[] getrow kEvent_queue, keventqueue_index
+    ;printarray kDebug_play
     kprev_notenum = kgen_notenum
 		kgen_velocity = kEvent_queue[keventqueue_index][5]
-    kdur = kEvent_queue[keventqueue_index][2]*kdur_scale
+    kdur = kEvent_queue[keventqueue_index][2]*kdur_scale 
   	event "i", igen_instr, 0, kdur, kgen_notenum, kgen_velocity, ivoice
     kchords_on chnget "chords_on"
     if kchords_on > 0 then
