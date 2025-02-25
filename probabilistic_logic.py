@@ -59,7 +59,9 @@ class Probabilistic_encoder:
             print('Empty Prob sequence')
             return [-1.0]
         # for the very first item, if we do not have any previous note, so let's choose one randomly
-        if previous == None:
+        # same applies if we ask for a nonexisting key
+        if (previous == None) or (previous not in self.stm.keys()):
+            print(f'Prob_encoder: {self.name} previous {previous} not in stm.keys')
             alternatives = self.empty_index_container
         else:
             alternatives = self.stm[previous] # get an index container of possible next items

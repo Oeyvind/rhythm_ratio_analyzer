@@ -11,7 +11,7 @@ groupbox bounds(85, 5, 160, 50), text("last recorded phrase"), colour(45,25,25){
 }
 groupbox bounds(248, 5, 215, 50), colour(45,25,25){ ; , text("phrase data")
 label bounds(10, 2, 80, 18), text("an_tempo"), fontSize(11), align("left")
-nslider bounds(10, 25, 50, 22), channel("tempo_bps_last_phrase"), range(1, 2999, 1), fontSize(14)
+nslider bounds(10, 25, 50, 22), channel("tempo_bpm_last_phrase"), range(1, 2999, 1), fontSize(14)
 label bounds(70, 2, 80, 18), text("tendency"), fontSize(11), align("left")
 nslider bounds(70, 25, 50, 22), channel("tempo_tendency"), range(-10, 10, 0), fontSize(14)
 label bounds(138, 2, 80, 18), text("phrase_len"), fontSize(11), align("left")
@@ -442,15 +442,14 @@ instr 31
   done_trig:
 
   ; receive other data from Python
-  kticktempo_bpm init 60
+  ktempo_bpm init 60
   ktempo_tendency init 0
   kpulseposition init 1
   kphraselen init 0
   nextmsg_other:
-  kmess_other OSClisten gihandle, "python_other", "ffff", kticktempo_bpm,ktempo_tendency,kpulseposition,kphraselen ; receive OSC data from Python
-  chnset kticktempo_bpm/60, "tempo_triggerseq"
-  ktempo_bpm = kticktempo_bpm/kpulseposition
-  cabbageSetValue "tempo_bps_last_phrase", ktempo_bpm, changed(ktempo_bpm)
+  kmess_other OSClisten gihandle, "python_other", "ffff", ktempo_bpm,ktempo_tendency,kpulseposition,kphraselen ; receive OSC data from Python
+  chnset (ktempo_bpm/60)*kpulseposition, "tempo_triggerseq"
+  cabbageSetValue "tempo_bpm_last_phrase", ktempo_bpm, changed(ktempo_bpm)
   cabbageSetValue "gen_tempo_bpm", ktempo_bpm, changed(ktempo_bpm*kauto_tempo_update)
   cabbageSetValue "tempo_tendency", ktempo_tendency, changed(ktempo_tendency)
   cabbageSetValue "phrase_len", kphraselen, changed(kphraselen)

@@ -64,9 +64,9 @@ class Osc_server():
                     self.dc.corpus[index, self.dc.pnum_corpus['notenum_relative']] = notenum-self.previous_notenum
                 if self.previous_velocity > -1:
                     self.dc.corpus[index, self.dc.pnum_corpus['velocity_relative']] = velocity-self.previous_velocity
-                self.previous_notenum = notenum
-                self.previous_velocity = velocity
                 self.pending_analysis.append(index)
+            self.previous_notenum = notenum
+            self.previous_velocity = velocity
     
     def receive_eventchord(self, unused_addr, *osc_data):
         '''Receive chord data, i.e. when several notes occur simultaneously (within time window of i.e. 50 ms) in the input data'''
@@ -97,13 +97,11 @@ class Osc_server():
         self.last_analyzed_phrase = self.pending_analysis # keep it so we can delete it if clear_last_phrase is called
         start, end = self.pending_analysis[0], self.pending_analysis[-1]
         timedata = self.dc.corpus[start:end+1,self.dc.pnum_corpus['timestamp']]
-        print('timedata:', timedata-timedata[0])
+        print('timedata:', timedata-timedata[0], 'len:', len(self.pending_analysis))
         self.phrase_number += 1
         ratios_reduced, ranked_unique_representations, rankscores, trigseq, ticktempo_bpm, tempo_tendency, pulseposition = self.ra.analyze(timedata)
         for i in range(len(trigseq)):
             osc_io.sendOSC("python_triggerdata", [i, trigseq[i]]) # send OSC back to client
-        returnmsg = [ticktempo_bpm, tempo_tendency, float(pulseposition), float(len(self.pending_analysis))]
-        osc_io.sendOSC("python_other", returnmsg) # send OSC back to client
         
         # store the rhythm fractions as float for each event in the corpus
         best = ranked_unique_representations[0]
@@ -125,21 +123,29 @@ class Osc_server():
         tempo_factor = bpm_sanitized/bpm_from_ratio
         print('sanitized bpm:', bpm_sanitized)
         print(f'sanitized ratios best: \n{(ratios_reduced[best,range(len(self.pending_analysis)-1),0]/ratios_reduced[best,range(len(self.pending_analysis)-1),1])*tempo_factor}')
+        returnmsg = [bpm_sanitized, tempo_tendency, float(pulseposition), float(len(self.pending_analysis))]
+        osc_io.sendOSC("python_other", returnmsg) # send OSC back to client
         
         next_best = ranked_unique_representations[1]
-        for i in range(len(self.pending_analysis)-1): 
+        for i in range(len(self.pending_analysis)): 
             indx = self.pending_analysis[i]
+            print('store in corpus', indx)
             self.dc.corpus[indx,self.dc.pnum_corpus['index']] = indx
-            self.dc.corpus[indx,self.dc.pnum_corpus['ratio_best']] = (ratios_reduced[best,i,0]/ratios_reduced[best,i,1])*tempo_factor # ratio as float
-            self.dc.corpus[indx,self.dc.pnum_corpus['deviation_best']] = ratios_reduced[best,i,2]*tempo_factor # deviation
-            self.dc.corpus[indx,self.dc.pnum_corpus['ratio_2nd_best']] = ratios_reduced[next_best,i,0]/ratios_reduced[next_best,i,1] # ratio as float
             self.dc.corpus[indx,self.dc.pnum_corpus['phrase_num']] = self.phrase_number
-            # event duration relative to time until next event
-            self.dc.corpus[indx,self.dc.pnum_corpus['duration']] = \
-                (self.dc.corpus[indx,self.dc.pnum_corpus['time_off']] \
-                - self.dc.corpus[indx,self.dc.pnum_corpus['timestamp']]) \
-                / (self.dc.corpus[indx+1,self.dc.pnum_corpus['timestamp']] \
-                - self.dc.corpus[indx,self.dc.pnum_corpus['timestamp']])
+            if i < len(self.pending_analysis)-1:
+                self.dc.corpus[indx,self.dc.pnum_corpus['ratio_best']] = (ratios_reduced[best,i,0]/ratios_reduced[best,i,1])*tempo_factor # ratio as float
+                self.dc.corpus[indx,self.dc.pnum_corpus['deviation_best']] = ratios_reduced[best,i,2]*tempo_factor # deviation
+                self.dc.corpus[indx,self.dc.pnum_corpus['ratio_2nd_best']] = (ratios_reduced[next_best,i,0]/ratios_reduced[next_best,i,1])*tempo_factor # ratio as float
+                # event duration relative to time until next event
+                self.dc.corpus[indx,self.dc.pnum_corpus['duration']] = \
+                    ((self.dc.corpus[indx,self.dc.pnum_corpus['time_off']] \
+                    - self.dc.corpus[indx,self.dc.pnum_corpus['timestamp']]) \
+                    / (self.dc.corpus[indx+1,self.dc.pnum_corpus['timestamp']] \
+                    - self.dc.corpus[indx,self.dc.pnum_corpus['timestamp']]))*tempo_factor
+            else:
+                self.dc.corpus[indx,self.dc.pnum_corpus['ratio_best']] = 1.0*tempo_factor
+                # event duration for last event
+                self.dc.corpus[indx,self.dc.pnum_corpus['duration']] = 1.0*tempo_factor
             # probabilistic model encoding
             self.pl.analyze_single_event(indx)
         self.pending_analysis = [] # clear
