@@ -106,7 +106,7 @@ class Osc_server():
         # store the rhythm fractions as float for each event in the corpus
         best = ranked_unique_representations[0]
         print(f'ratios best: \n{ratios_reduced[best,range(len(self.pending_analysis)-1),0]/ratios_reduced[best,range(len(self.pending_analysis)-1),1]}')
-        ratio_sequence = np.array(ratios_reduced[best])
+        #ratio_sequence = np.array(ratios_reduced[best])
         #dur_pattern = self.ra.make_duration_pattern(ratio_sequence).astype('int')
         #pulse_div, certainty = self.ra.find_pulse(dur_pattern, mode='coef')
         #print('pulse_div, certainty', pulse_div, certainty)
@@ -129,7 +129,6 @@ class Osc_server():
         next_best = ranked_unique_representations[1]
         for i in range(len(self.pending_analysis)): 
             indx = self.pending_analysis[i]
-            print('store in corpus', indx)
             self.dc.corpus[indx,self.dc.pnum_corpus['index']] = indx
             self.dc.corpus[indx,self.dc.pnum_corpus['phrase_num']] = self.phrase_number
             if i < len(self.pending_analysis)-1:

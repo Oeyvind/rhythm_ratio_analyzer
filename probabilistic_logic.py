@@ -119,6 +119,7 @@ class Probabilistic_logic:
         self.prob = np.zeros(self.maxsize)
         
     def analyze_single_event(self, i):
+        #print(f'analyze: {self.dc.corpus[i]}')
         for parm in self.dc.prob_parms.keys():
             pe = self.dc.prob_parms[parm][1]
             #print(f'pe.analyze: {pe.name}, {self.dc.corpus[i, self.dc.pnum_corpus[parm]]}')
