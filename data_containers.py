@@ -13,8 +13,8 @@ class DataContainers:
   """ 
   Data containers for event corpus and probabilistic logic
   """
-  def __init__(self): 
-    self.max_events = 10000 # 100 for test, 10.000 for small scale production
+  def __init__(self, max_events=100): 
+    self.max_events = max_events
 
     # parameter names and their indices in the corpus
     self.pnum_corpus = {

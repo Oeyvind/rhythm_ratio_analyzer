@@ -15,10 +15,11 @@ import probabilistic_logic
 import osc_server
 
 # instantiate data containers
-dc = data_containers.DataContainers()
+max_events = 10000 # 100 for test, 10.000 for small scale production
+dc = data_containers.DataContainers(max_events)
 
 # instantiate probabilistic logic
-pl = probabilistic_logic.Probabilistic_logic(dc, max_size=100, max_order=4, max_voices=10)
+pl = probabilistic_logic.Probabilistic_logic(dc, max_size=max_events, max_order=4, max_voices=10)
 
 # instantiate and start osc server
 server = osc_server.Osc_server(dc, ratio_analyzer, pl)
