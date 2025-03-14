@@ -12,7 +12,7 @@ import math
 #import logging 
 #logging.basicConfig(level=logging.DEBUG)
 
-weights = [0, 1, 1, 0.3, 1, 0.2, 0.3, 1]
+weights = [0.5, 0.7, 0.6, 1.0, 0.2, 0.2, 0.3, 0.3]
 # weights for the scoring of ratio alternatives, in this order:
 #barlow_weight
 #benni_weight
@@ -84,7 +84,7 @@ def recalculate_deviation(ratios):
     ratios[:,:,2] = (ratios[:,:,3]/ratios[:,:,4])-(ratios[:,:,0]/ratios[:,:,1]) 
     return ratios
 
-def ratio_scores(ratios, timeseries):
+def ratio_scores(ratios, duration_patterns, timeseries):
     "calculate scores for each set of ratios"
     ratio_deviations = []
     ratio_deviation_abs = []
@@ -103,11 +103,10 @@ def ratio_scores(ratios, timeseries):
         benedetti_height.append(np.add.reduce(np.multiply(ratios[i,:,0], ratios[i,:,1]))) # sum of Benedetti heights across all ratios in each set
         nd_add.append(np.add.reduce(np.add(ratios[i,:,0], ratios[i,:,1]))) # sum of sums of numerators and denominators in each set
         indig = 0
-        for denom in ratios[i,:,1]:
-            indig += indigestability_n(denom)
+        for dur in duration_patterns[i]:
+            indig += indigestability_n(dur)
         indigestabilities.append(indig)
     return ratio_deviations, ratio_deviation_abs, ratio_deviation_abs_max, gridsize_deviations, indigestabilities, benedetti_height, nd_add 
-
 
 def prime_factorization(n):
     "prime factorization of `n` as a dictionary with p:multiplicity for each p."
@@ -357,12 +356,15 @@ def find_pulse(data, mode='coef'):
 def analyze(t, rank=1):
     """Do the full ratio analysis"""
     timedata = t.tolist()
-    barlow_weight, benni_weight, nd_sum_weight, ratio_dev_weight, ratio_dev_abs_max_weight, grid_dev_weight, evidence_weight, autocorr_weight = weights # global weights
-    #rat2 = ratio_to_each(timedata, div_limit=2)
-    #rat4 = ratio_to_each(timedata, div_limit=4)
-    #ratios = np.concatenate((rat2, rat4), axis=0)
+    barlow_weight, benni_weight, nd_sum_weight, \
+        ratio_dev_weight, ratio_dev_abs_max_weight, \
+            grid_dev_weight, evidence_weight, autocorr_weight = weights # global weights
     ratios = ratio_to_each(timedata, div_limit=4)
-    ratio_deviations, ratio_deviation_abs, ratio_deviation_abs_max, gridsize_deviations, barlow_indigest,benedetti_height, nd_add = ratio_scores(ratios,timedata)
+    duration_patterns = []
+    for i in range(len(ratios)):
+        duration_patterns.append(make_duration_pattern(ratios[i]))
+    ratio_deviations, ratio_deviation_abs, ratio_deviation_abs_max, \
+        gridsize_deviations, barlow_indigest, benedetti_height, nd_add = ratio_scores(ratios, duration_patterns, timedata)
     ratios_commondiv = make_commondiv_ratios(ratios)
     ratios_commondiv_copy = np.copy(ratios_commondiv)
     norm_num_ratios = normalize_numerators(ratios_commondiv_copy)
@@ -373,8 +375,10 @@ def analyze(t, rank=1):
         acorr = autocorr(trigseq)
         autocorr_scores.append(np.max(acorr[1:])) # max of autocorr
     scores = normalize_and_add_scores(
-        [barlow_indigest, benedetti_height, nd_add, ratio_deviation_abs, ratio_deviation_abs_max, gridsize_deviations, evidence_scores, autocorr_scores], 
-        [barlow_weight, benni_weight, nd_sum_weight, ratio_dev_weight, ratio_dev_abs_max_weight, grid_dev_weight, evidence_weight, autocorr_weight],
+        [barlow_indigest, benedetti_height, nd_add, ratio_deviation_abs, \
+         ratio_deviation_abs_max, gridsize_deviations, evidence_scores, autocorr_scores], 
+        [barlow_weight, benni_weight, nd_sum_weight, ratio_dev_weight, \
+         ratio_dev_abs_max_weight, grid_dev_weight, evidence_weight, autocorr_weight],
         [0, 0, 0, 0, 0, 0, 1, 1])
     
     # simplify ratios and remove duplicate ratio representations
@@ -386,7 +390,7 @@ def analyze(t, rank=1):
     selected = ranked_unique_representations[rank-1] # select the unique representation ranked from the lowest score
     ticktempo_Hz = (1/ratios_commondiv[selected,0,-1])*ratios_commondiv[selected,0,1]
     #print('analyze: commondiv', ratios_commondiv[selected,0,1])
-    print(f'ticktempo {ticktempo_Hz}\n{ratios_commondiv[selected]}')
+    #print(f'ticktempo {ticktempo_Hz}\n{ratios_commondiv[selected]}')
     #print((1/ratios_commondiv[selected,0,-1]), ratios_commondiv[selected,0,1])
     ticktempo_bpm = ticktempo_Hz*60
     trigseq = make_trigger_sequence(ratios_commondiv[selected,:,:2])
@@ -395,7 +399,8 @@ def analyze(t, rank=1):
     tempo_tendency = ratio_deviations[selected]*-1 # invert deviation to adjust tempo
     
     # return
-    return ratios_reduced, ranked_unique_representations, rankscores, trigseq, ticktempo_bpm, tempo_tendency, pulseposition
+    return ratios_reduced, ranked_unique_representations, rankscores, \
+        trigseq, ticktempo_bpm, tempo_tendency, pulseposition
         
 if __name__ == '__main__':
     # example rhythms
@@ -406,10 +411,14 @@ if __name__ == '__main__':
     # skalert for å matche til 3.0
     #t = [0.    , 0.2903, 0.5196, 0.8099, 1.3084, 1.5134, 1.7947, 2.0004, 2.4797, 2.8148, 3.    ] 
     # ideell
-    t = [0,    0.25,     0.5,    0.75,   1.25,   1.5,    1.75,   2,      2.5,    2.75,   3]
+    #t = [0,    0.25,     0.5,    0.75,   1.25,   1.5,    1.75,   2,      2.5,    2.75,   3]
     # manuell slark
     #t = [0,    0.3,      0.5,    0.8,    1.3,    1.5,    1.8,    2,      2.5,    2.8,   3]
     #t = [ 6.69,  7.19,  7.44,  7.69,  8.19,  8.52,  8.69,  9.19,  9.44,  9.69, 10.19]
+    # test pattern for article
+    t = [0, 1, 1.5, 2, 2.75, 3] #straight
+    #t = [0, 0.98, 1.51, 2.03, 2.72, 3] #expressive
+
     t = np.array(t,dtype=np.float32)
     barlow_weight = 1
     benni_weight = 1
@@ -419,14 +428,15 @@ if __name__ == '__main__':
     grid_dev_weight = 0.2
     evidence_weight = 0.3
     autocorr_weight = 1
-    weights = [barlow_weight, benni_weight, nd_sum_weight, ratio_dev_weight, ratio_dev_abs_max_weight, grid_dev_weight, evidence_weight, autocorr_weight]
+    weights = [barlow_weight, benni_weight, nd_sum_weight, ratio_dev_weight,\
+                ratio_dev_abs_max_weight, grid_dev_weight, evidence_weight, autocorr_weight]
     set_weights(weights)
     rank = 1
-    ratios_reduced, ranked_unique_representations, rankscores, trigseq, ticktempo_bpm, tempo_tendency, pulseposition = analyze(t, rank)
+    ratios_reduced, ranked_unique_representations, rankscores, trigseq, \
+        ticktempo_bpm, tempo_tendency, pulseposition = analyze(t, rank)
     best = ranked_unique_representations[0]
     ratios_list = ratios_reduced[best].tolist()
+    print('winner')
     for i in range(len(ratios_list)):
         print(ratios_list[i])
-    #print(ratios_reduced[selected,:,:3]) #nom, denom, deviation
-    #print(ratios_reduced[selected,0,0], type(ratios_reduced[selected,0,0]))
    

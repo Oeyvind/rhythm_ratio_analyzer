@@ -33,21 +33,21 @@ groupbox bounds(5, 60, 240, 65), text("last recorded event"), colour(20,30,45){
 }
 
 groupbox bounds(250, 60, 400, 65), text("rhythm analysis weights"), colour(20,30,45){
-nslider bounds(5, 25, 40, 20), channel("barlow_weight"), range(0, 1, 1), fontSize(14)
+nslider bounds(5, 25, 40, 20), channel("barlow_weight"), range(0, 1, 0.5), fontSize(14)
 label bounds(5, 45, 40, 20), text("barlow"), fontSize(12)
-nslider bounds(50, 25, 40, 20), channel("benni_weight"), range(0, 1, 1), fontSize(14)
+nslider bounds(50, 25, 40, 20), channel("benni_weight"), range(0, 1, 0.7), fontSize(14)
 label bounds(50, 45, 40, 20), text("benni"), fontSize(12)
-nslider bounds(100, 25, 40, 20), channel("nd_weight"), range(0, 1, 1), fontSize(14)
+nslider bounds(100, 25, 40, 20), channel("nd_weight"), range(0, 1, 0.6), fontSize(14)
 label bounds(100, 45, 40, 20), text("n+d"), fontSize(12)
-nslider bounds(150, 25, 40, 20), channel("ratio_dev_weight"), range(0, 1, 1), fontSize(14)
+nslider bounds(150, 25, 40, 20), channel("ratio_dev_weight"), range(0, 1, 1.0), fontSize(14)
 label bounds(150, 45, 40, 20), text("r_dev"), fontSize(12)
-nslider bounds(200, 25, 40, 20), channel("ratio_dev_abs_max_weight"), range(0, 1, 1), fontSize(14)
+nslider bounds(200, 25, 40, 20), channel("ratio_dev_abs_max_weight"), range(0, 1, 0.2), fontSize(14)
 label bounds(200, 45, 40, 20), text("r_maxdev"), fontSize(12)
-nslider bounds(250, 25, 40, 20), channel("grid_dev_weight"), range(0, 1, 1), fontSize(14)
+nslider bounds(250, 25, 40, 20), channel("grid_dev_weight"), range(0, 1, 0.2), fontSize(14)
 label bounds(250, 45, 40, 20), text("grid"), fontSize(12)
-nslider bounds(300, 25, 40, 20), channel("evidence_weight"), range(0, 1, 1), fontSize(14)
+nslider bounds(300, 25, 40, 20), channel("evidence_weight"), range(0, 1, 0.3), fontSize(14)
 label bounds(300, 45, 40, 20), text("evidence"), fontSize(12)
-nslider bounds(350, 25, 40, 20), channel("autocorr_weight"), range(0, 1, 1), fontSize(14)
+nslider bounds(350, 25, 40, 20), channel("autocorr_weight"), range(0, 1, 0.3), fontSize(14)
 label bounds(350, 45, 40, 20), text("acorr"), fontSize(12)
 }
 
