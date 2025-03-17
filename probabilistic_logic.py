@@ -342,6 +342,31 @@ class Datacontainer_test():
             self.corpus[i, self.pnum_corpus['val1']] = self.list_val1[i]
             self.corpus[i, self.pnum_corpus['val2']] = self.list_val2[i]
 
+def encoder_test():
+    datasize = 10
+    max_order = 2
+    pe = Probabilistic_encoder(size=datasize, max_order=max_order)
+    data = ('A','B','C','C','B','A')
+    indices = np.zeros(datasize+max_order)
+    current_datasize = 0
+    for i in range(len(data)):
+        pe.analyze(data[i],i)
+        indices[i+max_order] = i
+        current_datasize += 1
+    v = ('A')
+    temperature_coef = 1
+    for i in range(10):
+        prob = pe.next_items(v)
+        prob /= np.amax(prob) # normalize
+        prob = np.power(prob, temperature_coef) # temperature adjustment
+        sumprob = np.sum(prob)
+        prob = prob/sumprob #normalize sum to 1
+        print('prob \n', prob)
+        print('indices \n', indices)
+        next_item_index = int(np.random.choice(indices,p=prob))
+        v = data[next_item_index]
+        print(v)
+
 def basic_test():
     max_events = 1000
     dc = Datacontainer_test(max_events)
@@ -468,8 +493,9 @@ def request_dev():
 
 # test
 if __name__ == '__main__' :
+    encoder_test()
     #basic_test()
-    request_dev()
+    #request_dev()
     # profiling tests
     #import cProfile
     #cProfile.run('pl.get_request_mask(request_next_item)')

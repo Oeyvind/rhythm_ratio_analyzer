@@ -35,6 +35,12 @@ def rational_approx(n, div_limit=4):
     else:
         fact = np.array([3,4])
         threshold = 0.208333 # finer resolution with small n
+    if div_limit == 8 : 
+      fact *= 2
+      threshold /= 2
+    if div_limit == 16 : 
+      fact *= 4
+      threshold /= 4
     dev = np.zeros(2)
     res = [0,0]
     while n < threshold:
@@ -47,9 +53,9 @@ def rational_approx(n, div_limit=4):
       denom = 64
     else:
       res = n*fact
-      dev = np.abs(np.round(res)-res)
+      dev = np.abs(np.round(res)-res)*(1/fact)# also adjust deviation according to the factor in question
     num = round(res[np.argmin(dev)])
-    denom = fact[np.argmin(dev)] 
+    denom = fact[np.argmin(dev)]
     deviation = (n-(num/denom))
     gcd = np.gcd(num, denom)
     num /= gcd
@@ -353,18 +359,25 @@ def find_pulse(data, mode='coef'):
   return pulse_div, certainty
 
 
-def analyze(t, rank=1):
+def analyze(t, rank=1, div_limit=4):
     """Do the full ratio analysis"""
     timedata = t.tolist()
     barlow_weight, benni_weight, nd_sum_weight, \
         ratio_dev_weight, ratio_dev_abs_max_weight, \
             grid_dev_weight, evidence_weight, autocorr_weight = weights # global weights
-    ratios = ratio_to_each(timedata, div_limit=4)
+    ratios = ratio_to_each(timedata, div_limit=div_limit)
+    ratios_copy = np.copy(ratios)
     duration_patterns = []
-    for i in range(len(ratios)):
-        duration_patterns.append(make_duration_pattern(ratios[i]))
+    for i in range(len(ratios_copy)):
+        duration_patterns.append(make_duration_pattern(ratios_copy[i]))
+    #for i in range(len(ratios)):
+    #    print(ratios[i], '\n', duration_patterns[i])
+
     ratio_deviations, ratio_deviation_abs, ratio_deviation_abs_max, \
         gridsize_deviations, barlow_indigest, benedetti_height, nd_add = ratio_scores(ratios, duration_patterns, timedata)
+    #for i in range(len(ratios)):
+    #    print(ratios[i], '\n', ratio_deviation_abs[i])
+
     ratios_commondiv = make_commondiv_ratios(ratios)
     ratios_commondiv_copy = np.copy(ratios_commondiv)
     norm_num_ratios = normalize_numerators(ratios_commondiv_copy)
@@ -374,13 +387,18 @@ def analyze(t, rank=1):
         trigseq = make_trigger_sequence(ratios_commondiv[i,:,:2])
         acorr = autocorr(trigseq)
         autocorr_scores.append(np.max(acorr[1:])) # max of autocorr
+    #for i in range(len(ratios)):
+    #    print(ratios[i], '\n', autocorr_scores[i])
+
     scores = normalize_and_add_scores(
         [barlow_indigest, benedetti_height, nd_add, ratio_deviation_abs, \
          ratio_deviation_abs_max, gridsize_deviations, evidence_scores, autocorr_scores], 
         [barlow_weight, benni_weight, nd_sum_weight, ratio_dev_weight, \
          ratio_dev_abs_max_weight, grid_dev_weight, evidence_weight, autocorr_weight],
         [0, 0, 0, 0, 0, 0, 1, 1])
-    
+    for i in range(len(ratios)):
+        print(ratios[i], '\n', scores[i])
+
     # simplify ratios and remove duplicate ratio representations
     ratios_reduced = np.copy(ratios_commondiv)
     ratios_reduced = simplify_ratios(ratios_reduced)
@@ -418,25 +436,29 @@ if __name__ == '__main__':
     # test pattern for article
     t = [0, 1, 1.5, 2, 2.75, 3] #straight
     #t = [0, 0.98, 1.51, 2.03, 2.72, 3] #expressive
-
+    #t = [0, 725, 1120, 1472, 2005, 2198, 2933]
+    #t = [0.0, 725.387163043022156, 1120.064254999160767, 1472.122761011123657, 2005.306858062744141, 2197.617893099784851, 2933.395150065422058 ]
+    # test pattern for no medium delta times
+    #t = [0, 3.76, 4, 8] #straight
     t = np.array(t,dtype=np.float32)
-    barlow_weight = 1
-    benni_weight = 1
-    nd_sum_weight = 1
-    ratio_dev_weight = 0.3
-    ratio_dev_abs_max_weight = 1
-    grid_dev_weight = 0.2
-    evidence_weight = 0.3
-    autocorr_weight = 1
+    barlow_weight = 0
+    benni_weight = 0.
+    nd_sum_weight = 0.3
+    ratio_dev_weight = 0.9
+    ratio_dev_abs_max_weight = 0
+    grid_dev_weight = 0.
+    evidence_weight = 0.
+    autocorr_weight = 0
     weights = [barlow_weight, benni_weight, nd_sum_weight, ratio_dev_weight,\
                 ratio_dev_abs_max_weight, grid_dev_weight, evidence_weight, autocorr_weight]
     set_weights(weights)
     rank = 1
     ratios_reduced, ranked_unique_representations, rankscores, trigseq, \
-        ticktempo_bpm, tempo_tendency, pulseposition = analyze(t, rank)
+        ticktempo_bpm, tempo_tendency, pulseposition = analyze(t, rank, div_limit=4)
     best = ranked_unique_representations[0]
     ratios_list = ratios_reduced[best].tolist()
     print('winner')
     for i in range(len(ratios_list)):
         print(ratios_list[i])
-   
+    #duration_pattern = make_duration_pattern(ratios_reduced[best])
+    #print(duration_pattern)
