@@ -6,6 +6,37 @@ np.set_printoptions(suppress=True)
 np.set_printoptions(precision=2)
 
 
+def deviation_scaler(n, num,denom):
+  ratio_seq_up = np.array([[2,3],[3,4]])
+  ratio_seq_down = np.array([[1,3],[1,4]])
+  nf, ni = np.modf(n)
+  if nf >= 0.5:
+    if nf < ratio_seq_up[0][0]/ratio_seq_up[0][1]:
+      dev_range = 1/3
+    elif nf < ratio_seq_up[1][0]/ratio_seq_up[1][1]:
+       dev_range = 1/6
+    else:
+       dev_range = 1/4
+  if nf < 0.5:
+    if nf > ratio_seq_down[0][0]/ratio_seq_down[0][1]:
+      dev_range = 1/3
+    elif nf > ratio_seq_down[1][0]/ratio_seq_down[1][1]:
+       dev_range = 1/6
+    else:
+       dev_range = 0.25
+  thresh = 0.25
+  while nf < thresh:
+    ratio_seq_down /= 2
+    if nf > ratio_seq_down[0][0]/ratio_seq_down[0][1]:
+      dev_range = 1/3*thresh
+    elif nf > ratio_seq_down[1][0]/ratio_seq_down[1][1]:
+       dev_range = 1/6*thresh
+    thresh /= 2
+  dev = n-(num/denom)
+  print(dev, dev_range)
+  return dev / (dev_range*0.5)
+   
+
 def autocorr(data, offset):
     """Autocorrelation (non normalized), options to offset"""
     if offset == 'm':
@@ -39,7 +70,6 @@ def make_trigger_sequence(ratios):
             trigger_seq.append(0)
     return np.array(trigger_seq)
 
-autocorr(a1,0.7)
 
 def indigestability2(n,e):
     "Barlow's indigestability measure"
@@ -105,7 +135,7 @@ def rational_approx(n):
   return nom, denom
 
 '''
-rational_approx(0.2)
+#rational_approx(0.2)
 
 '''def fraction_approx(n):
   div_limit = 4

@@ -48,19 +48,53 @@ def rational_approx(n, div_limit=4):
       threshold /= 2
       if threshold < 0.011:
           break
-    if n < 0.01:
+    if n < (1/64):
       num = 1
       denom = 64
     else:
       res = n*fact
       dev = np.abs(np.round(res)-res)*(1/fact)# also adjust deviation according to the factor in question
-    num = round(res[np.argmin(dev)])
-    denom = fact[np.argmin(dev)]
-    deviation = (n-(num/denom))
+      num = round(res[np.argmin(dev)])
+      denom = fact[np.argmin(dev)]
+    deviation = deviation_scaler(n, num, denom)
     gcd = np.gcd(num, denom)
     num /= gcd
     denom /= gcd
     return int(num), int(denom), deviation
+
+
+def deviation_scaler(n, num,denom):
+  # scale the deviation from the rational approx according to available deviation range between ratios
+  ratio_seq_up = np.array([[2,3],[3,4]])
+  ratio_seq_down = np.array([[1,3],[1,4]])
+  nf, ni = np.modf(n)
+  if nf >= 0.5:
+    if nf < ratio_seq_up[0][0]/ratio_seq_up[0][1]:
+      dev_range = 1/3
+    elif nf < ratio_seq_up[1][0]/ratio_seq_up[1][1]:
+       dev_range = 1/6
+    else:
+       dev_range = 1/4
+  if nf < 0.5:
+    if nf > ratio_seq_down[0][0]/ratio_seq_down[0][1]:
+      dev_range = 1/3
+    elif nf > ratio_seq_down[1][0]/ratio_seq_down[1][1]:
+       dev_range = 1/6
+    else:
+       dev_range = 0.25
+  thresh = 0.25
+  while nf < thresh:
+    ratio_seq_down[:,1] = ratio_seq_down[:,1]*2
+    if nf > ratio_seq_down[0][0]/ratio_seq_down[0][1]:
+      dev_range = 1/3*(thresh*2)
+    elif nf > ratio_seq_down[1][0]/ratio_seq_down[1][1]:
+       dev_range = 1/6*(thresh*2)
+    thresh /= 2
+    if thresh < (1/64):
+        break
+  dev = n-(num/denom)
+  return dev / (dev_range*0.5)
+
 
 def ratio_to_each(timeseries, mode='connect', div_limit=4):
     """Ratio of delta times to each other delta time in rhythm sequence. Also including combinations of two neighbouring delta times as reference"""
@@ -396,8 +430,8 @@ def analyze(t, rank=1, div_limit=4):
         [barlow_weight, benni_weight, nd_sum_weight, ratio_dev_weight, \
          ratio_dev_abs_max_weight, grid_dev_weight, evidence_weight, autocorr_weight],
         [0, 0, 0, 0, 0, 0, 1, 1])
-    for i in range(len(ratios)):
-        print(ratios[i], '\n', scores[i])
+    #for i in range(len(ratios)):
+    #    print(ratios[i], '\n', scores[i])
 
     # simplify ratios and remove duplicate ratio representations
     ratios_reduced = np.copy(ratios_commondiv)
