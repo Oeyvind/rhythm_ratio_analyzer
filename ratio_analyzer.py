@@ -367,25 +367,35 @@ def tempo_sanitize(tempo, assumption=120, pulse_div=1):
     tempo *= tempo_factor
     return tempo, tempo_factor
 
-def find_pulse(data, mode='coef'):
+def find_pulse(data, mode='coef', oversample=1):
   # reduce 
   data = data/np.gcd.reduce(data)
   pulse_2 = 0
   pulse_3 = 0
-  for i in range(4):
+  for i in range(oversample):
     testdata = data*(2**i)
     t1 = make_trigger_sequence_dur_pattern(testdata)
     a1 = autocorr(t1)
-    p1 = np.argsort(-a1[1:])[:5]+1
+    #p1 = np.argsort(-a1[1:])[:6]+1
+    p1 = np.argsort(-a1[1:])[:int(len(a1)/4)]+1
+    #print(p1)
     for j in range(len(p1)):
       n = p1[j]
-      if mode == 'coef': coef = a1[p1[j]] # correlation coefficient
-      else: coef = 1/(j+1) # gradually decreasing with order
-      if n <= 32:
-        if n%3==0: pulse_3 += coef
-        elif n%2==0: pulse_2 += coef
-  certainty = pulse_2/(pulse_2+pulse_3)
-  if certainty > 0.5: 
+      if a1[p1[j]] > 0:
+        if mode == 'coef': 
+            coef = a1[p1[j]] # correlation coefficient
+            #print(n,coef)
+        else: 
+            coef = 1/(j+1) # gradually decreasing with order
+            #print(n,coef)
+        if n <= 32:
+          if n%3==0: pulse_3 += coef
+          elif n%2==0: pulse_2 += coef
+    #print('pulse 2, 3:', pulse_2, pulse_3)
+  if pulse_2+pulse_3 > 0:
+      certainty = pulse_2/(pulse_2+pulse_3)
+  else: certainty = 0.5
+  if certainty >= 0.5: 
     pulse_div = 2
   else: 
     pulse_div = 3
