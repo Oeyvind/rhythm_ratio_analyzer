@@ -74,14 +74,15 @@ def deviation_scaler(n, num,denom):
     elif nf < ratio_seq_up[1][0]/ratio_seq_up[1][1]:
        dev_range = 1/6
     else:
-       dev_range = 1/4
+       dev_range = 1/2
   if nf < 0.5:
     if nf > ratio_seq_down[0][0]/ratio_seq_down[0][1]:
       dev_range = 1/3
     elif nf > ratio_seq_down[1][0]/ratio_seq_down[1][1]:
        dev_range = 1/6
     else:
-       dev_range = 0.25
+       dev_range = 1/4
+    print('dev_range', dev_range)
   thresh = 0.25
   while nf < thresh:
     ratio_seq_down[:,1] = ratio_seq_down[:,1]*2
@@ -93,6 +94,7 @@ def deviation_scaler(n, num,denom):
     if thresh < (1/64):
         break
   dev = n-(num/denom)
+  print('dev', dev)
   return dev / (dev_range*0.5)
 
 
@@ -430,8 +432,8 @@ def analyze(t, rank=1, div_limit=4):
     duration_patterns = []
     for i in range(len(ratios_copy)):
         duration_patterns.append(make_duration_pattern(ratios_copy[i]))
-    #for i in range(len(ratios)):
-    #    print(ratios[i], '\n', duration_patterns[i])
+    for i in range(len(ratios)):
+        print(ratios[i], '\n', duration_patterns[i])
 
     ratio_deviations, ratio_deviation_abs, ratio_deviation_abs_max, \
         gridsize_deviations, barlow_indigest, benedetti_height, nd_add = ratio_scores(ratios, duration_patterns, timedata)
@@ -500,11 +502,14 @@ if __name__ == '__main__':
     #t = [0.0, 725.387163043022156, 1120.064254999160767, 1472.122761011123657, 2005.306858062744141, 2197.617893099784851, 2933.395150065422058 ]
     # test pattern for no medium delta times
     #t = [0, 3.76, 4, 8] #straight
+    t = [0, 1, 1.58, 2, 2.71, 3] #straight
+    t = [0.1, 1, 1.58, 2, 2.71, 3] #straight
+    t = [0, 0.92, 1.5, 1.92, 2.75, 3.02] #straight
     t = np.array(t,dtype=np.float32)
-    barlow_weight = 0
+    barlow_weight = 0.7
     benni_weight = 0.
-    nd_sum_weight = 0.3
-    ratio_dev_weight = 0.9
+    nd_sum_weight = 0.1
+    ratio_dev_weight = 0.1
     ratio_dev_abs_max_weight = 0
     grid_dev_weight = 0.
     evidence_weight = 0.
