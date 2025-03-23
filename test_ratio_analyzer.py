@@ -59,7 +59,7 @@ def test_ratio_analyzer_on_beats(beats_subdivs, weights):
   print(f'num good {good} out of {num_attempts*len(beats_subdivs)}')
   print(len(beats_subdivs))
 
-
+'''
 beats_subdivs = [[[6,3,3,2,2,2,6],6], 
                  [[2,1,1,2],2],
                  [[3,1,4,4],4],
@@ -103,3 +103,55 @@ print(f't: {t}')
 answer = dur_pat
 ans_duration_pattern, ratios, good_answer = test_ratio_analyzer(t, answer, weights, debug=False)
 print(f'{ans_duration_pattern} \n{ratios} \n{good_answer}')
+'''
+
+# autocorr complexity
+# see if we can indicate that a duration pattern has combinations that does not align with whole beats
+# the purpose is to avoid combinations like 2/3+1/4 or 3/4+1/3
+# as examples 
+# d1: 3/4+1/4,3/4+1/4
+# d2: 2/3+1/4,3/4+1/4
+# d1: 2/3+1/4,2/3+1/3
+# d1: 2/3+1/3,2/3+1/3
+# the _1 examples adds a whole beat 12/12 to all
+  # seems to keep same complexity ordering
+# the _3 examples adds a whole beat and 1/4 to all
+  # d1_3 is then simple, while d4_3 is complex
+# the _4 examples adds a whole beat and 1/3 to all
+  # d1_4 is then complex, while d4_4 is simple
+d1 = np.array([9,3,9,3])
+d2 = np.array([8,3,9,3])
+d3 = np.array([8,3,8,4])
+d4 = np.array([8,4,8,4])
+d1_1 = np.array([12,9,3,9,3])
+d2_1 = np.array([12,8,3,9,3])
+d3_1 = np.array([12,8,3,8,4])
+d4_1 = np.array([12,8,4,8,4])
+d1_3 = np.array([12,3,9,3,9,3])
+d2_3 = np.array([12,3,8,3,9,3])
+d3_3 = np.array([12,3,8,3,8,4])
+d4_3 = np.array([12,3,8,4,8,4])
+d1_4 = np.array([12,4,9,3,9,3])
+d2_4 = np.array([12,4,8,3,9,3])
+d3_4 = np.array([12,4,8,3,8,4])
+d4_4 = np.array([12,4,8,4,8,4])
+print('d1')
+print(ra.autocorr_complexity(d1))
+print(ra.autocorr_complexity(d2))
+print(ra.autocorr_complexity(d3))
+print(ra.autocorr_complexity(d4))
+print('d1_1')
+print(ra.autocorr_complexity(d1_1))
+print(ra.autocorr_complexity(d2_1))
+print(ra.autocorr_complexity(d3_1))
+print(ra.autocorr_complexity(d4_1))
+print('d1_3')
+print(ra.autocorr_complexity(d1_3))
+print(ra.autocorr_complexity(d2_3))
+print(ra.autocorr_complexity(d3_3))
+print(ra.autocorr_complexity(d4_3))
+print('d1_4')
+print(ra.autocorr_complexity(d1_4))
+print(ra.autocorr_complexity(d2_4))
+print(ra.autocorr_complexity(d3_4))
+print(ra.autocorr_complexity(d4_4))

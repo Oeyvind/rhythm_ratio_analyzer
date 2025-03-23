@@ -392,6 +392,22 @@ def find_pulse(data, mode='coef'):
     certainty = 1-certainty 
   return pulse_div, certainty
 
+def autocorr_complexity(data):
+    # sort the correlation coefficients, take only the best 1/4 of them, 
+    # look at the digestability for the correlation indices
+    data = data/np.gcd.reduce(data) # reduce to lowest terms
+    sum_barlow = 0
+    for i in range(len(data)):
+        t1 = make_trigger_sequence_dur_pattern(data)
+        a1 = autocorr(t1)
+        p1 = np.argsort(-a1[1:])[:int(len(a1)/4)]+1
+        for j in range(len(p1)):
+            n = p1[j]
+            sum_barlow += indigestability_n(n) # correlation position
+        data = np.roll(data,1)
+    return sum_barlow
+
+
 
 def analyze(t, rank=1, div_limit=4):
     """Do the full ratio analysis"""
