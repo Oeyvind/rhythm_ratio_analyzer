@@ -5,7 +5,60 @@ import numpy as np
 np.set_printoptions(suppress=True)
 np.set_printoptions(precision=2)
 
+def get_indispensabilities(normalize='max'):
+  # Barlow's indispensability for subdivided meters
+  # Naming convention here is base_subdiv, so 3_4 is 3-meter divided in 4 subdivisions
+  indispensabilities = {
+    'indisp_3_4': [11,0,6,3, 9,1,7,4, 10,2,8,5],
+    'indisp_3_2': [5, 0,   3,  1,   4,   2],
+    'indisp_3': [2,      0,       1],
+    'indisp_6_2': [11,0, 6,2, 8,4, 10,1, 7,3, 9,5],
+    'indisp_6': [5,  0,   2,   4,    1,   3],
+    'indisp_12_3': [11,0,4, 8,2,6, 10,1,5, 9,3,7],
+    'indisp_9_3': [8,0,3, 6,1,4,  7,2,5],
+    'indisp_4_4': [15,0,8,4, 12,2,10,6, 14,1,9,5, 13,3,11,7],
+    'indisp_4_2': [7, 0,   4,    2,    6,  1,    5,  3],
+    'indisp_4': [3,      0,          2,        1]
+    }
+  # normalize the indispensabilities first
+  # normalize to sum or to max??
+  #max
+  if normalize == 'max':
+    for k in indispensabilities.keys():
+       indispensabilities[k] /= np.max(indispensabilities[k])
+  else:
+    for k in indispensabilities.keys():
+       indispensabilities[k] /= np.sum(indispensabilities[k])
+  return indispensabilities
 
+  # 1) multiply autocorr with indispensabilities, sum (np.correlate)
+  # or 2) convolve trigger sequence with indispensability patterns
+  # output ranked list of possible meters
+def convolve_tseq_indispensabilities(trigger_sequence):
+   #test
+   trigger_sequence = np.array([1,0,1,0])
+   indisp3 = np.array([1, 0, 0.5])
+   indisp4 = np.array([1, 0, 0.67, 0.33])
+
+def make_trigger_sequence_dur_pattern(dur_pattern):
+    # make the trigger sequence 
+    # 1=transient, 0 = space
+    # e.g. for rhythm 6/6, 3/6, 3/6, 2/6, 2/6, 2/6, the sequence will be
+    # [1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0]
+    trigger_seq = []
+    for num in dur_pattern.astype(int):
+        trigger_seq.append(1)
+        for i in range(num-1):
+            trigger_seq.append(0)
+    return trigger_seq
+
+def autocorr(data):
+    """Autocorrelation (non normalized)"""
+    mean = np.mean(data)
+    data = data-mean
+    return np.correlate(data, data, 'full')[len(data)-1:]
+
+'''
 def deviation_scaler(n, num,denom):
   ratio_seq_up = np.array([[2,3],[3,4]])
   ratio_seq_down = np.array([[1,3],[1,4]])
@@ -33,10 +86,10 @@ def deviation_scaler(n, num,denom):
        dev_range = 1/6*thresh
     thresh /= 2
   dev = n-(num/denom)
-  print(dev, dev_range)
   return dev / (dev_range*0.5)
-   
+'''
 
+'''
 def autocorr(data, offset):
     """Autocorrelation (non normalized), options to offset"""
     if offset == 'm':
@@ -57,7 +110,9 @@ def autocorr(data, offset):
     second_best = sorted[-2]+1
     print(f'max corr at {best} and {second_best}')
     return acorr
+'''
 
+'''
 def make_trigger_sequence(ratios):
     # make the trigger sequence 
     # 1=transient, 0 = space
@@ -69,8 +124,8 @@ def make_trigger_sequence(ratios):
         for i in range(num-1):
             trigger_seq.append(0)
     return np.array(trigger_seq)
-
-
+'''
+'''
 def indigestability2(n,e):
     "Barlow's indigestability measure"
     d = prime_factorization(n)
@@ -79,7 +134,7 @@ def indigestability2(n,e):
         b += (d[p]*((p-1)**e)/p)
     return b*2
 
-
+'''
 '''def rational_approx(n):
     # faster rational approx
     fact = np.array([3,4])

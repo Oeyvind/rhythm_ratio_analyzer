@@ -104,7 +104,14 @@ answer = dur_pat
 ans_duration_pattern, ratios, good_answer = test_ratio_analyzer(t, answer, weights, debug=False)
 print(f'{ans_duration_pattern} \n{ratios} \n{good_answer}')
 '''
+t = np.array([0, 0.68, 0.84, 1.31, 1.63, 1.97, 2.46, 2.66, 3.34])
+print(f't: {t}')
+weights = [0.5, 0.7, 0.6, 1.0, 0.2, 0.2, 0.3, 0.3]
+answer = [4,1,3,2,2,3,1,4]
+ans_duration_pattern, ratios, good_answer = test_ratio_analyzer(t, answer, weights, debug=False)
+print(f'{ans_duration_pattern} \n{ratios} \n{good_answer}')
 
+'''
 # autocorr complexity
 # see if we can indicate that a duration pattern has combinations that does not align with whole beats
 # the purpose is to avoid combinations like 2/3+1/4 or 3/4+1/3
@@ -155,3 +162,4 @@ print(ra.autocorr_complexity(d1_4))
 print(ra.autocorr_complexity(d2_4))
 print(ra.autocorr_complexity(d3_4))
 print(ra.autocorr_complexity(d4_4))
+'''

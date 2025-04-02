@@ -56,47 +56,39 @@ def rational_approx(n, div_limit=4):
       dev = np.abs(np.round(res)-res)*(1/fact)# also adjust deviation according to the factor in question
       num = round(res[np.argmin(dev)])
       denom = fact[np.argmin(dev)]
-    deviation = deviation_scaler(n, num, denom)
     gcd = np.gcd(num, denom)
     num /= gcd
     denom /= gcd
+    deviation = deviation_scaler(n, num, denom)
     return int(num), int(denom), deviation
 
-
 def deviation_scaler(n, num,denom):
-  # scale the deviation from the rational approx according to available deviation range between ratios
-  ratio_seq_up = np.array([[2,3],[3,4]])
-  ratio_seq_down = np.array([[1,3],[1,4]])
-  nf, ni = np.modf(n)
-  if nf >= 0.5:
-    if nf < ratio_seq_up[0][0]/ratio_seq_up[0][1]:
-      dev_range = 1/3
-    elif nf < ratio_seq_up[1][0]/ratio_seq_up[1][1]:
-       dev_range = 1/6
-    else:
-       dev_range = 1/2
-  if nf < 0.5:
-    if nf > ratio_seq_down[0][0]/ratio_seq_down[0][1]:
-      dev_range = 1/3
-    elif nf > ratio_seq_down[1][0]/ratio_seq_down[1][1]:
-       dev_range = 1/6
-    else:
-       dev_range = 1/4
-    print('dev_range', dev_range)
-  thresh = 0.25
-  while nf < thresh:
-    ratio_seq_down[:,1] = ratio_seq_down[:,1]*2
-    if nf > ratio_seq_down[0][0]/ratio_seq_down[0][1]:
-      dev_range = 1/3*(thresh*2)
-    elif nf > ratio_seq_down[1][0]/ratio_seq_down[1][1]:
-       dev_range = 1/6*(thresh*2)
-    thresh /= 2
-    if thresh < (1/64):
-        break
-  dev = n-(num/denom)
-  print('dev', dev)
-  return dev / (dev_range*0.5)
-
+    # scale the deviation from the rational approx according to available deviation range between ratios
+    nf, ni = np.modf(n)
+    print('ni, nf', ni, nf, 'denom', denom)
+    if denom == 1: dev_range = [1/4, 1/4]
+    if denom == 2: dev_range = [1/6, 1/6]
+    if nf >= 0.5:
+        if denom == 3: dev_range = [1/6, 1/12]
+        if denom == 4: dev_range = [1/12, 1/4]
+    if nf < 0.5:
+        if denom == 3: dev_range = [1/12, 1/6]
+        if ni == 0:
+            if denom == 4: dev_range = [1/12, 1/12]
+        else:
+            if denom == 4: dev_range = [1/4, 1/12]
+        if denom == 6: dev_range = [1/24, 1/12]
+        if denom == 8: dev_range = [1/24, 1/24]
+        if denom == 12: dev_range = [1/48, 1/24]
+        if denom == 16: dev_range = [1/48, 1/48]
+        if denom == 24: dev_range = [1/96, 1/48]
+        if denom > 24: dev_range = [1/96, 1/96]
+    dev = (n-(num/denom)) 
+    if dev < 0:
+        dev /= dev_range[0]
+    else: 
+        dev /= dev_range[1]
+    return dev 
 
 def ratio_to_each(timeseries, mode='connect', div_limit=4):
     """Ratio of delta times to each other delta time in rhythm sequence. Also including combinations of two neighbouring delta times as reference"""
@@ -404,6 +396,46 @@ def find_pulse(data, mode='coef', oversample=1):
     certainty = 1-certainty 
   return pulse_div, certainty
 
+def find_pulse2(data, mode='coef', oversample=1, rotate=True):
+  # reduce 
+  data = data/np.gcd.reduce(data)
+  pulse_2 = 0
+  pulse_3 = 0
+  if rotate: rotations = len(data)
+  else: rotations = 1 
+  for k in range(rotations):
+    for i in range(oversample):
+      testdata = data*(2**i)
+      t1 = make_trigger_sequence_dur_pattern(testdata)
+      a1 = autocorr(t1)
+      print(a1)
+      p1 = np.argsort(-a1[1:])[:6]+1
+      #p1 = np.argsort(-a1[1:])[:int(len(a1)/4)]+1
+      print('p1', p1)
+      for j in range(len(p1)):
+        n = p1[j]
+        if mode == 'coef': 
+          if a1[p1[j]] > 0:
+            coef = a1[p1[j]] # correlation coefficient
+            #print(n,coef)
+        else: 
+          coef = 1/(j+1) # gradually decreasing with order
+        if n <= 32:
+          if n%3==0: pulse_3 += coef
+          elif n%2==0: pulse_2 += coef
+      print('k, data', k, data)
+      print('pulse 2, 3:', pulse_2, pulse_3)
+      data = np.roll(data,1)
+  if pulse_2+pulse_3 > 0:
+      certainty = pulse_2/(pulse_2+pulse_3)
+  else: certainty = 0.5
+  if certainty >= 0.5: 
+    pulse_div = 2
+  else: 
+    pulse_div = 3
+    certainty = 1-certainty 
+  return pulse_div, certainty
+
 def autocorr_complexity(data):
     # sort the correlation coefficients, take only the best 1/4 of them, 
     # look at the digestability for the correlation indices
@@ -504,12 +536,12 @@ if __name__ == '__main__':
     #t = [0, 3.76, 4, 8] #straight
     t = [0, 1, 1.58, 2, 2.71, 3] #straight
     t = [0.1, 1, 1.58, 2, 2.71, 3] #straight
-    t = [0, 0.92, 1.5, 1.92, 2.75, 3.02] #straight
+    t = [0, 0.92, 1.5, 1.92, 2.75, 3.04] #straight
     t = np.array(t,dtype=np.float32)
     barlow_weight = 0.7
     benni_weight = 0.
-    nd_sum_weight = 0.1
-    ratio_dev_weight = 0.1
+    nd_sum_weight = 0.4
+    ratio_dev_weight = 0.0
     ratio_dev_abs_max_weight = 0
     grid_dev_weight = 0.
     evidence_weight = 0.
