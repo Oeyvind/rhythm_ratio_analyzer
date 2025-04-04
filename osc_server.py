@@ -92,7 +92,8 @@ class Osc_server():
         self.last_analyzed_phrase = self.pending_analysis # keep it so we can delete it if clear_last_phrase is called
         start, end = self.pending_analysis[0], self.pending_analysis[-1]
         timedata = self.dc.corpus[start:end+1,self.dc.pnum_corpus['timestamp']]
-        print('timedata:', timedata-timedata[0], 'len:', len(self.pending_analysis))
+        with np.printoptions(precision=5):
+            print('timedata:', timedata-timedata[0], 'len:', len(self.pending_analysis))
         self.phrase_number += 1
         ratios_reduced, ranked_unique_representations, rankscores, trigseq, ticktempo_bpm, tempo_tendency, pulseposition = self.ra.analyze(timedata)
         for i in range(len(trigseq)):
@@ -100,7 +101,7 @@ class Osc_server():
         
         # store the rhythm fractions as float for each event in the corpus
         best = ranked_unique_representations[0]
-        print(f'ratios best: \n{ratios_reduced[best,range(len(self.pending_analysis)-1),0]/ratios_reduced[best,range(len(self.pending_analysis)-1),1]}')
+        print(f'ratios best({best}): \n{ratios_reduced[best,range(len(self.pending_analysis)-1),0]/ratios_reduced[best,range(len(self.pending_analysis)-1),1]}')
         #ratio_sequence = np.array(ratios_reduced[best])
         #dur_pattern = self.ra.make_duration_pattern(ratio_sequence).astype('int')
         #pulse_div, certainty = self.ra.find_pulse(dur_pattern, mode='coef')
@@ -118,6 +119,8 @@ class Osc_server():
         tempo_factor = bpm_sanitized/bpm_from_ratio
         print('sanitized bpm:', bpm_sanitized)
         print(f'sanitized ratios best: \n{(ratios_reduced[best,range(len(self.pending_analysis)-1),0]/ratios_reduced[best,range(len(self.pending_analysis)-1),1])*tempo_factor}')
+        ratio_sequence = np.array(ratios_reduced[best])
+        print(f'dur pattern {self.ra.make_duration_pattern(ratio_sequence).astype("int")}')
         returnmsg = [bpm_sanitized, tempo_tendency, float(pulseposition), float(len(self.pending_analysis))]
         osc_io.sendOSC("python_other", returnmsg) # send OSC back to client
         

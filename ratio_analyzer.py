@@ -65,7 +65,6 @@ def rational_approx(n, div_limit=4):
 def deviation_scaler(n, num,denom):
     # scale the deviation from the rational approx according to available deviation range between ratios
     nf, ni = np.modf(n)
-    print('ni, nf', ni, nf, 'denom', denom)
     if denom == 1: dev_range = [1/4, 1/4]
     if denom == 2: dev_range = [1/6, 1/6]
     if nf >= 0.5:
@@ -464,13 +463,16 @@ def analyze(t, rank=1, div_limit=4):
     duration_patterns = []
     for i in range(len(ratios_copy)):
         duration_patterns.append(make_duration_pattern(ratios_copy[i]))
-    for i in range(len(ratios)):
-        print(ratios[i], '\n', duration_patterns[i])
+    #for i in range(len(ratios)):
+    #    print(ratios[i], '\n', duration_patterns[i])
 
     ratio_deviations, ratio_deviation_abs, ratio_deviation_abs_max, \
         gridsize_deviations, barlow_indigest, benedetti_height, nd_add = ratio_scores(ratios, duration_patterns, timedata)
-    #for i in range(len(ratios)):
-    #    print(ratios[i], '\n', ratio_deviation_abs[i])
+    for i in range(len(ratios)):
+        print(f'i={i} \n{ratios[i]} \n{duration_patterns[i]} \
+              \ndev {ratio_deviations[i]:.3f}, {ratio_deviation_abs[i]:.3f}, {ratio_deviation_abs_max[i]:.3f}, \
+              \ngrid {gridsize_deviations[i]:.3f} \
+              \nheight {barlow_indigest[i]}, {benedetti_height[i]}, {nd_add[i]}')
 
     ratios_commondiv = make_commondiv_ratios(ratios)
     ratios_commondiv_copy = np.copy(ratios_commondiv)
