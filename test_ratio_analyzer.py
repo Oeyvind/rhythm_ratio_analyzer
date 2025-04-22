@@ -6,111 +6,150 @@
 
 import numpy as np
 np.set_printoptions(suppress=True)
-np.set_printoptions(precision=2)
+np.set_printoptions(precision=3)
 import ratio_analyzer as ra
-from fractions import Fraction
-from itertools import product
 # profiling tests
 import cProfile
-import random
 
 
-def make_time_from_beats(beats,subdiv, maxdev):
-  timestamp = [0]
-  t = 0
-  for b in beats:
-    delta = (b/subdiv)
-    dev = (1/subdiv)*(random.random()-0.5)*maxdev
-    #print('b/sub',b, subdiv, dev)
-    t += delta
-    timestamp.append(t+dev)
-  return np.array(timestamp)
-
-
-def test_ratio_analyzer(t, answer, weights, debug=False):
-    ra.set_weights(weights)
-    rank = 1
-    ratios_reduced, ranked_unique_representations, rankscores, trigseq, ticktempo_bpm, tempo_tendency, pulseposition = ra.analyze(t, rank)
-    # check if we found the right answer
-    best = ranked_unique_representations[0]
-    ratio_sequence = np.array(ratios_reduced[best])
-    duration_pattern = ra.make_duration_pattern(ratio_sequence).astype('int')
-    #print(f'answer: {answer} \nbest  : {duration_pattern.tolist()} \nbest_ID: {best}')
-    good_answer = np.array_equal(answer,duration_pattern)
-    #print('good:', good_answer)
-    if (not good_answer) or debug:
-      #print(ranked_unique_representations)
-      #print(rankscores)
-      for i in range(len(ranked_unique_representations)):
-        print(f'ratio {i} \n{ratios_reduced[ranked_unique_representations[i]]} \nscore {i} \n{rankscores[i]}')
-    return duration_pattern, np.array(ratios_reduced[best]), good_answer
-
-def test_ratio_analyzer_on_beats(beats_subdivs, weights):
-  good = 0
-  num_attempts = 5
-  for beats,subdiv in beats_subdivs:
-    for i in range(num_attempts):
-      maxdev = 0.2
-      t = make_time_from_beats(beats, subdiv, maxdev)
-      print(t)
-      duration_pattern, suggestion, good_answer = test_ratio_analyzer(t, beats, weights)
-      if good_answer:
-        good += 1
-  print(f'num good {good} out of {num_attempts*len(beats_subdivs)}')
-  print(len(beats_subdivs))
 
 '''
-beats_subdivs = [[[6,3,3,2,2,2,6],6], 
-                 [[2,1,1,2],2],
-                 [[3,1,4,4],4],
-                 [[4,1,1,1,1,3,3,2,1],4], #!
-                 [[3,3,2,3,3,2,4],4], #!
-                 [[2,1,1,1,1,1,1,2,1,1,1,1,1,1,1],4], # !!
-                 [[7,1,8,8],1],
-                 [[7,1,1,7,3,2,3,8],1],
-                 [[4,1,1,1,1,4,1,1,1,1,1],4], #!
-                 [[3,1,1,1,3,1,1,1,1],3],
-                 [[3,1,2,3,2,1,1],3], #!
-                 [[3,1,1,2,1,1,2,1,1],3],
-                 [[3,1,1,2,1,1,2,1,3],3],
-                 [[3,1,1,1,2,1,3],3],
-                 [[4,2,1,1,4],4], #!
-                 [[4,2,1,1,4],4],
-                 [[3,5,5,3],4],
-                 [[3,5,3,3,2],4], 
-                 [[2,1,2,1,3],3], 
-                 [[3,3,4,2,2],4]]
-
-weights = [0.2, 0.0, 0., 0., 0.0, 0.0, 0.0, 0.0]
-# weights for the scoring of ratio alternatives, in this order:
-#barlow_weight
-#benni_weight
-#nd_sum_weight
-#ratio_dev_weight
-#ratio_dev_abs_max_weight
-#grid_dev_weight
-#evidence_weight
-#autocorr_weight
-
-dur_pat = [2,2,1,1]
-dev = 0.25
-#t = make_time_from_beats(dur_pat, 4, dev)
-#t = np.array([0, 0.51, 1.03, 1.26, 1.47])
-dur_pat = [2,2,2,1]
-t = np.array([0, 1.109, 1.9, 3.0, 3.5])
-
-print(f't: {t}')
-answer = dur_pat
-ans_duration_pattern, ratios, good_answer = test_ratio_analyzer(t, answer, weights, debug=False)
-print(f'{ans_duration_pattern} \n{ratios} \n{good_answer}')
+# 14.April:
+# ratios
+# dur pattern
+# stretch dur pattern
+# purge duplicates
+# compare deviation from all dur pattern suggestions
+#t = np.array([0, 0.75, 1.06, 2.03])
+t = np.array([0, 0.75, 1.03, 1.7, 2.03])
+t = np.array([0, 0.7, 1.0, 1.75, 2.03])
+ratios = ra.ratio_to_each(t)
+duration_patterns = []
+print('from ratio')
+for i in range(len(ratios)):
+    dur_pat = ra.make_duration_pattern(ratios[i])
+    print(dur_pat, np.sum(np.abs(ratios[i,:,2])))
+    duration_patterns.append(dur_pat)
+#print(duration_patterns)
+simplified_patterns = []
+for i in range(len(duration_patterns)):
+    d1,d2 = simplify_dur_pattern(duration_patterns[i])
+    simplified_patterns.append(d1)
+    simplified_patterns.append(d2)
+#print(simplified_patterns)
+duration_patterns.extend(simplified_patterns)
+for i in range(len(duration_patterns)):
+    duration_patterns[i] = duration_patterns[i].astype('int').tolist()
+duration_patterns_no_dup = []
+for d in duration_patterns:
+    if d not in duration_patterns_no_dup: duration_patterns_no_dup.append(d)
+#print(duration_patterns_no_dup)
+deviations = []
+dev_sum = []
+#indigestabilities = [] # must find other measure of simplicity!
+print('t', t)
+for i in range(len(duration_patterns_no_dup)):
+    t_q = fit_dur_pattern_to_time(t,duration_patterns_no_dup[i])
+    deviations.append(t_q-t)
+    dev_sum.append(np.sum(np.abs(t_q-t)))
+    #indig = 0
+    #for dur in duration_patterns_no_dup[i]:
+    #    indig += ra.indigestability_n(dur)
+    #indigestabilities.append(indig)
+print('from dur pattern')
+for i in range(len(duration_patterns_no_dup)):
+    #print(duration_patterns_no_dup[i], dev_sum[i], indigestabilities[i])
+    print(duration_patterns_no_dup[i], dev_sum[i])
+print(np.argsort(dev_sum))
 '''
-t = np.array([0, 0.68, 0.84, 1.31, 1.63, 1.97, 2.46, 2.66, 3.34])
-print(f't: {t}')
-weights = [0.5, 0.7, 0.6, 1.0, 0.2, 0.2, 0.3, 0.3]
-answer = [4,1,3,2,2,3,1,4]
-ans_duration_pattern, ratios, good_answer = test_ratio_analyzer(t, answer, weights, debug=False)
-print(f'{ans_duration_pattern} \n{ratios} \n{good_answer}')
+'''
+def indispensability_3_4(dur_pattern):
+    trigger_seq = ra.make_trigger_sequence_dur_pattern(dur_pattern)
+    indispensability_3 = np.array([0,2,1])
+    indispensability_3 = indispensability_3/np.max(indispensability_3)
+    indispensability_3 = np.tile(indispensability_3, int(np.ceil(len(trigger_seq)/len(indispensability_3))))
+    indispensability_4 = np.array([0,3,1,2])
+    indispensability_4 = indispensability_4/np.max(indispensability_4)
+    indispensability_4 = np.tile(indispensability_4, int(np.ceil(len(trigger_seq)/len(indispensability_4))))
+    indisp_3 = np.sum(trigger_seq*indispensability_3[:len(trigger_seq)])
+    indisp_4 = np.sum(trigger_seq*indispensability_4[:len(trigger_seq)])
+    # normalize sum to 1
+    scale = indisp_3+indisp_4
+    if indisp_3 < indisp_4: 
+        pulse_div = 3
+        certainty = 1-(indisp_3/scale)
+    else:
+        pulse_div = 4
+        certainty = 1-(indisp_4/scale)
+    return pulse_div, certainty
 
+def indispensability_3_4_rotate(dur_pattern):
+    trigger_seq = ra.make_trigger_sequence_dur_pattern(dur_pattern)
+    # calc indisp, rotate all positions
+    # large difference between min and max insdisp between rotations: good
+    # compare best_4 and best_3 to determine 3 or 4
+    indispensability_3 = np.array([0,2,1])
+    indispensability_3 = indispensability_3/np.max(indispensability_3)
+    indispensability_3 = np.tile(indispensability_3, int(np.ceil(len(trigger_seq)/len(indispensability_3))))
+    indispensability_4 = np.array([0,3,1,2])
+    indispensability_4 = indispensability_4/np.max(indispensability_4)
+    indispensability_4 = np.tile(indispensability_4, int(np.ceil(len(trigger_seq)/len(indispensability_4))))
+    indisp_3 = np.sum(trigger_seq*indispensability_3[:len(trigger_seq)])
+    indisp_4 = np.sum(trigger_seq*indispensability_4[:len(trigger_seq)])
+    # normalize sum to 1
+    scale = indisp_3+indisp_4
+    if indisp_3 < indisp_4: 
+        pulse_div = 3
+        certainty = 1-(indisp_3/scale)
+    else:
+        pulse_div = 4
+        certainty = 1-(indisp_4/scale)
+    return pulse_div, certainty
+
+def tesselation(dur_pattern):
+    # check all subsequences, 
+    # test if subsequence sum is divisible by 3 or 4
+    l = len(dur_pattern)
+    tess_3 = 0
+    tess_4 = 0
+    subsize = 2
+    while subsize <= l:
+        for i in range(l-subsize+1):
+            sub = dur_pattern[i:i+subsize]
+            if np.sum(sub)%3 == 0:
+                tess_3 += 1
+            if np.sum(sub)%4 == 0:
+                tess_4 += 1
+        subsize += 1
+    scale = tess_3+tess_4
+    if tess_3 > tess_4: 
+        pulse_div = 3
+        certainty = tess_3/scale
+    else:
+        pulse_div = 4
+        certainty = tess_4/scale
+    return pulse_div, certainty
+
+d_examples = [np.array([4,4,2,2,8,4]),
+              np.array([2,1,2,1]),
+              np.array([3,1,3,1]),
+              np.array([2,2,1,1,4,4]),
+              np.array([3,3,4,3,3]),
+              np.array([3,3,4,3,3,3,3,4,3,3]),
+              np.array([3,3,4,2,4]),
+              np.array([3,3,4,2,4,3,3,4,2,4])]
+for d in d_examples:
+    print(d)
+    tess_pulse_div, tess_c = tesselation(d)
+    print(f'tess: {int(tess_pulse_div)}, {tess_c:.2f}')
+    indisp_pulse_div, indisp_c = indispensability_3_4(d)
+    print(f'indisp: {int(indisp_pulse_div)}, {indisp_c:.2f}')
+    pulse_div,certainty = ra.find_pulse(d)
+    print(f'findpulse: {int(pulse_div)}, {certainty:.2f}')
+    pulse_div,certainty = ra.find_pulse2(d)
+    print(f'findpulse2: {int(pulse_div)}, {certainty:.2f}')
+'''    
+    
 '''
 # autocorr complexity
 # see if we can indicate that a duration pattern has combinations that does not align with whole beats
@@ -163,3 +202,27 @@ print(ra.autocorr_complexity(d2_4))
 print(ra.autocorr_complexity(d3_4))
 print(ra.autocorr_complexity(d4_4))
 '''
+
+def tesselation(dur_pattern):
+    # check all subsequences, 
+    # test if subsequence sum is divisible by 3 or 4
+    l = len(dur_pattern)
+    tess_3 = 0
+    tess_4 = 0
+    subsize = 2
+    while subsize <= l:
+        for i in range(l-subsize+1):
+            sub = dur_pattern[i:i+subsize]
+            if np.sum(sub)%3 == 0:
+                tess_3 += 1
+            if np.sum(sub)%4 == 0:
+                tess_4 += 1
+        subsize += 1
+    scale = tess_3+tess_4
+    if tess_3 > tess_4: 
+        pulse_div = 3
+        certainty = tess_3/scale
+    else:
+        pulse_div = 4
+        certainty = tess_4/scale
+    return pulse_div, certainty

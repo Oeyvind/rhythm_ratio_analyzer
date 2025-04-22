@@ -8,20 +8,12 @@ import numpy as np
 np.set_printoptions(suppress=True)
 np.set_printoptions(precision=2)
 import math
-#import time # for profiling
-#import logging 
-#logging.basicConfig(level=logging.DEBUG)
+import random
 
-weights = [0.5, 0.7, 0.6, 1.0, 0.2, 0.2, 0.3, 0.3]
+weights = [0.5, 0.5]
 # weights for the scoring of ratio alternatives, in this order:
-#barlow_weight
-#benni_weight
-#nd_sum_weight
-#ratio_dev_weight
-#ratio_dev_abs_max_weight
-#grid_dev_weight
-#evidence_weight
-#autocorr_weight
+# dur_pattern height (complexity)
+# deviation
 
 def set_weights(w):
     global weights
@@ -59,35 +51,8 @@ def rational_approx(n, div_limit=4):
     gcd = np.gcd(num, denom)
     num /= gcd
     denom /= gcd
-    deviation = deviation_scaler(n, num, denom)
+    deviation = (n-(num/denom)) 
     return int(num), int(denom), deviation
-
-def deviation_scaler(n, num,denom):
-    # scale the deviation from the rational approx according to available deviation range between ratios
-    nf, ni = np.modf(n)
-    if denom == 1: dev_range = [1/4, 1/4]
-    if denom == 2: dev_range = [1/6, 1/6]
-    if nf >= 0.5:
-        if denom == 3: dev_range = [1/6, 1/12]
-        if denom == 4: dev_range = [1/12, 1/4]
-    if nf < 0.5:
-        if denom == 3: dev_range = [1/12, 1/6]
-        if ni == 0:
-            if denom == 4: dev_range = [1/12, 1/12]
-        else:
-            if denom == 4: dev_range = [1/4, 1/12]
-        if denom == 6: dev_range = [1/24, 1/12]
-        if denom == 8: dev_range = [1/24, 1/24]
-        if denom == 12: dev_range = [1/48, 1/24]
-        if denom == 16: dev_range = [1/48, 1/48]
-        if denom == 24: dev_range = [1/96, 1/48]
-        if denom > 24: dev_range = [1/96, 1/96]
-    dev = (n-(num/denom)) 
-    if dev < 0:
-        dev /= dev_range[0]
-    else: 
-        dev /= dev_range[1]
-    return dev 
 
 def ratio_to_each(timeseries, mode='connect', div_limit=4):
     """Ratio of delta times to each other delta time in rhythm sequence. Also including combinations of two neighbouring delta times as reference"""
@@ -101,7 +66,7 @@ def ratio_to_each(timeseries, mode='connect', div_limit=4):
         ref_deltas.append(delta)
         deltas.append(delta)
         if (mode == 'connect') and (i < (t_series_len-1)):
-            ref_deltas.append(timeseries[i+2]-timeseries[i]) # then also include delta for next neighbour evet
+            ref_deltas.append(timeseries[i+2]-timeseries[i]) # then also include delta for next neighbour event
     ref_deltas_len = len(ref_deltas)
     ratios = np.zeros((ref_deltas_len, t_series_len, 5))
     for i in range(ref_deltas_len):
@@ -111,97 +76,6 @@ def ratio_to_each(timeseries, mode='connect', div_limit=4):
             ratio = delta/ref_delta
             numerator, denom, deviation = rational_approx(ratio, div_limit)
             ratios[i,j] = [numerator, denom, deviation, delta, ref_delta]
-    return ratios
-
-def recalculate_deviation(ratios):
-    ratios[:,:,2] = (ratios[:,:,3]/ratios[:,:,4])-(ratios[:,:,0]/ratios[:,:,1]) 
-    return ratios
-
-def ratio_scores(ratios, duration_patterns, timeseries):
-    "calculate scores for each set of ratios"
-    ratio_deviations = []
-    ratio_deviation_abs = []
-    ratio_deviation_abs_max = []
-    indigestabilities = []
-    benedetti_height = []
-    nd_add = []
-    gridsize_deviations = [] #list of deviations from grid created on each delta value as rational approximation
-    for i in range(len(ratios)):
-        ratio_deviations.append(np.sum(ratios[i,:,2]))
-        ratio_deviation_abs.append(np.sum(np.absolute(ratios[i,:,2])))
-        ratio_deviation_abs_max.append(np.max(np.absolute(ratios[i,:,2])))
-        grid_subdivs = np.unique(ratios[i,:,1]).astype(int) #list of all denoms in this set
-        gridsize_deviation = test_gridsize_deviation(timeseries, ratios[i,0,4]/math.lcm(*grid_subdivs)) # TEST gridsize on least common multiple of the set
-        gridsize_deviations.append(gridsize_deviation)
-        benedetti_height.append(np.add.reduce(np.multiply(ratios[i,:,0], ratios[i,:,1]))) # sum of Benedetti heights across all ratios in each set
-        nd_add.append(np.add.reduce(np.add(ratios[i,:,0], ratios[i,:,1]))) # sum of sums of numerators and denominators in each set
-        indig = 0
-        for dur in duration_patterns[i]:
-            indig += indigestability_n(dur)
-        indigestabilities.append(indig)
-    return ratio_deviations, ratio_deviation_abs, ratio_deviation_abs_max, gridsize_deviations, indigestabilities, benedetti_height, nd_add 
-
-def prime_factorization(n):
-    "prime factorization of `n` as a dictionary with p:multiplicity for each p."
-    # nudged from https://scientific-python-101.readthedocs.io/python/exercises/prime_factorization.html
-    prime_factors = {}
-    i = 2
-    while i**2 <= n:
-        if n % i:
-            i += 1
-        else:
-            n /= i
-            try:
-                prime_factors[i] += 1
-            except KeyError:
-                prime_factors[i] = 1
-    if n > 1:
-        try:
-            prime_factors[n] += 1
-        except KeyError:
-            prime_factors[n] = 1
-    return prime_factors
-
-def indigestability_n(n):
-    "Barlow's indigestability measure"
-    d = prime_factorization(n)
-    b = 0
-    for p in d.keys():
-        b += (d[p]*((p-1)**2)/p)
-    return b*2
-
-def suavitatis(n):
-    "Euler's gradus suavitatis"
-    d = prime_factorization(n)
-    s = 0
-    for p in d.keys():
-        s += d[p]*(p-1)
-    return s
-
-def test_gridsize_deviation(timeseries, gridsize, offset=-1):
-    """Test how well a ratio assumtion can be used as basis for a grid (for the whole time sequence)"""
-    # for each item in rhythmlist, test how far it is from an integer multiple of the given ratio (gridsize)
-    deviations = []
-    if offset < 0:
-        timeseries -= np.min(timeseries) # let it start from zero
-    else:
-        timeseries = np.subtract(timeseries,offset)# offset to the event in question
-    for t in timeseries:
-        deviation = abs(t)%gridsize
-        if deviation > gridsize/2:
-            deviation = gridsize-deviation
-        deviations.append(deviation/gridsize) # using linear deviations but we could also square them
-    return sum(deviations)
-
-def make_commondiv_ratios(ratios, commondiv='auto'):
-    """Set all ratio suggestions to a common denominator, in the case of rhythm analysis usually 12 is the denominator"""
-    d = ratios[:,:,1].astype(int)
-    if commondiv == 'auto':
-        d_ = np.unique(d)
-        commondiv = math.lcm(*d_)
-    f = commondiv/d[:,:]
-    ratios[:,:,0] *= f
-    ratios[:,:,1] *= f
     return ratios
 
 def make_commondiv_ratios_single(ratio_sequence, commondiv='auto'):
@@ -221,58 +95,34 @@ def make_duration_pattern(ratio_sequence):
     n = ratio_sequence[:,0]
     return n
 
-def simplify_ratios(ratios):
-    """Reduce ratios to lowest terms"""
-    n = ratios[:,:,0].astype(int)
-    d = ratios[:,:,1].astype(int)
-    for i in range(len(n)):
-        for j in range(len(n[0])):
-            gcd = np.gcd(n[i,j],d[i,j])
-            n[i,j] /= gcd
-            d[i,j] /= gcd
-    ratios[:,:,0] = n
-    ratios[:,:,1] = d
-    return ratios
+def fit_dur_pattern_to_time(t,dur_pattern):
+    # Fit a dur pattern to the available time span from the first to the last event in a time sequence
+    time_span = t[-1] - t[0]
+    num_steps = np.sum(dur_pattern)
+    step_size = time_span/num_steps
+    t_quantized = [t[0]]
+    for i in range(1, len(dur_pattern)+1):
+        t_quantized.append(t_quantized[i-1]+(dur_pattern[i-1]*step_size))
+    return np.array(t_quantized)
 
-def get_ranked_unique_representations(duplicates, scores):
-    ranked_unique_representations = []
-    already_included = []
-    rankscores = []
-    for i in np.argsort(scores):
-        if i not in already_included:
-            for d in range(len(duplicates)):
-                if (i in duplicates[d]):
-                    ranked_unique_representations.append(i)
-                    already_included.extend(duplicates[d])
-                    rankscores.append(scores[i])
-                    duplicates.remove(duplicates[d])
-                    break
-    return ranked_unique_representations, rankscores
+def dur_pattern_deviation(dur_pattern,t):
+    # Calculate the sum of absolute deviations, comparing a dur pattern to the original time sequence
+    t_quantized = fit_dur_pattern_to_time(t,dur_pattern)
+    dev_sum = np.sum(np.abs(t_quantized-t))
+    return dev_sum
 
-def normalize_numerators(ratios):
-    n = ratios[:,:,0].astype(int)
-    max_all = np.max(n)
-    for i in range(len(n)):
-        max_this = (np.max(n[i]))
-        ratios[i,:,0] *= (max_all/max_this) # normalize and write back
-        ratios[i,:,1] *= (max_all/max_this) # also normalize denominators 
-    return ratios
-
-def evidence(ratios):
-    # check if any subarrays contain the same numerators (assuming we already have made common denominators)
-    # give each subarray a score depending of how may other subarrays contain the same
-    # usually run this with the output from normalize_numerators
-    # invert the evidence scores when adding with other quality scores (as they rank low score as best)
-    evidence_score = np.zeros((len(ratios)))
-    for i in range(len(ratios)):
-        n0 = ratios[i,:,0]#.astype(int)
-        for j in range(len(ratios)):
-            if i == j:
-                continue
-            n1 = ratios[j,:,0]#.astype(int)
-            if np.array_equal(n0,n1):
-                evidence_score[j] += 1
-    return evidence_score
+def simplify_dur_pattern(dur_pattern):
+    # This can be used to correct for duration patterns containing odd combinations of durations
+    # For example when triplets and 8th notes are mixed within the same sequence
+    # divide by 2 until lowest dur == 1
+    # divide by 3 until lowest dur == 1
+    dur_pattern_2 = np.copy(dur_pattern)
+    dur_pattern_3 = np.copy(dur_pattern)
+    while np.min(dur_pattern_2) > 1:
+        dur_pattern_2 = dur_pattern_2 / 2
+    while np.min(dur_pattern_3) > 1.5:
+        dur_pattern_3 = dur_pattern_3 / 3
+    return np.round(dur_pattern_2).astype('int').tolist(), np.round(dur_pattern_3).astype('int').tolist()
 
 def normalize_and_add_scores(scores, weights, invert=None):
     # take several lists of scores, normalize them to max 1.0, 
@@ -294,270 +144,109 @@ def normalize_and_add_scores(scores, weights, invert=None):
         scoresum += s*weights[i]
     return scoresum
 
-def make_trigger_sequence(commondiv_ratios):
-    # make the trigger sequence 
-    # 1=transient, 0 = space
-    # e.g. for rhythm 6/6, 3/6, 3/6, 2/6, 2/6, 2/6, the sequence will be
-    # [1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0]
-    trigger_seq = []
-    for num in commondiv_ratios[:,0].astype(int):
-        trigger_seq.append(1)
-        for i in range(num-1):
-            trigger_seq.append(0)
-    return trigger_seq
+def evaluate(duration_patterns, t, weights):
+    # Evaluate the fitness of a set of suggested dur patterns,
+    # considering dur pattern complexity,
+    # and the resulting deviations from the original time sequence
+    deviations = []
+    heights = []
+    for d in duration_patterns:
+        dev = dur_pattern_deviation(d,t)
+        deviations.append(dev)
+        height = np.sum(d)
+        heights.append(height)
+    scoresum = normalize_and_add_scores([deviations, heights], weights)
+    return scoresum
 
-def make_trigger_sequence_dur_pattern(dur_pattern):
-    # make the trigger sequence 
-    # 1=transient, 0 = space
-    # e.g. for rhythm 6/6, 3/6, 3/6, 2/6, 2/6, 2/6, the sequence will be
-    # [1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0]
-    trigger_seq = []
-    for num in dur_pattern.astype(int):
-        trigger_seq.append(1)
-        for i in range(num-1):
-            trigger_seq.append(0)
-    return trigger_seq
+def find_pulse_tempo(dur_pattern, t):
+    # from dur_pattern, find pulse and tempo,
+    # in relation to the available time span from the first to the last event in the original time sequence
+    subdiv_tempo = (t[-1]-t[0])/np.sum(dur_pattern)
+    subdiv_bpm = 60/subdiv_tempo
+    return subdiv_bpm
 
-def autocorr(data):
-    """Autocorrelation (non normalized)"""
-    mean = np.mean(data)
-    data = data-mean
-    return np.correlate(data, data, 'full')[len(data)-1:]
+def make_time_from_dur(dur_pattern,maxdev, subdiv_bpm=120, start_time=0):
+    # make timestamp sequence from duration pattern
+    # to reconstruct time sequence from proposed duration pattern,
+    # or for generating time sequences for testing
+    timestamp = [start_time]
+    temposcaler = 60/subdiv_bpm
+    t = start_time
+    for d in dur_pattern:
+        dev = (random.random()-0.5)*2*maxdev*temposcaler
+        t += d*temposcaler
+        timestamp.append(t+dev)
+    return np.array(timestamp)
 
-def find_duplicate_representations(ratios):
-    """Find indices in the ratios array where the exact same rational approximations are used (not regarding deviations or other parameters)"""
-    duplicate_list = []
-    for i in range(len(ratios)):
-        nd1 = ratios[i,:,:2] # numerator and denominator
-        duplicate_list.append([])
-        for j in range(i,len(ratios)):
-            nd2 = ratios[j,:,:2]
-            if np.array_equal(nd1,nd2):
-                already_there = False
-                for d in duplicate_list:
-                    if j in d:
-                        already_there = True
-                if not already_there:
-                    duplicate_list[i].append(j)
-    empties = []
-    for i in range(len(duplicate_list)):
-        if len(duplicate_list[i]) == 0:
-            empties.append(i)
-    for i in empties:
-        duplicate_list.remove([])
-    return duplicate_list
-
-def tempo_sanitize(tempo, assumption=120, pulse_div=1):
-    # Adjust tempo to be in sanitized range
-    # Using 120 bpm as the mother of all tempos, the range must be from 2/3 to 4/3: 80-160
-    mintempo = assumption*(2/3)
-    maxtempo = assumption*(4/3)
-    tempo_factor = pulse_div
-    while (tempo*tempo_factor) > maxtempo:
-        tempo_factor /= 2        
-    while (tempo*tempo_factor) < mintempo:
-        tempo_factor *= 2
-    tempo *= tempo_factor
-    return tempo, tempo_factor
-
-def find_pulse(data, mode='coef', oversample=1):
-  # reduce 
-  data = data/np.gcd.reduce(data)
-  pulse_2 = 0
-  pulse_3 = 0
-  for i in range(oversample):
-    testdata = data*(2**i)
-    t1 = make_trigger_sequence_dur_pattern(testdata)
-    a1 = autocorr(t1)
-    #p1 = np.argsort(-a1[1:])[:6]+1
-    p1 = np.argsort(-a1[1:])[:int(len(a1)/4)]+1
-    #print(p1)
-    for j in range(len(p1)):
-      n = p1[j]
-      if a1[p1[j]] > 0:
-        if mode == 'coef': 
-            coef = a1[p1[j]] # correlation coefficient
-            #print(n,coef)
-        else: 
-            coef = 1/(j+1) # gradually decreasing with order
-            #print(n,coef)
-        if n <= 32:
-          if n%3==0: pulse_3 += coef
-          elif n%2==0: pulse_2 += coef
-    #print('pulse 2, 3:', pulse_2, pulse_3)
-  if pulse_2+pulse_3 > 0:
-      certainty = pulse_2/(pulse_2+pulse_3)
-  else: certainty = 0.5
-  if certainty >= 0.5: 
-    pulse_div = 2
-  else: 
-    pulse_div = 3
-    certainty = 1-certainty 
-  return pulse_div, certainty
-
-def find_pulse2(data, mode='coef', oversample=1, rotate=True):
-  # reduce 
-  data = data/np.gcd.reduce(data)
-  pulse_2 = 0
-  pulse_3 = 0
-  if rotate: rotations = len(data)
-  else: rotations = 1 
-  for k in range(rotations):
-    for i in range(oversample):
-      testdata = data*(2**i)
-      t1 = make_trigger_sequence_dur_pattern(testdata)
-      a1 = autocorr(t1)
-      print(a1)
-      p1 = np.argsort(-a1[1:])[:6]+1
-      #p1 = np.argsort(-a1[1:])[:int(len(a1)/4)]+1
-      print('p1', p1)
-      for j in range(len(p1)):
-        n = p1[j]
-        if mode == 'coef': 
-          if a1[p1[j]] > 0:
-            coef = a1[p1[j]] # correlation coefficient
-            #print(n,coef)
-        else: 
-          coef = 1/(j+1) # gradually decreasing with order
-        if n <= 32:
-          if n%3==0: pulse_3 += coef
-          elif n%2==0: pulse_2 += coef
-      print('k, data', k, data)
-      print('pulse 2, 3:', pulse_2, pulse_3)
-      data = np.roll(data,1)
-  if pulse_2+pulse_3 > 0:
-      certainty = pulse_2/(pulse_2+pulse_3)
-  else: certainty = 0.5
-  if certainty >= 0.5: 
-    pulse_div = 2
-  else: 
-    pulse_div = 3
-    certainty = 1-certainty 
-  return pulse_div, certainty
-
-def autocorr_complexity(data):
-    # sort the correlation coefficients, take only the best 1/4 of them, 
-    # look at the digestability for the correlation indices
-    data = data/np.gcd.reduce(data) # reduce to lowest terms
-    sum_barlow = 0
-    for i in range(len(data)):
-        t1 = make_trigger_sequence_dur_pattern(data)
-        a1 = autocorr(t1)
-        p1 = np.argsort(-a1[1:])[:int(len(a1)/4)]+1
-        for j in range(len(p1)):
-            n = p1[j]
-            sum_barlow += indigestability_n(n) # correlation position
-        data = np.roll(data,1)
-    return sum_barlow
-
-
-
-def analyze(t, rank=1, div_limit=4):
-    """Do the full ratio analysis"""
+def dur_pattern_suggestions(t, div_limit=4):
+    # Analysize time sequence, find possible duration patttern representations 
     timedata = t.tolist()
-    barlow_weight, benni_weight, nd_sum_weight, \
-        ratio_dev_weight, ratio_dev_abs_max_weight, \
-            grid_dev_weight, evidence_weight, autocorr_weight = weights # global weights
     ratios = ratio_to_each(timedata, div_limit=div_limit)
-    ratios_copy = np.copy(ratios)
     duration_patterns = []
-    for i in range(len(ratios_copy)):
-        duration_patterns.append(make_duration_pattern(ratios_copy[i]))
-    #for i in range(len(ratios)):
-    #    print(ratios[i], '\n', duration_patterns[i])
-
-    ratio_deviations, ratio_deviation_abs, ratio_deviation_abs_max, \
-        gridsize_deviations, barlow_indigest, benedetti_height, nd_add = ratio_scores(ratios, duration_patterns, timedata)
     for i in range(len(ratios)):
-        print(f'i={i} \n{ratios[i]} \n{duration_patterns[i]} \
-              \ndev {ratio_deviations[i]:.3f}, {ratio_deviation_abs[i]:.3f}, {ratio_deviation_abs_max[i]:.3f}, \
-              \ngrid {gridsize_deviations[i]:.3f} \
-              \nheight {barlow_indigest[i]}, {benedetti_height[i]}, {nd_add[i]}')
+        dur_pattern = make_duration_pattern(ratios[i]).astype('int').tolist()
+        if dur_pattern not in duration_patterns: 
+            duration_patterns.append(dur_pattern)
+            d2, d3 = simplify_dur_pattern(dur_pattern)
+            if d2 not in duration_patterns: duration_patterns.append(d2)
+            if d3 not in duration_patterns: duration_patterns.append(d3)
+    return duration_patterns
 
-    ratios_commondiv = make_commondiv_ratios(ratios)
-    ratios_commondiv_copy = np.copy(ratios_commondiv)
-    norm_num_ratios = normalize_numerators(ratios_commondiv_copy)
-    evidence_scores = evidence(norm_num_ratios)
-    autocorr_scores = []
-    for i in range(len(ratios)):
-        trigseq = make_trigger_sequence(ratios_commondiv[i,:,:2])
-        acorr = autocorr(trigseq)
-        autocorr_scores.append(np.max(acorr[1:])) # max of autocorr
-    #for i in range(len(ratios)):
-    #    print(ratios[i], '\n', autocorr_scores[i])
+def analyze(t, div_limit=4):
+    """Analysis of time sequence, resulting in a duration pattern with tempo estimation"""
+    duration_patterns = dur_pattern_suggestions(t)
+    scores = evaluate(duration_patterns, t, weights)
+    tempi = []
+    for i in range(len(scores)):
+        tempo = find_pulse_tempo(duration_patterns[i], t)
+        tempi.append(tempo)
+    best = np.argsort(scores)[0]
+    return best, duration_patterns, scores, tempi
 
-    scores = normalize_and_add_scores(
-        [barlow_indigest, benedetti_height, nd_add, ratio_deviation_abs, \
-         ratio_deviation_abs_max, gridsize_deviations, evidence_scores, autocorr_scores], 
-        [barlow_weight, benni_weight, nd_sum_weight, ratio_dev_weight, \
-         ratio_dev_abs_max_weight, grid_dev_weight, evidence_weight, autocorr_weight],
-        [0, 0, 0, 0, 0, 0, 1, 1])
-    #for i in range(len(ratios)):
-    #    print(ratios[i], '\n', scores[i])
+def test_one_pattern():
+    # analyze one pattern
+    print('\ntesting analysis of one pattern')
+    #d=[3,2,1,2,1,3]
+    #d=[3,3,2,3,3,2]
+    #d=[3,3,4,2,4]
+    #d=[3,3,4,3,2,1]
+    #d=[3,3,4,3,3]
+    d=[2,1,1,2]
+    print('dur pattern:', d)
+    t = make_time_from_dur(d,0.1, subdiv_bpm=120)
+    print('t:', t)
+    best, duration_patterns, scores, tempi = analyze(t)
+    for i in np.argsort(scores):
+        print(f'{i}, {duration_patterns[i]}, {scores[i]:.2f}, tempo: {tempi[i]:.2f}')
 
-    # simplify ratios and remove duplicate ratio representations
-    ratios_reduced = np.copy(ratios_commondiv)
-    ratios_reduced = simplify_ratios(ratios_reduced)
-    duplicates = find_duplicate_representations(ratios_reduced)
-    ranked_unique_representations, rankscores = get_ranked_unique_representations(duplicates, scores)
-    # isolate the selected (best) representation
-    selected = ranked_unique_representations[rank-1] # select the unique representation ranked from the lowest score
-    ticktempo_Hz = (1/ratios_commondiv[selected,0,-1])*ratios_commondiv[selected,0,1]
-    #print('analyze: commondiv', ratios_commondiv[selected,0,1])
-    #print(f'ticktempo {ticktempo_Hz}\n{ratios_commondiv[selected]}')
-    #print((1/ratios_commondiv[selected,0,-1]), ratios_commondiv[selected,0,1])
-    ticktempo_bpm = ticktempo_Hz*60
-    trigseq = make_trigger_sequence(ratios_commondiv[selected,:,:2])
-    acorr = autocorr(trigseq)
-    pulseposition = np.argmax(acorr[1:])+1
-    tempo_tendency = ratio_deviations[selected]*-1 # invert deviation to adjust tempo
-    
-    # return
-    return ratios_reduced, ranked_unique_representations, rankscores, \
-        trigseq, ticktempo_bpm, tempo_tendency, pulseposition
-        
+def test_two_patterns():
+    print('\ntesting analysis of two consecutive patterns')
+    # analyze two consecutive rhythm patterns
+    # try to reconcile the interpretation of the two patterns
+    # allow re-interpretation of the first in light of evidence from the second
+    # also allow interpretation of the second in light of eveidence from the first
+    # Use tempo as a reconciliation measure, try to find an interpretation where the two tempi match within a threshold (e.g. 10%)
+    # So:
+    # Take the best tempo from the first phrase analysis, look for matching tempi in the analysis of the second phrase
+    # Also take the first tempo from the second phrase analysis, and look for matching tempi in the analysis of the first phrase
+    # Case to solve: if no match can be found (does it indicate a tempo change in the input?)
+    #   - if this indicates a tempo change, we must break down the phrases to find the exact point of change
+    # Case to solve: if several matches can be found (take the best sum of scores?)
+    durs = [[2,1,1,2],[1,1,2,2]]
+    durs = [[3,3,4,3,3],[1,1,2,2]]
+    start_time = 0
+    pattern_num = 0
+    for d in durs:
+        print('* dur pattern', pattern_num+1, durs[pattern_num])
+        pattern_num += 1
+        t = make_time_from_dur(d,0.1, subdiv_bpm=120,start_time=start_time)
+        print('t:', t)
+        start_time = t[-1]
+        best, duration_patterns, scores, tempi = analyze(t)
+        for i in np.argsort(scores):
+            print(f'{i}, {duration_patterns[i]}, {scores[i]:.2f}, tempo: {tempi[i]:.2f}')
+
 if __name__ == '__main__':
-    # example rhythms
-    # rhythm is represented here by the time stamp of each event
-    #t = [0.0, 0.3467, 0.524, 1.02, 1.546, 1.8553, 2.088, 2.362, 2.6053, 2.8713, 3.1333, 3.62, 3.962, 4.176,]    
-    # test 2 jazzphrase
-    #t = [0.    , 0.302 , 0.5406, 0.8426, 1.3613, 1.5746, 1.8673, 2.0813, 2.58  , 2.9286, 3.1213]
-    # skalert for å matche til 3.0
-    #t = [0.    , 0.2903, 0.5196, 0.8099, 1.3084, 1.5134, 1.7947, 2.0004, 2.4797, 2.8148, 3.    ] 
-    # ideell
-    #t = [0,    0.25,     0.5,    0.75,   1.25,   1.5,    1.75,   2,      2.5,    2.75,   3]
-    # manuell slark
-    #t = [0,    0.3,      0.5,    0.8,    1.3,    1.5,    1.8,    2,      2.5,    2.8,   3]
-    #t = [ 6.69,  7.19,  7.44,  7.69,  8.19,  8.52,  8.69,  9.19,  9.44,  9.69, 10.19]
-    # test pattern for article
-    t = [0, 1, 1.5, 2, 2.75, 3] #straight
-    #t = [0, 0.98, 1.51, 2.03, 2.72, 3] #expressive
-    #t = [0, 725, 1120, 1472, 2005, 2198, 2933]
-    #t = [0.0, 725.387163043022156, 1120.064254999160767, 1472.122761011123657, 2005.306858062744141, 2197.617893099784851, 2933.395150065422058 ]
-    # test pattern for no medium delta times
-    #t = [0, 3.76, 4, 8] #straight
-    t = [0, 1, 1.58, 2, 2.71, 3] #straight
-    t = [0.1, 1, 1.58, 2, 2.71, 3] #straight
-    t = [0, 0.92, 1.5, 1.92, 2.75, 3.04] #straight
-    t = np.array(t,dtype=np.float32)
-    barlow_weight = 0.7
-    benni_weight = 0.
-    nd_sum_weight = 0.4
-    ratio_dev_weight = 0.0
-    ratio_dev_abs_max_weight = 0
-    grid_dev_weight = 0.
-    evidence_weight = 0.
-    autocorr_weight = 0
-    weights = [barlow_weight, benni_weight, nd_sum_weight, ratio_dev_weight,\
-                ratio_dev_abs_max_weight, grid_dev_weight, evidence_weight, autocorr_weight]
-    set_weights(weights)
-    rank = 1
-    ratios_reduced, ranked_unique_representations, rankscores, trigseq, \
-        ticktempo_bpm, tempo_tendency, pulseposition = analyze(t, rank, div_limit=4)
-    best = ranked_unique_representations[0]
-    ratios_list = ratios_reduced[best].tolist()
-    print('winner')
-    for i in range(len(ratios_list)):
-        print(ratios_list[i])
-    #duration_pattern = make_duration_pattern(ratios_reduced[best])
-    #print(duration_pattern)
+    set_weights([0.5,0.5]) # dev, height
+    test_one_pattern()
+    test_two_patterns()
