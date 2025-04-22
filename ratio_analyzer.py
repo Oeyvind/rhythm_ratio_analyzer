@@ -111,6 +111,14 @@ def dur_pattern_deviation(dur_pattern,t):
     dev_sum = np.sum(np.abs(t_quantized-t))
     return dev_sum
 
+def get_deviation_polarity(deviations, threshold):
+    # for each deviation, give a -1, 0, or 1 polarity
+    # depending on the sign, but keep a range close to zero as 0 polarity
+    pos = np.greater(deviations, threshold)*1
+    neg = np.less(deviations, -threshold)*-1
+    deviations_polarity = pos+neg
+    return deviations_polarity
+
 def simplify_dur_pattern(dur_pattern):
     # This can be used to correct for duration patterns containing odd combinations of durations
     # For example when triplets and 8th notes are mixed within the same sequence
@@ -148,8 +156,8 @@ def evaluate(duration_patterns, t, weights):
     # Evaluate the fitness of a set of suggested dur patterns,
     # considering dur pattern complexity,
     # and the resulting deviations from the original time sequence
-    deviations = []
     heights = []
+    deviations = []
     for d in duration_patterns:
         dev = dur_pattern_deviation(d,t)
         deviations.append(dev)
@@ -195,13 +203,18 @@ def dur_pattern_suggestions(t, div_limit=4):
 def analyze(t, div_limit=4):
     """Analysis of time sequence, resulting in a duration pattern with tempo estimation"""
     duration_patterns = dur_pattern_suggestions(t)
+    deviations = []
+    for d in duration_patterns:
+        t_quantized = fit_dur_pattern_to_time(t,d)
+        dev = t_quantized-t
+        deviations.append(dev)
     scores = evaluate(duration_patterns, t, weights)
     tempi = []
     for i in range(len(scores)):
         tempo = find_pulse_tempo(duration_patterns[i], t)
         tempi.append(tempo)
     best = np.argsort(scores)[0]
-    return best, duration_patterns, scores, tempi
+    return best, duration_patterns, deviations, scores, tempi
 
 def test_one_pattern():
     # analyze one pattern
@@ -215,7 +228,7 @@ def test_one_pattern():
     print('dur pattern:', d)
     t = make_time_from_dur(d,0.1, subdiv_bpm=120)
     print('t:', t)
-    best, duration_patterns, scores, tempi = analyze(t)
+    best, duration_patterns, deviations, scores, tempi = analyze(t)
     for i in np.argsort(scores):
         print(f'{i}, {duration_patterns[i]}, {scores[i]:.2f}, tempo: {tempi[i]:.2f}')
 
@@ -242,7 +255,7 @@ def test_two_patterns():
         t = make_time_from_dur(d,0.1, subdiv_bpm=120,start_time=start_time)
         print('t:', t)
         start_time = t[-1]
-        best, duration_patterns, scores, tempi = analyze(t)
+        best, duration_patterns, deviations, scores, tempi = analyze(t)
         for i in np.argsort(scores):
             print(f'{i}, {duration_patterns[i]}, {scores[i]:.2f}, tempo: {tempi[i]:.2f}')
 

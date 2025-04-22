@@ -95,54 +95,47 @@ class Osc_server():
         with np.printoptions(precision=5):
             print('timedata:', timedata-timedata[0], 'len:', len(self.pending_analysis))
         self.phrase_number += 1
-        ratios_reduced, ranked_unique_representations, rankscores, trigseq, ticktempo_bpm, tempo_tendency, pulseposition = self.ra.analyze(timedata)
-        for i in range(len(trigseq)):
-            osc_io.sendOSC("python_triggerdata", [i, trigseq[i]]) # send OSC back to client
+        best, duration_patterns, deviations, scores, tempi = self.ra.analyze(timedata)
+        print(f'dur pattern {duration_patterns[best]}')
+        print(f'deviations {deviations[best]}')
+        deviation_polarity = self.ra.get_deviation_polarity(deviations[best], 0.01)
+        print(f'tempo {tempi[best]}')
         
-        # store the rhythm fractions as float for each event in the corpus
-        best = ranked_unique_representations[0]
-        print(f'ratios best({best}): \n{ratios_reduced[best,range(len(self.pending_analysis)-1),0]/ratios_reduced[best,range(len(self.pending_analysis)-1),1]}')
-        #ratio_sequence = np.array(ratios_reduced[best])
-        #dur_pattern = self.ra.make_duration_pattern(ratio_sequence).astype('int')
-        #pulse_div, certainty = self.ra.find_pulse(dur_pattern, mode='coef')
-        #print('pulse_div, certainty', pulse_div, certainty)
-        # to adjust tempo to be in range 80-160 bpm:
-        # first find the beat duration based on analyzed ratio and delta time
-        n = ratios_reduced[best,0,0]
-        d = ratios_reduced[best,0,1]
-        delta = ratios_reduced[best,0,-2]
-        beat_dur_from_ratio = (1/(n/d))*delta
-        #print('beat_dur_from_ratio', beat_dur_from_ratio)
-        bpm_from_ratio = (1/beat_dur_from_ratio)*60
-        print('bpm_from_ratio', bpm_from_ratio)
-        bpm_sanitized, tfac_san = self.ra.tempo_sanitize(bpm_from_ratio)
-        tempo_factor = bpm_sanitized/bpm_from_ratio
-        print('sanitized bpm:', bpm_sanitized)
-        print(f'sanitized ratios best: \n{(ratios_reduced[best,range(len(self.pending_analysis)-1),0]/ratios_reduced[best,range(len(self.pending_analysis)-1),1])*tempo_factor}')
-        ratio_sequence = np.array(ratios_reduced[best])
-        print(f'dur pattern {self.ra.make_duration_pattern(ratio_sequence).astype("int")}')
-        returnmsg = [bpm_sanitized, tempo_tendency, float(pulseposition), float(len(self.pending_analysis))]
+        # return tempo to client
+        returnmsg = tempi[best], len(duration_patterns[best]) # tempo and phrase length
         osc_io.sendOSC("python_other", returnmsg) # send OSC back to client
         
-        next_best = ranked_unique_representations[1]
+        # store the duration pattern as integer for each event in the corpus
         for i in range(len(self.pending_analysis)): 
             indx = self.pending_analysis[i]
             self.dc.corpus[indx,self.dc.pnum_corpus['index']] = indx
             self.dc.corpus[indx,self.dc.pnum_corpus['phrase_num']] = self.phrase_number
             if i < len(self.pending_analysis)-1:
-                self.dc.corpus[indx,self.dc.pnum_corpus['ratio_best']] = (ratios_reduced[best,i,0]/ratios_reduced[best,i,1])*tempo_factor # ratio as float
-                self.dc.corpus[indx,self.dc.pnum_corpus['deviation_best']] = ratios_reduced[best,i,2]*tempo_factor # deviation
-                self.dc.corpus[indx,self.dc.pnum_corpus['ratio_2nd_best']] = (ratios_reduced[next_best,i,0]/ratios_reduced[next_best,i,1])*tempo_factor # ratio as float
+                # DONE TO HERE
+                # ok 1. store dur_pattern item as 'rhythm_subdiv' instead of ratio_best
+                # ok 2. rename address in corpus accordingly
+                # ok 3. check if that change propagates nicely into prob_logic
+                # ok   - rename ratio_best and deviation_best fields here in this file, and check others
+                # ok 4. calculate deviation per event (above)
+                # ok 5. store deviation per event
+                # ok 6. delete "next best" fields from corpus
+                # 7. rewrite plugin to receive only tempo "python_tempo" OSC address
+                #   - rewrite to only send complexity and deviation weight
+                # ok 8. add prob_logic item for deviation
+                # ok   - use 1, 0, and -1 to classify deviation (0 <= 1% ?)
+                self.dc.corpus[indx,self.dc.pnum_corpus['rhythm_subdiv']] = duration_patterns[best][i]
+                self.dc.corpus[indx,self.dc.pnum_corpus['deviation']] = deviations[best][i]
+                self.dc.corpus[indx,self.dc.pnum_corpus['deviation_polarity']] = deviation_polarity[i]
                 # event duration relative to time until next event
                 self.dc.corpus[indx,self.dc.pnum_corpus['duration']] = \
                     ((self.dc.corpus[indx,self.dc.pnum_corpus['time_off']] \
                     - self.dc.corpus[indx,self.dc.pnum_corpus['timestamp']]) \
                     / (self.dc.corpus[indx+1,self.dc.pnum_corpus['timestamp']] \
-                    - self.dc.corpus[indx,self.dc.pnum_corpus['timestamp']]))*tempo_factor
+                    - self.dc.corpus[indx,self.dc.pnum_corpus['timestamp']]))
             else:
-                self.dc.corpus[indx,self.dc.pnum_corpus['ratio_best']] = 1.0*tempo_factor
+                self.dc.corpus[indx,self.dc.pnum_corpus['rhythm_subdiv']] = 1
                 # event duration for last event
-                self.dc.corpus[indx,self.dc.pnum_corpus['duration']] = 1.0*tempo_factor
+                self.dc.corpus[indx,self.dc.pnum_corpus['duration']] = 0.9
             # probabilistic model encoding
             self.pl.analyze_single_event(indx)
         self.pending_analysis = [] # clear
@@ -157,7 +150,7 @@ class Osc_server():
             request =  [None]
         else: 
             # translation of gui labels to data container labels
-            if request_parm == 'rhythm': request_parm = 'ratio_best'
+            if request_parm == 'rhythm': request_parm = 'rhythm_subdiv'
             if request_parm == 'pitch': request_parm = 'notenum'
             if request_parm == 'interval': request_parm = 'notenum_relative'
             if request_parm == 'phrase': request_parm = 'phrase_num'
@@ -167,8 +160,8 @@ class Osc_server():
 
         next_item_index = self.pl.generate(query, voicenum, temperature) #query probabilistic models for next event and update query for next iteration
         returnmsg = [int(next_item_index), 
-                     float(self.dc.corpus[next_item_index, self.dc.pnum_corpus['ratio_best']]),
-                     float(self.dc.corpus[next_item_index, self.dc.pnum_corpus['deviation_best']]),
+                     float(self.dc.corpus[next_item_index, self.dc.pnum_corpus['rhythm_subdiv']]),
+                     float(self.dc.corpus[next_item_index, self.dc.pnum_corpus['deviation']]),
                      float(self.dc.corpus[next_item_index, self.dc.pnum_corpus['duration']]),
                      float(self.dc.corpus[next_item_index, self.dc.pnum_corpus['notenum']]),
                      float(self.dc.corpus[next_item_index, self.dc.pnum_corpus['notenum_relative']]),
@@ -180,7 +173,7 @@ class Osc_server():
         if chord_index > 0:
             for event in self.dc.chord_list[int(chord_index-1)]:
                 returnmsg = [int(next_item_index), 
-                             0.0, # ratio
+                             0.0, # rhythm_subdiv
                              event[2], # deviation (...)
                              float(self.dc.corpus[next_item_index, self.dc.pnum_corpus['duration']]),
                              event[0]+float(self.dc.corpus[next_item_index, self.dc.pnum_corpus['notenum']]),
@@ -207,9 +200,9 @@ class Osc_server():
             print('chord list: \n', self.dc.chord_list)
 
         elif printcode == 2:
-            print('last_phrase: indx, ratio1, ratio2')
-            print(self.dc.pnum_corpus['index'], self.dc.pnum_corpus['ratio_best'], self.dc.pnum_corpus['ratio_2nd_best'], self.last_analyzed_phrase)
-            parmindxs = [self.dc.pnum_corpus['index'], self.dc.pnum_corpus['ratio_best'], self.dc.pnum_corpus['ratio_2nd_best']]
+            print('last_phrase: indx, rhythm_subdiv')
+            print(self.dc.pnum_corpus['index'], self.dc.pnum_corpus['rhythm_subdiv'], self.last_analyzed_phrase)
+            parmindxs = [self.dc.pnum_corpus['index'], self.dc.pnum_corpus['rhythm_subdiv']]
             for i in self.last_analyzed_phrase[:-1]:
                 print(self.dc.corpus[[i,i,i],parmindxs])
         else:
@@ -240,18 +233,13 @@ class Osc_server():
     def receive_parameter_controls(self, unused_addr, *osc_data):
         '''Message handler. This is called when we receive an OSC message'''
         # set control parameters, like score weights etc
-        kbarlow_weight, kbenni_weight, knd_weight, kratio_dev_weight, \
-            kratio_dev_abs_max_weight, kgrid_dev_weight, \
-            kevidence_weight, kautocorr_weight, kratio1_order, \
-            kratio2_order, knotenum_order, kinterval_order, kchord_on = osc_data
+        kcomplexity_weight, kdeviation_weight, krhythm_order, \
+            kdeviation_order, knotenum_order, kinterval_order, kchord_on = osc_data
         
-        ratio_analyzer_weights = [kbarlow_weight, kbenni_weight, knd_weight, kratio_dev_weight, \
-                                  kratio_dev_abs_max_weight, kgrid_dev_weight, \
-                                  kevidence_weight, kautocorr_weight]
-        self.ra.set_weights(ratio_analyzer_weights)
+        self.ra.set_weights(kcomplexity_weight, kdeviation_weight)
         
-        self.pl.set_weights_pname('ratio_best', kratio1_order)         
-        self.pl.set_weights_pname('ratio_2nd_best', kratio2_order) 
+        self.pl.set_weights_pname('rhythm_subdiv', krhythm_order)         
+        self.pl.set_weights_pname('deviation_polarity', kdeviation_order) 
         self.pl.set_weights_pname('notenum', knotenum_order) 
         self.pl.set_weights_pname('notenum_relative', kinterval_order)
         self.chord_on = kchord_on 

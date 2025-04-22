@@ -5,15 +5,15 @@ form size(770, 660), caption("Rhythm Analyzer"), pluginId("rtm1"), guiMode("queu
 button bounds(5, 5, 70, 50), text("record","recording"), channel("record_enable"), colour:0("green"), colour:1("red")
 
 groupbox bounds(85, 5, 160, 50), text("last recorded phrase"), colour(45,25,25){
-  button bounds(8, 25, 45, 20), text("play"), channel("play_last_phrase"), colour:0("green"), colour:1("red")
+  ;button bounds(8, 25, 45, 20), text("play"), channel("play_last_phrase"), colour:0("green"), colour:1("red")
   button bounds(57, 25, 45, 20), text("print"), channel("print_last_phrase"), colour:0("green"), colour:1("red"), latched(0)
   button bounds(106, 25, 45, 20), text("clear"), channel("clear_last_phrase"), colour:0("green"), colour:1("red"), latched(0)
 }
 groupbox bounds(248, 5, 215, 50), colour(45,25,25){ ; , text("phrase data")
 label bounds(10, 2, 80, 18), text("an_tempo"), fontSize(11), align("left")
 nslider bounds(10, 25, 50, 22), channel("tempo_bpm_last_phrase"), range(1, 2999, 1), fontSize(14)
-label bounds(70, 2, 80, 18), text("tendency"), fontSize(11), align("left")
-nslider bounds(70, 25, 50, 22), channel("tempo_tendency"), range(-10, 10, 0), fontSize(14)
+;label bounds(70, 2, 80, 18), text("tendency"), fontSize(11), align("left")
+;nslider bounds(70, 25, 50, 22), channel("tempo_tendency"), range(-10, 10, 0), fontSize(14)
 label bounds(138, 2, 80, 18), text("phrase_len"), fontSize(11), align("left")
 nslider bounds(143, 25, 50, 22), channel("phrase_len"), range(0, 999, 0, 1, 1), fontSize(14)
 }
@@ -33,22 +33,10 @@ groupbox bounds(5, 60, 240, 65), text("last recorded event"), colour(20,30,45){
 }
 
 groupbox bounds(250, 60, 400, 65), text("rhythm analysis weights"), colour(20,30,45){
-nslider bounds(5, 25, 40, 20), channel("barlow_weight"), range(0, 1, 0.5), fontSize(14)
-label bounds(5, 45, 40, 20), text("barlow"), fontSize(12)
-nslider bounds(50, 25, 40, 20), channel("benni_weight"), range(0, 1, 0.7), fontSize(14)
-label bounds(50, 45, 40, 20), text("benni"), fontSize(12)
-nslider bounds(100, 25, 40, 20), channel("nd_weight"), range(0, 1, 0.6), fontSize(14)
-label bounds(100, 45, 40, 20), text("n+d"), fontSize(12)
-nslider bounds(150, 25, 40, 20), channel("ratio_dev_weight"), range(0, 1, 1.0), fontSize(14)
-label bounds(150, 45, 40, 20), text("r_dev"), fontSize(12)
-nslider bounds(200, 25, 40, 20), channel("ratio_dev_abs_max_weight"), range(0, 1, 0.2), fontSize(14)
-label bounds(200, 45, 40, 20), text("r_maxdev"), fontSize(12)
-nslider bounds(250, 25, 40, 20), channel("grid_dev_weight"), range(0, 1, 0.2), fontSize(14)
-label bounds(250, 45, 40, 20), text("grid"), fontSize(12)
-nslider bounds(300, 25, 40, 20), channel("evidence_weight"), range(0, 1, 0.3), fontSize(14)
-label bounds(300, 45, 40, 20), text("evidence"), fontSize(12)
-nslider bounds(350, 25, 40, 20), channel("autocorr_weight"), range(0, 1, 0.3), fontSize(14)
-label bounds(350, 45, 40, 20), text("acorr"), fontSize(12)
+nslider bounds(5, 25, 40, 20), channel("complexity_weight"), range(0, 1, 0.5), fontSize(14)
+label bounds(5, 45, 40, 20), text("complexity"), fontSize(12)
+nslider bounds(50, 25, 40, 20), channel("deviation_weight"), range(0, 1, 0.7), fontSize(14)
+label bounds(50, 45, 40, 20), text("deviation"), fontSize(12)
 }
 
 groupbox bounds(5, 135, 760, 170), text("generate events with prob logic"), colour(25,45,30){
@@ -110,14 +98,14 @@ nslider bounds(715, 65, 40, 20), channel("gen_v2_temperature"), range(0.01, 10, 
 
 button bounds(390, 125, 45, 18), text("chord"), channel("chords_on"), colour:0("green"), colour:1("red"), latched(1)
 
-nslider bounds(460, 125, 40, 22), channel("gen_r1_order"), range(0, 4, 2, 1, 0.5), fontSize(14)
-label bounds(460, 147, 60, 18), text("r1_ord"), fontSize(12), align("left")
-;nslider bounds(155, 25, 40, 25), channel("gen_r2_order"), range(0, 4, 2, 1, 0.5), fontSize(14)
-;label bounds(155, 45, 60, 18), text("r2_ord"), fontSize(12), align("left")
-nslider bounds(525, 125, 40, 22), channel("gen_pitch_order"), range(0, 4, 2, 1, 0.5), fontSize(14)
-label bounds(525, 147, 60, 18), text("ptch_ord"), fontSize(12), align("left")
-nslider bounds(590, 125, 40, 22), channel("gen_interval_order"), range(0, 4, 2, 1, 0.5), fontSize(14)
-label bounds(590, 147, 60, 18), text("intv_ord"), fontSize(12), align("left")
+nslider bounds(460, 125, 40, 22), channel("gen_rhythm_order"), range(0, 4, 2, 1, 0.5), fontSize(14)
+label bounds(460, 147, 60, 18), text("rytm_ord"), fontSize(12), align("left")
+nslider bounds(525, 125, 40, 25), channel("gen_deviation_order"), range(0, 4, 2, 1, 0.5), fontSize(14)
+label bounds(525, 147, 60, 18), text("dev_ord"), fontSize(12), align("left")
+nslider bounds(590, 125, 40, 22), channel("gen_pitch_order"), range(0, 4, 2, 1, 0.5), fontSize(14)
+label bounds(590, 147, 60, 18), text("ptch_ord"), fontSize(12), align("left")
+nslider bounds(655, 125, 40, 22), channel("gen_interval_order"), range(0, 4, 2, 1, 0.5), fontSize(14)
+label bounds(655, 147, 60, 18), text("intv_ord"), fontSize(12), align("left")
 
 
 groupbox bounds(0, 98, 160, 72), text("gen tempo") {
@@ -138,13 +126,11 @@ nslider bounds(110, 25, 40, 25), channel("beat_clock_mod_phase"), range(0, 1, 0,
 label bounds(113, 50, 40, 18), text("phase"), fontSize(12), align("left")
 }
 
-
 ; debug
 button bounds(560, 3, 75, 15), text("print stm"), channel("pl_print"), colour:0("green"), colour:1("red"), latched(0)
 button bounds(480, 3, 75, 15), text("clock reset"), channel("beat_clock_reset"), colour:0("green"), colour:1("red"), latched(0)
-
-
 }
+
 csoundoutput bounds(5, 315, 760, 340)
 </Cabbage>
 
@@ -165,23 +151,11 @@ pgmassign 0, -1 ; ignore program change
 gkactivenote init 0; stores the note number of the active note, for polyphony control for rhythm analyzer
 giChord[] init 6 ; hold chord notes
 
-gitrig_ftab ftgen 0, 0, 4096, 2, 0
-gitrig_ftab_empty ftgen 0, 0, 4096, 2, 0
 gihandle OSCinit 9999 ; set the network port number where we will receive OSC data from Python
 giSine ftgen 0, 0, 4096, 10, 1
 
 ; GUI handling
 instr 1
-  kplay chnget "play_last_phrase"
-  ktrig_play trigger kplay, 0.5, 0
-  ktrig_stop trigger kplay, 0.5, 1
-  itriggerseq_instr = 5
-  if ktrig_play > 0 then
-    event "i", itriggerseq_instr, 0, -1
-  endif
-  if ktrig_stop > 0 then
-    event "i", -itriggerseq_instr, 0, .1
-  endif
   ; generator
   kgenerate chnget "gen_voice1"
   ktrig_generate trigger kgenerate, 0.5, 0
@@ -303,27 +277,6 @@ instr 4
   OSCsend 1, "127.0.0.1", 9901, "/client_eventchord", "fffff", index, ichord_index, inum, ivel, idelta  
 endin
 
-; play trigger rhythm
-instr 5
-  ktempo chnget "tempo_triggerseq"
-  itrig_length chnget "triggerseq_length"
-  Striglength sprintf "triggerseq length %i", itrig_length
-  puts Striglength, 1
-  kmetro metro ktempo
-  kindex init 0
-  ktrig table kindex, gitrig_ftab
-  kpulse = ktrig*kmetro
-  kindex = (kindex+kmetro)
-  if kindex > itrig_length+1 then
-    Send = "Sequence end, turning off instr"
-    puts Send, kindex
-    turnoff
-  endif
-  inoise_instr = 120
-  if kpulse > 0 then
-    event "i", inoise_instr, 0, 0.1
-  endif
-endin
 
 ;*******************************
 ; Csound to Python communication, analyzer
@@ -393,56 +346,26 @@ instr 31
   OSCsend kanalyzetrig, "127.0.0.1", 9901, "/client_analyze_trig", "i", k_
   
   ; send other parameter controls to Python
-  kbarlow_weight chnget "barlow_weight"
-  kbenni_weight chnget "benni_weight"
-  knd_weight chnget "nd_weight"
-  kratio_dev_weight chnget "ratio_dev_weight"
-  kratio_dev_abs_max_weight chnget "ratio_dev_abs_max_weight"
-  kgrid_dev_weight chnget "grid_dev_weight"
-  kevidence_weight chnget "evidence_weight"
-  kautocorr_weight chnget "autocorr_weight"
-  kratio1_order chnget "gen_r1_order"
-  kratio2_order chnget "gen_r2_order"
+  kcomplexity_weight chnget "complexity_weight"
+  kdeviation_weight chnget "deviation_weight"
+  krhythm_order chnget "gen_rhythm_order"
+  kdeviation_order chnget "gen_deviation_order"
   knotenum_order chnget "gen_pitch_order"
   kinterval_order chnget "gen_interval_order"
   kchords_on chnget "chords_on"
-  kparm_update = changed(kbarlow_weight, kbenni_weight, knd_weight, kratio_dev_weight, 
-                      kratio_dev_abs_max_weight, kgrid_dev_weight, 
-                      kevidence_weight, kautocorr_weight, kratio1_order, 
-                      kratio2_order, knotenum_order, kinterval_order, kchords_on)
-  OSCsend kparm_update, "127.0.0.1", 9901, "/client_parametercontrols", "fffffffffffff", 
-                      kbarlow_weight, kbenni_weight, knd_weight, kratio_dev_weight, 
-                      kratio_dev_abs_max_weight, kgrid_dev_weight, 
-                      kevidence_weight, kautocorr_weight, kratio1_order, 
-                      kratio2_order, knotenum_order, kinterval_order, kchords_on
-
-  ; receive trigger string from Python (only for playback of last recorded phrase)
-  ktrig_sig init 0
-  ktrig_index init 0
-  if krec_trig_off+kclear_last_phrase+kclear_all > 0 then
-    tablecopy gitrig_ftab, gitrig_ftab_empty  ; clear trig table
-    ktrig_index = 0
-    chnset ktrig_index, "triggerseq_length"
-  endif
-  nextmsg_trig:
-  kmess_trig OSClisten gihandle, "python_triggerdata", "ii", ktrig_index, ktrig_sig  ; receive OSC data from Python
-  if kmess_trig == 0 goto done_trig
-  tablew ktrig_sig, ktrig_index, gitrig_ftab
-  chnset ktrig_index+1, "triggerseq_length"
-  kgoto nextmsg_trig ; jump back to the OSC listen line, to see if there are more messages waiting in the network buffer
-  done_trig:
+  kparm_update = changed(kcomplexity_weight, kdeviation_weight, krhythm_order, 
+                      kdeviation_order, knotenum_order, kinterval_order, kchords_on)
+  OSCsend kparm_update, "127.0.0.1", 9901, "/client_parametercontrols", "fffffff", 
+                      kcomplexity_weight, kdeviation_weight, krhythm_order, 
+                      kdeviation_order, knotenum_order, kinterval_order, kchords_on
 
   ; receive other data from Python
   ktempo_bpm init 60
-  ktempo_tendency init 0
-  kpulseposition init 1
   kphraselen init 0
   nextmsg_other:
-  kmess_other OSClisten gihandle, "python_other", "ffff", ktempo_bpm,ktempo_tendency,kpulseposition,kphraselen ; receive OSC data from Python
-  chnset (ktempo_bpm/60)*kpulseposition, "tempo_triggerseq"
+  kmess_other OSClisten gihandle, "python_other", "ff", ktempo_bpm, kphraselen ; receive OSC data from Python
   cabbageSetValue "tempo_bpm_last_phrase", ktempo_bpm, changed(ktempo_bpm)
   cabbageSetValue "gen_tempo_bpm", ktempo_bpm, changed(ktempo_bpm*kauto_tempo_update)
-  cabbageSetValue "tempo_tendency", ktempo_tendency, changed(ktempo_tendency)
   cabbageSetValue "phrase_len", kphraselen, changed(kphraselen)
   if kmess_other == 0 goto done_other
   kgoto nextmsg_other ; jump back to the OSC listen line, to see if there are more messages waiting in the network buffer
@@ -602,14 +525,14 @@ instr 109
   ; event trig
 	kgen_once init 1 ; do only the first time
   kgen_index init 0
-  kgen_ratio init 0 
+  kgen_rhythm_subdiv init 0 
   kgen_deviation init 0
   kgen_duration init 1
   kgen_notenum init 0
   kgen_interval init 0
   kgen_velocity init 0
   knext_event_time init -999 ; overwritten on first k-event
-	kprevious_ratio init 0 ; means we will generate two events when starting
+	kprevious_rhythm init 0 ; means we will generate two events when starting
   kcount init 0
   kchord_count init 0
   igen_instr = 121
@@ -626,22 +549,22 @@ instr 109
     OSCsend kcount, "127.0.0.1", 9901, "/client_prob_gen", "ffssfff", ivoice, kgen_index, Srequest_type, Srequest_parm, krequest_value, krequest_weight, ktemperature
   nextmsg:
     Saddr sprintf "python_prob_gen_voice%i", ivoice
-    kmess OSClisten gihandle, Saddr, "fffffff", kgen_index, kgen_ratio, kgen_deviation, kgen_duration, kgen_notenum, kgen_interval, kgen_velocity ; receive OSC data from Python
+    kmess OSClisten gihandle, Saddr, "fffffff", kgen_index, kgen_rhythm_subdiv, kgen_deviation, kgen_duration, kgen_notenum, kgen_interval, kgen_velocity ; receive OSC data from Python
     if kmess == 0 goto done
       ; store events in queue for playback
-      if kgen_ratio > 0 then ; if it is not a chord event
-        knext_event_time += round(kprevious_ratio*iclock_resolution)/iclock_resolution ; prevent accumulative rounding errors
+      if kgen_rhythm_subdiv > 0 then ; if it is not a chord event
+        knext_event_time += round(kprevious_rhythm*iclock_resolution)/iclock_resolution ; prevent accumulative rounding errors
 	      if kbeat_sync == 1 then
            knext_event_time = ceil(kbeat_clock) ; sync to whole beat clock if enabled
            kzero = 0
            cabbageSetValue Sbeat_sync, kzero, changed(knext_event_time)
         endif
-        ;Sdebug sprintfk "receive: voice %i, ndx %i, beat clock %.2f, next event %.2f, ratio %.2f, note %i vel %.2f dur %.2f", ivoice, kgen_index, kbeat_clock, knext_event_time, kgen_ratio, kgen_notenum, kgen_velocity, kgen_duration
-        ;puts Sdebug, knext_event_time+kgen_ratio+kgen_deviation+kgen_notenum
-        kprevious_ratio = kgen_ratio
+        ;Sdebug sprintfk "receive: voice %i, ndx %i, beat clock %.2f, next event %.2f, ratio %.2f, note %i vel %.2f dur %.2f", ivoice, kgen_index, kbeat_clock, knext_event_time, kgen_rhythm_subdiv, kgen_notenum, kgen_velocity, kgen_duration
+        ;puts Sdebug, knext_event_time+kgen_rhythm_subdiv+kgen_deviation+kgen_notenum
+        kprevious_rhythm = kgen_rhythm_subdiv
 	      kdeviation = kgen_deviation * kdeviation_scale 
-        kEvent_queue[kcount % lenarray(kEvent_queue)][0] = knext_event_time + (kgen_ratio*kdeviation)*(60/ktempo_bpm); store this event time with deviation, for correct playback
-        kEvent_queue[kcount % lenarray(kEvent_queue)][2] = kgen_duration*(kgen_ratio*(60/ktempo_bpm))
+        kEvent_queue[kcount % lenarray(kEvent_queue)][0] = knext_event_time + (kgen_rhythm_subdiv+kdeviation)*(60/ktempo_bpm); store this event time with deviation, for correct playback
+        kEvent_queue[kcount % lenarray(kEvent_queue)][2] = kgen_duration*(kgen_rhythm_subdiv*(60/ktempo_bpm))
         kEvent_queue[kcount % lenarray(kEvent_queue)][3] = kgen_notenum
         kEvent_queue[kcount % lenarray(kEvent_queue)][4] = kgen_interval
         kEvent_queue[kcount % lenarray(kEvent_queue)][5] = kgen_velocity

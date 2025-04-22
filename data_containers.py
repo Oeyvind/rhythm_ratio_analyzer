@@ -22,9 +22,9 @@ class DataContainers:
       'timestamp' : 1, # time of note on 
       'time_off' : 2, # time of note off
       'duration' : 3, # relative duration (time_off - timestamp) / (timestamp next event/timestamp this event)
-      'ratio_best': 4, # best unique rational approx, as float
-      'deviation_best' : 5,
-      'ratio_2nd_best': 6,
+      'rhythm_subdiv': 4, # duration pattern value (int)
+      'deviation' : 5, # deviation
+      'deviation_polarity' : 6, # deviation quantized, for prob logic (-1, 0, 1)
       'phrase_num': 7, 
       'downbeat_trig': 8, # to be implemented
       'velocity': 9,
@@ -42,8 +42,8 @@ class DataContainers:
     # zero order just means give us all indices where the value occurs
     # higher orders similar to markov order
     self.prob_parms_description = {
-      'ratio_best': 4,
-      'ratio_2nd_best': 4,
+      'rhythm_subdiv': 4,
+      'deviation_polarity': 4,
       'notenum': 4, 
       'notenum_relative': 4,
       'phrase_num': 1}
