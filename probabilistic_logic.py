@@ -106,7 +106,7 @@ class Probabilistic_logic:
         # set default weights to first order for all parameters
         for pname in self.dc.prob_parms.keys():
             self.set_weights_pname(pname, 1, printit=False)
-        print(f'prob weights set to {self.weights}')
+        #print(f'prob weights set to {self.weights}')
 
         # set data and allocate data containers
         self.current_datasize = 0 

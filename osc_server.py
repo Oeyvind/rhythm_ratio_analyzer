@@ -76,6 +76,7 @@ class Osc_server():
         self.dc.corpus[index, self.dc.pnum_corpus['chord_index']] = chord_index # 1-indexed, as zero means no chord
         base_note = self.dc.corpus[index, self.dc.pnum_corpus['notenum']] 
         base_velocity = self.dc.corpus[index, self.dc.pnum_corpus['velocity']]
+        if base_velocity == 0: base_velocity=90
         chord_note = [note-base_note, velocity/base_velocity, delta_time]
         if len(self.dc.chord_list) < chord_index:
             self.dc.chord_list.append([chord_note]) # the first note in a chord
@@ -236,7 +237,7 @@ class Osc_server():
         kcomplexity_weight, kdeviation_weight, krhythm_order, \
             kdeviation_order, knotenum_order, kinterval_order, kchord_on = osc_data
         
-        self.ra.set_weights(kcomplexity_weight, kdeviation_weight)
+        self.ra.set_weights([kcomplexity_weight, kdeviation_weight])
         
         self.pl.set_weights_pname('rhythm_subdiv', krhythm_order)         
         self.pl.set_weights_pname('deviation_polarity', kdeviation_order) 

@@ -537,7 +537,7 @@ instr 109
   kchord_count init 0
   igen_instr = 121
   ktime timeinsts ; for debug
-  
+  printk2 knext_event_time
   ; get event data from server
   if (kbeat_clock > knext_event_time) then
     if strcmpk(Srequest_parm, "index") == 0 then 
@@ -722,7 +722,8 @@ endin
 instr 121
   iamp = ampdbfs(-6)
   inote = p4
-  ;print p1, p2, p3, p4
+  ;itime times
+  ;print itime*1000
   if inote == 0 then
     turnoff
     igoto skip
