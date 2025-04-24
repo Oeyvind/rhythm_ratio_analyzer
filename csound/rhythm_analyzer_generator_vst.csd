@@ -537,7 +537,7 @@ instr 109
   kchord_count init 0
   igen_instr = 121
   ktime timeinsts ; for debug
-  printk2 knext_event_time
+  ;printk2 knext_event_time
   ; get event data from server
   if (kbeat_clock > knext_event_time) then
     if strcmpk(Srequest_parm, "index") == 0 then 
@@ -563,7 +563,7 @@ instr 109
         ;puts Sdebug, knext_event_time+kgen_rhythm_subdiv+kgen_deviation+kgen_notenum
         kprevious_rhythm = kgen_rhythm_subdiv
 	      kdeviation = kgen_deviation * kdeviation_scale 
-        kEvent_queue[kcount % lenarray(kEvent_queue)][0] = knext_event_time + (kgen_rhythm_subdiv+kdeviation)*(60/ktempo_bpm); store this event time with deviation, for correct playback
+        kEvent_queue[kcount % lenarray(kEvent_queue)][0] = knext_event_time + (kgen_rhythm_subdiv*(60/ktempo_bpm))+kdeviation; store this event time with deviation, for correct playback
         kEvent_queue[kcount % lenarray(kEvent_queue)][2] = kgen_duration*(kgen_rhythm_subdiv*(60/ktempo_bpm))
         kEvent_queue[kcount % lenarray(kEvent_queue)][3] = kgen_notenum
         kEvent_queue[kcount % lenarray(kEvent_queue)][4] = kgen_interval
@@ -722,8 +722,7 @@ endin
 instr 121
   iamp = ampdbfs(-6)
   inote = p4
-  ;itime times
-  ;print itime*1000
+  ;print p2
   if inote == 0 then
     turnoff
     igoto skip

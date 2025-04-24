@@ -35,6 +35,18 @@ def deviation_scaler(n, num,denom):
         dev /= dev_range[1]
     return dev 
 
+def make_box_notation(dur_pattern):
+    # 1=transient, 0 = space
+    # e.g. for rhythm 6/6, 3/6, 3/6, 2/6, 2/6, 2/6, the sequence will be
+    # [1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0]
+    box_notation = []
+    for num in dur_pattern:
+        box_notation.append(1)
+        for i in range(num-1):
+            box_notation.append(0)
+    box_notation.append(1) # add a last 1 as terminator after last duration
+    return box_notation
+
 def prime_factorization(n):
     "prime factorization of `n` as a dictionary with p:multiplicity for each p."
     # nudged from https://scientific-python-101.readthedocs.io/python/exercises/prime_factorization.html
@@ -72,16 +84,6 @@ def suavitatis(n):
         s += d[p]*(p-1)
     return s
 
-def make_box_notation(dur_pattern):
-    # 1=transient, 0 = space
-    # e.g. for rhythm 6/6, 3/6, 3/6, 2/6, 2/6, 2/6, the sequence will be
-    # [1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0]
-    box_notation = []
-    for num in dur_pattern.astype(int):
-        box_notation.append(1)
-        for i in range(num-1):
-            box_notation.append(0)
-    return box_notation
 
 def autocorr(data):
     """Autocorrelation (non normalized)"""
@@ -109,7 +111,7 @@ def find_pulse(data, mode='coef', oversample=1):
   pulse_3 = 0
   for i in range(oversample):
     testdata = data*(2**i)
-    t1 = make_trigger_sequence_dur_pattern(testdata)
+    t1 = make_box_notation(testdata)
     a1 = autocorr(t1)
     #p1 = np.argsort(-a1[1:])[:6]+1
     p1 = np.argsort(-a1[1:])[:int(len(a1)/4)]+1
@@ -147,7 +149,7 @@ def find_pulse2(data, mode='coef', oversample=1, rotate=True):
   for k in range(rotations):
     for i in range(oversample):
       testdata = data*(2**i)
-      t1 = make_trigger_sequence_dur_pattern(testdata)
+      t1 = make_box_notation(testdata)
       a1 = autocorr(t1)
       #print(a1)
       p1 = np.argsort(-a1[1:])[:6]+1
@@ -183,7 +185,7 @@ def autocorr_complexity(data):
     data = data/np.gcd.reduce(data) # reduce to lowest terms
     sum_barlow = 0
     for i in range(len(data)):
-        t1 = make_trigger_sequence_dur_pattern(data)
+        t1 = make_box_notation(data)
         a1 = autocorr(t1)
         p1 = np.argsort(-a1[1:])[:int(len(a1)/4)]+1
         for j in range(len(p1)):
@@ -192,3 +194,100 @@ def autocorr_complexity(data):
         data = np.roll(data,1)
     return sum_barlow
 
+'''
+def tesselation(dur_pattern):
+    # check all subsequences, 
+    # test if subsequence sum is divisible by 3 or 4
+    l = len(dur_pattern)
+    tess_3 = 0
+    tess_4 = 0
+    subsize = 2
+    while subsize <= l:
+        for i in range(l-subsize+1):
+            sub = dur_pattern[i:i+subsize]
+            if np.sum(sub)%3 == 0:
+                tess_3 += 1
+            if np.sum(sub)%4 == 0:
+                tess_4 += 1
+        subsize += 1
+    scale = tess_3+tess_4
+    if tess_3 > tess_4: 
+        pulse_div = 3
+        certainty = tess_3/scale
+    else:
+        pulse_div = 4
+        certainty = tess_4/scale
+    return pulse_div, certainty
+
+d_examples = [np.array([4,4,2,2,8,4]),
+              np.array([2,1,2,1]),
+              np.array([3,1,3,1]),
+              np.array([2,2,1,1,4,4]),
+              np.array([3,3,4,3,3]),
+              np.array([3,3,4,3,3,3,3,4,3,3]),
+              np.array([3,3,4,2,4]),
+              np.array([3,3,4,2,4,3,3,4,2,4])]
+for d in d_examples:
+    print(d)
+    tess_pulse_div, tess_c = tesselation(d)
+    print(f'tess: {int(tess_pulse_div)}, {tess_c:.2f}')
+    indisp_pulse_div, indisp_c = indispensability_3_4(d)
+    print(f'indisp: {int(indisp_pulse_div)}, {indisp_c:.2f}')
+    pulse_div,certainty = ra.find_pulse(d)
+    print(f'findpulse: {int(pulse_div)}, {certainty:.2f}')
+    pulse_div,certainty = ra.find_pulse2(d)
+    print(f'findpulse2: {int(pulse_div)}, {certainty:.2f}')
+'''    
+    
+'''
+# autocorr complexity
+# see if we can indicate that a duration pattern has combinations that does not align with whole beats
+# the purpose is to avoid combinations like 2/3+1/4 or 3/4+1/3
+# as examples 
+# d1: 3/4+1/4,3/4+1/4
+# d2: 2/3+1/4,3/4+1/4
+# d1: 2/3+1/4,2/3+1/3
+# d1: 2/3+1/3,2/3+1/3
+# the _1 examples adds a whole beat 12/12 to all
+  # seems to keep same complexity ordering
+# the _3 examples adds a whole beat and 1/4 to all
+  # d1_3 is then simple, while d4_3 is complex
+# the _4 examples adds a whole beat and 1/3 to all
+  # d1_4 is then complex, while d4_4 is simple
+d1 = np.array([9,3,9,3])
+d2 = np.array([8,3,9,3])
+d3 = np.array([8,3,8,4])
+d4 = np.array([8,4,8,4])
+d1_1 = np.array([12,9,3,9,3])
+d2_1 = np.array([12,8,3,9,3])
+d3_1 = np.array([12,8,3,8,4])
+d4_1 = np.array([12,8,4,8,4])
+d1_3 = np.array([12,3,9,3,9,3])
+d2_3 = np.array([12,3,8,3,9,3])
+d3_3 = np.array([12,3,8,3,8,4])
+d4_3 = np.array([12,3,8,4,8,4])
+d1_4 = np.array([12,4,9,3,9,3])
+d2_4 = np.array([12,4,8,3,9,3])
+d3_4 = np.array([12,4,8,3,8,4])
+d4_4 = np.array([12,4,8,4,8,4])
+print('d1')
+print(ra.autocorr_complexity(d1))
+print(ra.autocorr_complexity(d2))
+print(ra.autocorr_complexity(d3))
+print(ra.autocorr_complexity(d4))
+print('d1_1')
+print(ra.autocorr_complexity(d1_1))
+print(ra.autocorr_complexity(d2_1))
+print(ra.autocorr_complexity(d3_1))
+print(ra.autocorr_complexity(d4_1))
+print('d1_3')
+print(ra.autocorr_complexity(d1_3))
+print(ra.autocorr_complexity(d2_3))
+print(ra.autocorr_complexity(d3_3))
+print(ra.autocorr_complexity(d4_3))
+print('d1_4')
+print(ra.autocorr_complexity(d1_4))
+print(ra.autocorr_complexity(d2_4))
+print(ra.autocorr_complexity(d3_4))
+print(ra.autocorr_complexity(d4_4))
+'''

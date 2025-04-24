@@ -112,20 +112,8 @@ class Osc_server():
             self.dc.corpus[indx,self.dc.pnum_corpus['index']] = indx
             self.dc.corpus[indx,self.dc.pnum_corpus['phrase_num']] = self.phrase_number
             if i < len(self.pending_analysis)-1:
-                # DONE TO HERE
-                # ok 1. store dur_pattern item as 'rhythm_subdiv' instead of ratio_best
-                # ok 2. rename address in corpus accordingly
-                # ok 3. check if that change propagates nicely into prob_logic
-                # ok   - rename ratio_best and deviation_best fields here in this file, and check others
-                # ok 4. calculate deviation per event (above)
-                # ok 5. store deviation per event
-                # ok 6. delete "next best" fields from corpus
-                # 7. rewrite plugin to receive only tempo "python_tempo" OSC address
-                #   - rewrite to only send complexity and deviation weight
-                # ok 8. add prob_logic item for deviation
-                # ok   - use 1, 0, and -1 to classify deviation (0 <= 1% ?)
                 self.dc.corpus[indx,self.dc.pnum_corpus['rhythm_subdiv']] = duration_patterns[best][i]
-                self.dc.corpus[indx,self.dc.pnum_corpus['deviation']] = deviations[best][i]
+                self.dc.corpus[indx,self.dc.pnum_corpus['deviation']] = deviations[best][i-1]
                 self.dc.corpus[indx,self.dc.pnum_corpus['deviation_polarity']] = deviation_polarity[i]
                 # event duration relative to time until next event
                 self.dc.corpus[indx,self.dc.pnum_corpus['duration']] = \
@@ -134,7 +122,7 @@ class Osc_server():
                     / (self.dc.corpus[indx+1,self.dc.pnum_corpus['timestamp']] \
                     - self.dc.corpus[indx,self.dc.pnum_corpus['timestamp']]))
             else:
-                self.dc.corpus[indx,self.dc.pnum_corpus['rhythm_subdiv']] = 1
+                self.dc.corpus[indx,self.dc.pnum_corpus['rhythm_subdiv']] = duration_patterns[best][-1] # hack for last event
                 # event duration for last event
                 self.dc.corpus[indx,self.dc.pnum_corpus['duration']] = 0.9
             # probabilistic model encoding
