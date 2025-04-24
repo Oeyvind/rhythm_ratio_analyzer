@@ -266,6 +266,51 @@ def dur_pattern_suggestions(t, div_limit=4, simplify=True):
                 if d2 not in duration_patterns: duration_patterns.append(d2)
     return duration_patterns
 
+def indispensability_subdiv(trigger_seq):
+    # Find pattern subdivision based on indispensability (Barlow)
+    indis_2 = np.array([1,0])    
+    indis_3 = np.array([2,0,1])
+    indis_3 = (indis_3/np.max(indis_3))
+
+    # all indispensabilities
+    indis_all = [indis_3, indis_2] # list in increasing order of preference
+    for i in range(len(indis_all)): # tile until long enough
+        indis_all[i] = np.tile(indis_all[i], int(np.ceil(len(trigger_seq)/len(indis_all[i]))+1))
+
+    # score table for the different indispensabilities
+    indis_scores = np.array([[3, 0., 0., 0], # format: length, max_score, confidence (max/min score), rotation for best score
+                             [2, 0., 0., 0]])
+
+    for i in range(len(indis_all)):
+        subscores = np.zeros(int(indis_scores[i][0]))
+        for j in range(int(indis_scores[i][0])):
+            subscore = np.sum(trigger_seq*indis_all[i][j:len(trigger_seq)+j])
+            subscores[j] = subscore
+        indis_scores[i,1] = np.max(subscores)
+        minimum = np.min(subscores)
+        if minimum == 0: minimum = 1
+        indis_scores[i,2] = np.max(subscores)/minimum
+        #print(i,'subscores', subscores)
+        found_max = False
+        for j in np.argsort(subscores):    
+            if (subscores[j] == np.max(subscores)) and not found_max: # we want to find the least rotation needed for max score
+                indis_scores[i,3] = j
+                found_max = True
+    #print(indis_scores)
+    ranked = np.argsort(indis_scores[:,1])
+    subdiv = indis_scores[ranked[-1],0]
+    position = indis_scores[ranked[-1],3]
+    test_best = 2
+    while indis_scores[ranked[-test_best],1] == indis_scores[ranked[-1],1]: # if we have two equal max scores
+        if indis_scores[ranked[-test_best],2] > indis_scores[ranked[-1],2]: # if the second alternative has better confidence
+            subdiv = indis_scores[ranked[-test_best]][0] # use the second
+            position = indis_scores[ranked[-test_best]][3]
+        print(f'indispensability confidence used to decide a tie between {int(indis_scores[ranked[-1]][0])} and {int(indis_scores[ranked[-test_best]][0])}')
+        test_best += 1
+        if test_best > len(indis_scores):
+            break
+    return int(subdiv), int(position)
+
 def analyze(t, div_limit=4, simplify=True):
     """Analysis of time sequence, resulting in a duration pattern with tempo estimation"""
     duration_patterns = dur_pattern_suggestions(t, simplify=simplify)
@@ -329,50 +374,14 @@ def test_two_patterns(durs, subdiv_bpm=120, r_deviation=0, simplify=True):
 
 if __name__ == '__main__':
     set_weights([1,1]) # dev, height
-    #d=[3,2,1,2,1,3]
-    #d=[3,3,2,3,3,2]
-    #d=[3,3,4,2,4]
-    #d=[3,3,4,3,2,1]
-    #d=[3,3,4,3,3]
     #d=[2,1,1,2]
-    #d=[4,2,2,4,3,1,4,2,2,4]
     #d=[6,3,3,6,4,2,6,3,3,6]
+    #d=[6,3,3,4,4,4]
     #test_one_pattern(subdiv_bpm=720)
     #durs = [[2,1,1,2],[1,1,2,2]]
     #durs = [[3,3,4,3,3],[1,1,2,2]]
     #test_two_patterns(durs)
     
-    #timedata = np.array([0.,      0.29388, 0.49963, 0.74957, 0.99957, 1.24957, 1.46216, 1.74951])
-    #timedata = np.array([0.,      0.5,     0.75,    1.,      1.49988, 1.83337, 1.99988, 2.49976, 2.74976, 2.99976, 3.48779])
-    timedata = np.array([0.,      0.5,     0.75,    1.,      1.5,     1.85, 2.,      2.5,     2.75,   3.      ,3.5    ])
-    #timedata = np.array([0.,1.05,1.5,2])   
-    timedata = np.array([0, 0.75, 1.,  1.5, 2., 2.66,  3])
-    timedata = np.array([0, 0.73, 1.,  1.5, 2., 2.7,  3])
-    '''daniel example 633444
-    deltas = np.array([ 917.2, 469.36, 458.68, 576., 533.33, 565.3 ])  
-    t = [0]
-    for d in deltas:
-        t.append(t[-1]+d)
-    timedata = np.array(t)
-    '''
-    test_timedata(timedata, simplify=False)
-    '''
-    test_d = [[2, 1, 1, 2, 1, 1, 2, 1, 1, 2], # too simple
-              [6, 3, 3, 6, 4, 2, 6, 3, 3, 6], # correct
-              [3, 2, 2, 3, 2, 1, 3, 2, 2, 3], # high dev
-              [9, 4, 4, 9, 6, 3, 9, 4, 4, 9], # high dev
-              [8, 4, 4, 8, 6, 3, 8, 4, 4, 8], # high dev
-              [4, 2, 2, 4, 2, 1, 4, 2, 2, 4],
-              [3, 1, 1, 3, 2, 1, 3, 1, 1, 3],
-              [2, 1, 1, 2, 2, 1, 2, 1, 1, 2]]
-    #test_d = [[2,1],[3,1],[4,1],[5,1],[6,1],[7,1],[8,1],
-    #          [2,2],[3,2],[4,2],[5,2],[6,2],[7,2],[8,2],
-    #          [2,3],[3,3],[4,3],[5,3],[6,3],[7,3],[8,3],
-    #          [2,4],[3,4],[4,4],[5,4],[6,4],[7,4],[8,4]]
-    heights = []
-    for d in test_d:
-        heights.append(dur_pattern_height(d))
-    heights = np.array(heights)
-    for i in np.argsort(heights[:,3]):
-        print(test_d[i], heights[i])
-    '''
+    timedata = np.array([0, 1.,  1.5, 2, 2.7,  3])
+    timedata = np.array([0, 1.,  2.05,  3, 4])
+    #test_timedata(timedata, simplify=False)
