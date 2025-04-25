@@ -96,14 +96,14 @@ class Osc_server():
         with np.printoptions(precision=5):
             print('timedata:', timedata-timedata[0], 'len:', len(self.pending_analysis))
         self.phrase_number += 1
-        best, duration_patterns, deviations, scores, tempi = self.ra.analyze(timedata)
+        best, pulse, pulsepos, duration_patterns, deviations, scores, tempi = self.ra.analyze(timedata)
         print(f'dur pattern {duration_patterns[best]}')
         print(f'deviations {deviations[best]}')
         deviation_polarity = self.ra.get_deviation_polarity(deviations[best], 0.01)
-        print(f'tempo {tempi[best]}')
-        
+        print(f'subdiv tempo {tempi[best]}')
+        print(f'pulse subdiv {pulse}, start position {pulsepos}')
         # return tempo to client
-        returnmsg = tempi[best], len(duration_patterns[best]) # tempo and phrase length
+        returnmsg = tempi[best], pulse, len(duration_patterns[best]) # tempo and phrase length
         osc_io.sendOSC("python_other", returnmsg) # send OSC back to client
         
         # store the duration pattern as integer for each event in the corpus
@@ -222,11 +222,12 @@ class Osc_server():
     def receive_parameter_controls(self, unused_addr, *osc_data):
         '''Message handler. This is called when we receive an OSC message'''
         # set control parameters, like score weights etc
-        kcomplexity_weight, kdeviation_weight, krhythm_order, \
+        kdev_vs_complexity, ksimplify, krhythm_order, \
             kdeviation_order, knotenum_order, kinterval_order, kchord_on = osc_data
         
-        self.ra.set_weights([kcomplexity_weight, kdeviation_weight])
-        
+        self.ra.set_precision(kdev_vs_complexity)
+        self.ra.set_simplify(ksimplify)
+
         self.pl.set_weights_pname('rhythm_subdiv', krhythm_order)         
         self.pl.set_weights_pname('deviation_polarity', kdeviation_order) 
         self.pl.set_weights_pname('notenum', knotenum_order) 

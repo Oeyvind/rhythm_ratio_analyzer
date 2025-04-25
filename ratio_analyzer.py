@@ -14,10 +14,17 @@ weights = [0.5, 0.5]
 # weights for the scoring of ratio alternatives, in this order:
 # dur_pattern height (complexity)
 # deviation
+simplify = True
 
-def set_weights(w):
+def set_precision(precision):
     global weights
-    weights = w
+    complexity = precision
+    deviation = 1-precision
+    weights = [complexity, deviation]
+
+def set_simplify(truefalse):
+    global simplify
+    simplify = truefalse
 
 def rational_approx(n, div_limit=4):
     # faster rational approx for 2 and 3 divisions
@@ -112,35 +119,29 @@ def fit_tempo_from_dur_pattern(dur_pattern, t):
             #print('dur', sub_dur, 't_diff', sub_time)
             temp = (np.sum(sub_dur)/np.sum(sub_time))
             #print('temp', temp)
-            tempi += temp
+            tempi += temp #??? multiply with sum(sub_dur) ???
         subsize += 1
-    tempo = 60*(tempi/num_iterations)
+    tempo = 60*(tempi/num_iterations) #??? and divide by sum of all dur
     #print('tempo', tempo)    
     return tempo
 
 def fit_dur_pattern_deviations(dur_pattern, t, tempo):
     # Find the best fit of deviations by
     # 1. construct quantized time from tempo and dur pattern
-    # 2. initial deviation estimate (align first event with start time)
-    # 3. slide time series according to average deviation (to minimize average deviation)
-    # 4  repeat step 3 a few times to come closer to average zero
-    num_steps = np.sum(dur_pattern)
+    # 2. find deviation for each dur in dur pattern
+    # SKIP: 3. subtract average of all deviations from each deviaton
+    # OPT: 4  use dur+deviation to try to reconstruct t from t_quantized
     step_size = 60/tempo
     t_quantized = [t[0]]
     for i in range(1, len(dur_pattern)+1):
         t_quantized.append(t_quantized[i-1]+(dur_pattern[i-1]*step_size))
-    print('**fit_dur_pattern_deviations**')
-    print('t:', t)
-    print('d:', dur_pattern)
-    print('tempo:', tempo)
-    print('t_q:', t_quantized)
-    for i in range(4):
-        t_diff = t-t_quantized
-        dev = t_diff[1:]/np.diff(t_quantized)
-        t = t-(np.average(dev))
-        print(i,dev, np.average(dev), dev-np.average(dev))
-    print('****')
-    return dev
+    t_dev = t-t_quantized
+    dur_dev = (t_dev[1:]/np.diff(t_quantized)) #* (0.5/step_size)
+    #test = [0]
+    #for i in range(len(dur_pattern)):
+    #    test.append((t_quantized[i+1])+(np.diff(t_quantized)[i]*dur_dev[i]))
+    #print('test', test)
+    return dur_dev
 
 def get_deviation_polarity(deviations, threshold):
     # for each deviation, give a -1, 0, or 1 polarity
@@ -257,7 +258,7 @@ def evaluate(duration_patterns, deviations, weights):
     scoresum = normalize_and_add_scores([deviations, heights], weights)
     return scoresum
 
-def dur_pattern_suggestions(t, div_limit=4, simplify=True):
+def dur_pattern_suggestions(t, div_limit=4):
     # Analyze time sequence, find possible duration patttern representations 
     # Calculate tempo and deviations for each dur pattern
     timedata = t.tolist()
@@ -268,16 +269,18 @@ def dur_pattern_suggestions(t, div_limit=4, simplify=True):
     for i in range(len(ratios)):
         dur_pattern = make_duration_pattern(ratios[i]).astype('int').tolist()
         if dur_pattern not in duration_patterns: 
-            duration_patterns.append(dur_pattern)
             tempo = fit_tempo_from_dur_pattern(dur_pattern,t)
+            #if tempo < 1000: # pulse tempo over this threshold is probably an error
+            duration_patterns.append(dur_pattern)
             tempi.append(tempo)
             dev = fit_dur_pattern_deviations(dur_pattern,t,tempo)
             deviations.append(dev)
             if simplify:
                 d2 = simplify_dur_pattern(dur_pattern,dev)
-                if d2 not in duration_patterns: 
-                    duration_patterns.append(d2)
+                if (d2 not in duration_patterns) and ((np.array(d2)/2).astype('int').tolist() not in duration_patterns): 
                     tempo = fit_tempo_from_dur_pattern(d2,t)
+                    #if tempo < 1000: # pulse tempo over this threshold is probably an error
+                    duration_patterns.append(d2)
                     tempi.append(tempo)
                     dev = fit_dur_pattern_deviations(d2,t,tempo)
                     deviations.append(dev)
@@ -328,16 +331,19 @@ def indispensability_subdiv(trigger_seq):
             break
     return int(subdiv), int(position)
 
-def analyze(t, div_limit=4, simplify=True):
+def analyze(t, div_limit=4):
     """Analysis of time sequence, resulting in a duration pattern with tempo estimation"""
-    duration_patterns, deviations, tempi = dur_pattern_suggestions(t, simplify=simplify)
+    duration_patterns, deviations, tempi = dur_pattern_suggestions(t)
     devsums = []
     for dev in deviations:
         devsum = np.sum(np.abs(dev))
         devsums.append(devsum)
     scores = evaluate(duration_patterns, devsums, weights)
     best = np.argsort(scores)[0]
-    return best, duration_patterns, deviations, scores, tempi
+    best_dur_pattern = duration_patterns[best]
+    trigger_seq = make_box_notation(best_dur_pattern)
+    pulse, pulsepos = indispensability_subdiv(trigger_seq)
+    return best, pulse, pulsepos, duration_patterns, deviations, scores, tempi
 
 # testing functions
 
@@ -354,25 +360,26 @@ def make_time_from_dur(dur_pattern,maxdev, subdiv_bpm=120, start_time=0):
         timestamp.append(t+dev)
     return np.array(timestamp)
 
-def test_timedata(t,simplify=True):
+def test_timedata(t):
     print(f'\ntesting analysis of timedata. Simplify={simplify}')
     print('t:', t)
-    best, duration_patterns, deviations, scores, tempi = analyze(t,simplify=simplify)
+    best, pulse, pulsepos, duration_patterns, deviations, scores, tempi = analyze(t)
+    print('pulse, pulsepos', pulse, pulsepos)
     for i in np.argsort(scores):
         print(f'{i}, dur_pat {duration_patterns[i]} score {scores[i]:.2f}, tempo: {tempi[i]:.2f} \n  dev: {deviations[i]} ')
 
-def test_one_pattern(d, subdiv_bpm=120, r_deviation=0, simplify=True):
+def test_one_pattern(d, subdiv_bpm=120, r_deviation=0):
     # analyze one pattern
     print(f'\ntesting analysis of one pattern. Simplify={simplify}')
     print('dur pattern:', d)
     t = make_time_from_dur(d, r_deviation, subdiv_bpm)
     print('t:', t)
-    best, duration_patterns, deviations, scores, tempi = analyze(t,simplify=simplify)
-    print('tempi', tempi)
+    best, pulse, pulsepos, duration_patterns, deviations, scores, tempi = analyze(t)
+    print('pulse, pulsepos', pulse, pulsepos)
     for i in np.argsort(scores):
         print(f'{i}, dur_pat {duration_patterns[i]} score {scores[i]:.2f}, tempo: {tempi[i]:.2f} \n  dev: {deviations[i]} ')
 
-def test_two_patterns(durs, subdiv_bpm=120, r_deviation=0, simplify=True):
+def test_two_patterns(durs, subdiv_bpm=120, r_deviation=0):
     print(f'\ntesting analysis of two consecutive patterns. Simplify={simplify}')
     # analyze two consecutive rhythm patterns
     # try to reconcile the interpretation of the two patterns
@@ -393,52 +400,24 @@ def test_two_patterns(durs, subdiv_bpm=120, r_deviation=0, simplify=True):
         t = make_time_from_dur(d, r_deviation, subdiv_bpm, start_time=start_time)
         print('t:', t)
         start_time = t[-1]
-        best, duration_patterns, deviations, scores, tempi = analyze(t,simplify=simplify)
+        best, pulse, pulsepos, duration_patterns, deviations, scores, tempi = analyze(t)
+        print('pulse, pulsepos', pulse, pulsepos)
         for i in np.argsort(scores):
             print(f'{i}, {duration_patterns[i]} {scores[i]:.2f}, tempo: {tempi[i]:.2f} \n  dev: {deviations[i]} ')
 
 
 if __name__ == '__main__':
-    set_weights([1,1]) # dev, height
+    set_precision(0.5) # balance betwseen deviation and complexity
+    set_simplify(True)
     d=[2,1,1,2]
     #d=[6,3,3,6,4,2,6,3,3,6]
     #d=[6,3,3,4,4,4]
-    #test_one_pattern(d, r_deviation=0.1, subdiv_bpm=240, simplify=True)
-    #durs = [[2,1,1,2],[1,1,2,2]]
-    #durs = [[3,3,4,3,3],[1,1,2,2]]
-    #test_two_patterns(durs)
+    test_one_pattern(d, r_deviation=0.1, subdiv_bpm=240)
+    durs = [[2,1,1,2],[1,1,2,2]]
+    durs = [[3,3,4,3,3],[1,1,2,2]]
+    test_two_patterns(durs, r_deviation=0.1, subdiv_bpm=240)
     
-    #timedata = np.array([0, 1.,  1.5, 2, 2.7,  3])
-    #timedata = np.array([0, 1.,  2.05,  3, 4])
-    timedata = np.array([0. , 0.485, 0.735, 0.994, 1.496])
-    test_timedata(timedata, simplify=True)
+    #timedata = np.array([0. , 0.485, 0.735, 0.994, 1.496])
+    #timedata = np.array([0.,    0.497, 0.767, 0.978, 1.49 ])
+    #test_timedata(timedata)
 
-
-'''
-testing analysis of one pattern. Simplify=True
-dur pattern: [2, 1, 1, 2]
-t: [0.    0.485 0.735 0.994 1.496]
-tempi [239.41426783332074, 927.0869120423686, 448.25837637572715]
-0, dur_pat [2, 1, 1, 2] score 0.00, tempo: 239.41
-  dev: [0.184 0.365 0.399 0.201]
-1, dur_pat [7, 4, 4, 8] score 1.21, tempo: 927.09
-  dev: [-0.357 -0.658 -0.658 -0.359]
-2, dur_pat [3, 2, 2, 4] score 1.36, tempo: 448.26
-  dev: [-1.069 -1.669 -1.702 -0.913]
-
-testing analysis of timedata. Simplify=True
-t: [0.    0.485 0.735 0.994 1.496]
-0, dur_pat [2, 1, 1, 2] score 0.00, tempo: 239.48
-  dev: [0.184 0.367 0.4   0.202]
-1, dur_pat [7, 4, 4, 8] score 1.21, tempo: 927.34
-  dev: [-0.356 -0.658 -0.657 -0.359]
-2, dur_pat [3, 2, 2, 4] score 1.36, tempo: 448.38
-  dev: [-1.069 -1.67  -1.702 -0.913]
-
-testing analysis of timedata. Simplify=False
-t: [0.    0.485 0.735 0.994 1.496]
-0, dur_pat [2, 1, 1, 2] score 0.00, tempo: 239.48
-  dev: [0.184 0.367 0.4   0.202]
-1, dur_pat [7, 4, 4, 8] score 2.00, tempo: 927.34
-  dev: [-0.356 -0.658 -0.657 -0.359]
-'''

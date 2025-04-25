@@ -39,10 +39,9 @@ def fit_tempo_from_dur_pattern(dur_pattern, t):
 def fit_dur_pattern_deviations(dur_pattern, t, tempo):
     # Find the best fit of deviations by
     # 1. construct quantized time from tempo and dur pattern
-    # 2. initial deviation estimate (align first event with start time)
-    # 3. slide time series according to average deviation (to minimize average deviation)
-    # 4  repeat step 3 a few times to come closer to average zero
-    num_steps = np.sum(dur_pattern)
+    # 2. find deviation for each dur in dur pattern
+    # SKIP 3. subtract average of all deviations from each deviaton
+    # 4  use dur+deviation to try to reconstruct t from t_quantized
     step_size = 60/tempo
     t_quantized = [t[0]]
     for i in range(1, len(dur_pattern)+1):
@@ -50,28 +49,39 @@ def fit_dur_pattern_deviations(dur_pattern, t, tempo):
     print('**fit_dur_pattern_deviations**')
     print('t:', t)
     print('d:', dur_pattern)
-    print('tempo:', tempo)
+    print('tempo:', tempo, 'step_size', step_size)
     print('t_q:', t_quantized)
-    for i in range(4):
-        print('')
-        t_diff = t-t_quantized
-        print('t_diff', t_diff)
-        dev = t_diff[1:]/np.diff(t_quantized)
-        t = t-(np.average(dev))
-        print(i, dev, np.average(dev), dev-np.average(dev))
-    print('****')
-    return dev
+    t_dev = t-t_quantized
+    print('t_dev:', t_dev)
+    #dur_dev = ((t(n+1)-t(n)) / (tq(n+1)-tq(n))) * (dur/step_size)
+    #!! must relate dur to quantizzed, not just to delta
+    # only the dur landing on a deviation should have deviation
+    print('diff(tq)', np.diff(t_quantized))
+    dur_dev = (t_dev[1:]/np.diff(t_quantized)) #* (0.5/step_size)
+    print('dur_dev', dur_dev)
+    #avg = np.average(dur_dev)
+    #print('avg', avg)
+    #dur_dev = dur_dev-avg
+    #print('dur_dev_avg', dur_dev)
+    test = [0]
+    for i in range(len(dur_pattern)):
+        test.append((t_quantized[i+1])+(np.diff(t_quantized)[i]*dur_dev[i]))
+    print('test', test)
+
+
+    return dur_dev
 
 #tempo: 239.47910888652055
 
-#t= np.array([0,1,1.5,2,3.3])
-#d= [2,1,1,2]
-t= np.array([0.1,0.7,2.2])
-d = [1,1]
+t= np.array([0,1,1.45,2,3])
+d= [2,1,1,2]
+#t= np.array([0,0.51,1.989101876])
+#d = [1,3]
+
 t= np.array([0., 0.485, 0.735, 0.994, 1.496])
 d = [2, 1, 1, 2]
 tempo = fit_tempo_from_dur_pattern(d,t)
 print('tempo', tempo)
 dev = fit_dur_pattern_deviations(d,t,tempo)
-print(d)
-print(dev)
+#print(d)
+#print(dev)

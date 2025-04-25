@@ -129,7 +129,7 @@ class Probabilistic_logic:
     def set_weights(self, weights):
         self.weights = weights
 
-    def set_weights_pname(self, pname, order, printit=True):
+    def set_weights_pname(self, pname, order, printit=False):
         # set weights according to parameter name and desired order
         if pname in self.dc.prob_parms.keys():
             max_order = self.dc.prob_parms[pname][0]
