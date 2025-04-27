@@ -125,12 +125,11 @@ def fit_tempo_from_dur_pattern(dur_pattern, t):
     #print('tempo', tempo)    
     return tempo
 
-def fit_dur_pattern_deviations(dur_pattern, t, tempo):
-    # Find the best fit of deviations by
+def get_dur_pattern_deviations(dur_pattern, t, tempo):
+    # Find the deviations by
     # 1. construct quantized time from tempo and dur pattern
-    # 2. find deviation for each dur in dur pattern
-    # SKIP: 3. subtract average of all deviations from each deviaton
-    # OPT: 4  use dur+deviation to try to reconstruct t from t_quantized
+    # 2. find deviation for each dur in dur pattern (as fraction of the delta time)
+    # OPT: use dur+deviation to try to reconstruct t from t_quantized
     step_size = 60/tempo
     t_quantized = [t[0]]
     for i in range(1, len(dur_pattern)+1):
@@ -273,7 +272,7 @@ def dur_pattern_suggestions(t, div_limit=4):
             #if tempo < 1000: # pulse tempo over this threshold is probably an error
             duration_patterns.append(dur_pattern)
             tempi.append(tempo)
-            dev = fit_dur_pattern_deviations(dur_pattern,t,tempo)
+            dev = get_dur_pattern_deviations(dur_pattern,t,tempo)
             deviations.append(dev)
             if simplify:
                 d2 = simplify_dur_pattern(dur_pattern,dev)
@@ -360,24 +359,59 @@ def make_time_from_dur(dur_pattern,maxdev, subdiv_bpm=120, start_time=0):
         timestamp.append(t+dev)
     return np.array(timestamp)
 
-def test_timedata(t):
-    print(f'\ntesting analysis of timedata. Simplify={simplify}')
-    print('t:', t)
-    best, pulse, pulsepos, duration_patterns, deviations, scores, tempi = analyze(t)
+def print_analysis(analysis):
+    best, pulse, pulsepos, duration_patterns, deviations, scores, tempi = analysis
     print('pulse, pulsepos', pulse, pulsepos)
     for i in np.argsort(scores):
         print(f'{i}, dur_pat {duration_patterns[i]} score {scores[i]:.2f}, tempo: {tempi[i]:.2f} \n  dev: {deviations[i]} ')
 
-def test_one_pattern(d, subdiv_bpm=120, r_deviation=0):
+def test_timedata(t, printit=True):
+    print(f'\ntesting analysis of timedata. Simplify={simplify}')
+    analysis = analyze(t)
+    if printit: 
+        print('t:', t)
+        print_analysis(analysis)
+    return analysis
+    
+def test_timedatas(t, printit=True):
+    numpatterns = len(t)
+    print(f'\ntesting analysis of {numpatterns} timedata series. Simplify={simplify}')
+    analyses = []
+    for i in range(numpatterns):
+        analysis = analyze(t[i])
+        if printit:
+            print(f'timedata {i} \n{t[i]}') 
+            print_analysis(analysis)
+        analyses.append(analysis)
+    return analyses
+        
+def test_pattern(d, subdiv_bpm=120, r_deviation=0, printit=True):
     # analyze one pattern
     print(f'\ntesting analysis of one pattern. Simplify={simplify}')
-    print('dur pattern:', d)
     t = make_time_from_dur(d, r_deviation, subdiv_bpm)
-    print('t:', t)
-    best, pulse, pulsepos, duration_patterns, deviations, scores, tempi = analyze(t)
-    print('pulse, pulsepos', pulse, pulsepos)
-    for i in np.argsort(scores):
-        print(f'{i}, dur_pat {duration_patterns[i]} score {scores[i]:.2f}, tempo: {tempi[i]:.2f} \n  dev: {deviations[i]} ')
+    analysis = analyze(t)
+    if printit: 
+        print('dur pattern:', d)
+        print('t:', t)
+        print_analysis(analysis)
+    return analysis
+
+def test_patterns(durs, subdiv_bpm=120, r_deviation=0, printit=True):
+    # analyze several patterns
+    numpatterns = len(durs)
+    print(f'\ntesting analysis of {numpatterns} patterns. Simplify={simplify}')
+    start_time = 0
+    analyses = []
+    for i in range(numpatterns):
+        t = make_time_from_dur(d, r_deviation, subdiv_bpm, start_time=start_time)
+        start_time = t[-1]
+        analysis = analyze(t)
+        analyses.append(analysis)
+        if printit: 
+            print(f'dur pattern {i} \n{durs[i]}') 
+            print('t:', t)
+            print_analysis(analysis)
+    return analyses
 
 def test_two_patterns(durs, subdiv_bpm=120, r_deviation=0):
     print(f'\ntesting analysis of two consecutive patterns. Simplify={simplify}')
@@ -394,6 +428,7 @@ def test_two_patterns(durs, subdiv_bpm=120, r_deviation=0):
     # Case to solve: if several matches can be found (take the best sum of scores?)
     start_time = 0
     pattern_num = 0
+    analyses = []
     for d in durs:
         print('* dur pattern', pattern_num+1, durs[pattern_num])
         pattern_num += 1
@@ -401,23 +436,90 @@ def test_two_patterns(durs, subdiv_bpm=120, r_deviation=0):
         print('t:', t)
         start_time = t[-1]
         best, pulse, pulsepos, duration_patterns, deviations, scores, tempi = analyze(t)
-        print('pulse, pulsepos', pulse, pulsepos)
+        analyses.append([best, pulse, pulsepos, duration_patterns, deviations, scores, tempi])
+    for i in range(len(analyses)):
+        best, pulse, pulsepos, duration_patterns, deviations, scores, tempi = analyses[i]
+        print('best, pulse, pulsepos', best, pulse, pulsepos)
         for i in np.argsort(scores):
             print(f'{i}, {duration_patterns[i]} {scores[i]:.2f}, tempo: {tempi[i]:.2f} \n  dev: {deviations[i]} ')
+    print('analysis reconciliation')
+    best1 = analyses[0][0]
+    best2 = analyses[1][0]
+    tempi1 = analyses[0][6]
+    tempi2 = analyses[1][6]
+    tempo_tolerance = 0.1
+    reconciled = False
+    if (tempi1[best1] < tempi2[best2]*(1-tempo_tolerance)) \
+        or (tempi1[best1] > tempi2[best2]*(1+tempo_tolerance)):
+        print('not matching:', tempi1[best1], tempi2[best2])
+    else:
+        print('reconciled')
+        reconciled = True
+        #print(analyses[i])
+        print('durations:', analyses[0][3][best1], analyses[1][3][best2])
+    alternative_bests = []
+    if not reconciled:
+        for i in range(len(tempi1)):
+            tmp = tempi1[i]
+            near_match = np.isclose(tempi2,tmp, tempo_tolerance) 
+            if np.sum(near_match) > 0:
+                for j in range(len(near_match)):
+                    if near_match[j]:
+                        alternative_bests.append([i,j])
+        for i in range(len(tempi2)):
+            tmp = tempi2[i]
+            near_match = np.isclose(tempi1,tmp, tempo_tolerance) 
+            if np.sum(near_match) > 0:
+                for j in range(len(near_match)):
+                    if near_match[j]:
+                        if [j,i] not in alternative_bests:
+                            alternative_bests.append([j,i])
+        print('alternative_bests', alternative_bests)
+        alt_best_score = 99
+        for combo in alternative_bests:
+            score_sum = analyses[0][5][combo[0]]+analyses[1][5][combo[1]]
+            print('alt combo scores', combo, score_sum)
+            if score_sum < alt_best_score:
+                alt_best = combo
+                alt_best_score = score_sum
+    if len(alternative_bests) == 0:
+        print('** ** CAN NOT BE RECONCILED')
+    else:
+        print('reconciled combo:', combo)
+        selected_durations = [analyses[0][3][combo[0]], analyses[1][3][combo[1]]]
+        print('reconciled durations:', selected_durations)
+        print('input durations', durs)
+        if np.array_equal(durs[0],selected_durations[0]) and np.array_equal(durs[1],selected_durations[1]):
+            reconciled = True
+    print('match found =', reconciled)
+    return reconciled
 
 
 if __name__ == '__main__':
     set_precision(0.5) # balance betwseen deviation and complexity
-    set_simplify(True)
+    set_simplify(False)
     d=[2,1,1,2]
     #d=[6,3,3,6,4,2,6,3,3,6]
     #d=[6,3,3,4,4,4]
-    test_one_pattern(d, r_deviation=0.1, subdiv_bpm=240)
+    #test_pattern(d, r_deviation=0.1, subdiv_bpm=240)
+    
     durs = [[2,1,1,2],[1,1,2,2]]
     durs = [[3,3,4,3,3],[1,1,2,2]]
-    test_two_patterns(durs, r_deviation=0.1, subdiv_bpm=240)
+    #test_patterns(durs, r_deviation=0.1, subdiv_bpm=240)
     
+    #num_test = 1
+    #num_success = 0
+    #for i in range(num_test):
+    #    success = test_two_patterns(durs, r_deviation=0.1, subdiv_bpm=240)
+    #    num_success += success
+    #print('num test', num_test, 'num_success', num_success)
+
     #timedata = np.array([0. , 0.485, 0.735, 0.994, 1.496])
-    #timedata = np.array([0.,    0.497, 0.767, 0.978, 1.49 ])
     #test_timedata(timedata)
+
+    # analyze two time series (consecutive, where the last in the first timeseries = the first in the second)
+    timedata1 = np.array([0., 0.734, 1.512, 2.497, 3.256, 4.025])
+    timedata2 = np.array([4.025, 4.252, 4.5, 5.009, 5.54 ])
+    t = [timedata1,timedata2]
+    test_timedatas(t,2)
 
