@@ -547,11 +547,11 @@ if __name__ == '__main__':
         # check if best suggestion == original dur pattern, and test 1000 times
         # Flattening list using list comprehension  
         orig_durs = [x for sublist in durs for x in sublist] 
-        #print('original durs', orig_durs)
+        print('original durs', orig_durs)
         best= np.argsort(scoresum)[0]
         best_durs = reconciled_dur_deviations[best][0]
-        #print('best analysis', best_durs)
-        #print('t:', timetest)
+        print('best analysis', best_durs)
+        print('t:', timetest)
 
         return np.array_equal(orig_durs,best_durs)
     
@@ -562,7 +562,8 @@ if __name__ == '__main__':
         for i in range(n_times):
             test += test_analysis_reconcile(durs, r_deviation=0.1)
         print(f' correct {test} out of {i+1} attempts')
-    
+    testing(100)
+
     # profiling tests
     #import time
     #timenow = time.time()
