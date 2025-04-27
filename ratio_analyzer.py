@@ -417,6 +417,11 @@ def test_patterns(durs, subdiv_bpm=120, r_deviation=0, printit=True):
     return analyses, timetest
 
 def reconcile_tempi(tempi1,tempi2, tolerance=0.1):
+    # When analyzing two or more consecutive rhythm patterns
+    # try to reconcile the interpretation of the two patterns
+    # allow changing the selection of best representation of the first in light of evidence from the second
+    # also allow changing best representation of the second in light of evidence from the first
+    #
     # Compare arrays of tempi, try to find compatible tempo combinations
     # Compatible means they are almost equal (within tolerance limit)
     # If they can become compatible by integer multiplication (e.g. 120bpm and 240bpm),
@@ -434,71 +439,6 @@ def reconcile_tempi(tempi1,tempi2, tolerance=0.1):
                     reconcile_combos.append([[i,j],tf])
     # return indices for reconcilable tempi, and the factors needed for reconciliation
     return reconcile_combos
-
-def reconciliation(analyses):
-    # When analyzing two or more consecutive rhythm patterns
-    # try to reconcile the interpretation of the two patterns
-    # allow re-interpretation of the first in light of evidence from the second
-    # also allow interpretation of the second in light of eveidence from the first
-    # Use tempo as a reconciliation measure, try to find an interpretation where the two tempi match within a threshold (e.g. 10%)
-    # So:
-    # Take the best tempo from the first phrase analysis, look for matching tempi in the analysis of the second phrase
-    # Also take the first tempo from the second phrase analysis, and look for matching tempi in the analysis of the first phrase
-    # Case to solve: if no match can be found (does it indicate a tempo change in the input?)
-    #   - if this indicates a tempo change, we must break down the phrases to find the exact point of change
-    # Case to solve: if several matches can be found (take the best sum of scores?)
-    print('analysis reconciliation')
-    best1 = analyses[0][0]
-    best2 = analyses[1][0]
-    tempi1 = analyses[0][6]
-    tempi2 = analyses[1][6]
-    tempo_tolerance = 0.1
-    reconciled = False
-    if (tempi1[best1] < tempi2[best2]*(1-tempo_tolerance)) \
-        or (tempi1[best1] > tempi2[best2]*(1+tempo_tolerance)):
-        print('not matching:', tempi1[best1], tempi2[best2])
-    else:
-        print('reconciled')
-        reconciled = True
-        #print(analyses[i])
-        print('durations:', analyses[0][3][best1], analyses[1][3][best2])
-    alternative_bests = []
-    if not reconciled:
-        for i in range(len(tempi1)):
-            tmp = tempi1[i]
-            near_match = np.isclose(tempi2,tmp, tempo_tolerance) 
-            if np.sum(near_match) > 0:
-                for j in range(len(near_match)):
-                    if near_match[j]:
-                        alternative_bests.append([i,j])
-        for i in range(len(tempi2)):
-            tmp = tempi2[i]
-            near_match = np.isclose(tempi1,tmp, tempo_tolerance) 
-            if np.sum(near_match) > 0:
-                for j in range(len(near_match)):
-                    if near_match[j]:
-                        if [j,i] not in alternative_bests:
-                            alternative_bests.append([j,i])
-        print('alternative_bests', alternative_bests)
-        alt_best_score = 99
-        for combo in alternative_bests:
-            score_sum = analyses[0][5][combo[0]]+analyses[1][5][combo[1]]
-            print('alt combo scores', combo, score_sum)
-            if score_sum < alt_best_score:
-                alt_best = combo
-                alt_best_score = score_sum
-    if len(alternative_bests) == 0:
-        print('** ** CAN NOT BE RECONCILED')
-    else:
-        print('reconciled combo:', combo)
-        selected_durations = [analyses[0][3][combo[0]], analyses[1][3][combo[1]]]
-        print('reconciled durations:', selected_durations)
-        print('input durations', durs)
-        if np.array_equal(durs[0],selected_durations[0]) and np.array_equal(durs[1],selected_durations[1]):
-            reconciled = True
-    print('match found =', reconciled)
-    return reconciled
-
 
 if __name__ == '__main__':
     set_precision(0.6) # balance between deviation and complexity
