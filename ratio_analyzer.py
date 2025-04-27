@@ -281,7 +281,7 @@ def dur_pattern_suggestions(t, div_limit=4):
                     #if tempo < 1000: # pulse tempo over this threshold is probably an error
                     duration_patterns.append(d2)
                     tempi.append(tempo)
-                    dev = fit_dur_pattern_deviations(d2,t,tempo)
+                    dev = get_dur_pattern_deviations(d2,t,tempo)
                     deviations.append(dev)
     return duration_patterns, deviations, tempi
 
@@ -324,7 +324,7 @@ def indispensability_subdiv(trigger_seq):
         if indis_scores[ranked[-test_best],2] > indis_scores[ranked[-1],2]: # if the second alternative has better confidence
             subdiv = indis_scores[ranked[-test_best]][0] # use the second
             position = indis_scores[ranked[-test_best]][3]
-        print(f'indispensability confidence used to decide a tie between {int(indis_scores[ranked[-1]][0])} and {int(indis_scores[ranked[-test_best]][0])}')
+        #print(f'indispensability confidence used to decide a tie between {int(indis_scores[ranked[-1]][0])} and {int(indis_scores[ranked[-test_best]][0])}')
         test_best += 1
         if test_best > len(indis_scores):
             break
@@ -402,8 +402,11 @@ def test_patterns(durs, subdiv_bpm=120, r_deviation=0, printit=True):
     print(f'\ntesting analysis of {numpatterns} patterns. Simplify={simplify}')
     start_time = 0
     analyses = []
+    timetest = []
     for i in range(numpatterns):
         t = make_time_from_dur(durs[i], r_deviation, subdiv_bpm, start_time=start_time)
+        if i == 0: timetest.extend(t.tolist())
+        else: timetest.extend(t[1:].tolist())
         start_time = t[-1]
         analysis = analyze(t)
         analyses.append(analysis)
@@ -411,7 +414,7 @@ def test_patterns(durs, subdiv_bpm=120, r_deviation=0, printit=True):
             print(f'dur pattern {i} \n{durs[i]}') 
             print('t:', t)
             print_analysis(analysis)
-    return analyses
+    return analyses, timetest
 
 def reconcile_tempi(tempi1,tempi2, tolerance=0.1):
     # Compare arrays of tempi, try to find compatible tempo combinations
@@ -431,12 +434,6 @@ def reconcile_tempi(tempi1,tempi2, tolerance=0.1):
                     reconcile_combos.append([[i,j],tf])
     # return indices for reconcilable tempi, and the factors needed for reconciliation
     return reconcile_combos
-
-#tempi1 = np.array([236,884])
-#tempi2 = np.array([237,920,3107])
-tempi1 = np.array([60,180])
-tempi2 = np.array([120,240])
-print(reconcile_tempi(tempi1,tempi2))
 
 def reconciliation(analyses):
     # When analyzing two or more consecutive rhythm patterns
@@ -504,18 +501,88 @@ def reconciliation(analyses):
 
 
 if __name__ == '__main__':
-    set_precision(0.5) # balance betwseen deviation and complexity
-    set_simplify(False)
+    set_precision(0.6) # balance between deviation and complexity
+    set_simplify(True)
     d=[2,1,1,2]
     #d=[6,3,3,6,4,2,6,3,3,6]
     #d=[6,3,3,4,4,4]
     #test_pattern(d, r_deviation=0.1, subdiv_bpm=240)
     
+    def test_analysis_reconcile(durs, r_deviation=0.1):
+        analyses, timetest = test_patterns(durs, r_deviation=r_deviation, subdiv_bpm=240, printit=False)
+        # analyses format
+        # best, pulse, pulsepos, duration_patterns, deviations, scores, tempi
+        #reconciliation(analyses)
+        tempi1 = np.array(analyses[0][6])
+        tempi2 = np.array(analyses[1][6])
+        reconcile_combos = reconcile_tempi(tempi1, tempi2)
+        i = 1
+        reconciled_dur_deviations = []
+        for r in reconcile_combos:
+            #print(i, 'reconcile indices', r[0], 'factors', r[1])
+            dur_pat = (np.array(analyses[0][3][r[0][0]])*r[1][0]).tolist()
+            dur_pat2 = (np.array(analyses[1][3][r[0][1]])*r[1][1]).tolist()
+            dur_pat.extend(dur_pat2)
+            rec_deviations = (analyses[0][4][r[0][0]]).tolist()
+            rec_deviations.extend((analyses[1][4][r[0][1]]).tolist())
+            reconciled_dur_deviations.append([dur_pat, rec_deviations])
+            #print('dur_pat', dur_pat)
+            #print('sum score', analyses[0][5][r[0][0]] + analyses[1][5][r[0][1]])
+            i += 1
+        # re-evaluate reconciled suggestions according to height and deviation
+        #print('**')
+        heights = []
+        deviations = []
+        for i in range(len(reconciled_dur_deviations)):
+            dur_pattern, dp_deviations = reconciled_dur_deviations[i]
+            height = dur_pattern_height(dur_pattern)
+            heights.append(height)
+            deviations.append(np.sum(np.abs(dp_deviations)))
+        scoresum = normalize_and_add_scores([deviations, heights], weights)
+        for i in np.argsort(scoresum):
+            dur_pattern = reconciled_dur_deviations[i][0]
+            score = scoresum[i]
+            #print('* pat, score', dur_pattern, score)
+    
+        # check if best suggestion == original dur pattern, and test 1000 times
+        # Flattening list using list comprehension  
+        orig_durs = [x for sublist in durs for x in sublist] 
+        #print('original durs', orig_durs)
+        best= np.argsort(scoresum)[0]
+        best_durs = reconciled_dur_deviations[best][0]
+        #print('best analysis', best_durs)
+        #print('t:', timetest)
+
+        return np.array_equal(orig_durs,best_durs)
+    
     durs = [[2,1,1,2],[1,1,2,2]]
     durs = [[3,3,4,3,3],[1,1,2,2]]
-    #analyses = test_patterns(durs, r_deviation=0.1, subdiv_bpm=240)
-    #reconciliation(analyses)
+    def testing(n_times=100):
+        test = 0
+        for i in range(n_times):
+            test += test_analysis_reconcile(durs, r_deviation=0.1)
+        print(f' correct {test} out of {i+1} attempts')
     
+    # profiling tests
+    #import time
+    #timenow = time.time()
+    #testing(1000)
+    #print('elapsed', time.time()-timenow)
+    #import cProfile
+    #cProfile.run('testing(1000)')
+
+    # if no match:
+    # - with synthetic test sequences: 
+    #   - double check if the time series would be perceptually interpretable as the duration pattern
+    #   - see how we can massage the algorithm to interpret it correctly
+    # - with real data:
+    #   - perhaps there was a tempo or time signature change during the analysed phrase
+    #   - see if we can break up the phrase to find the switch point:
+    #       - run ratio analyzer on subsequences, adding one event at a time 
+    #       - look for the point where we get a significantly higer deviation
+    #       - divide the phrase there, analyze first and second half independently 
+    #         (not reconcile across this phrase border)
+
     #num_test = 1
     #num_success = 0
     #for i in range(num_test):
