@@ -403,7 +403,7 @@ def test_patterns(durs, subdiv_bpm=120, r_deviation=0, printit=True):
     start_time = 0
     analyses = []
     for i in range(numpatterns):
-        t = make_time_from_dur(d, r_deviation, subdiv_bpm, start_time=start_time)
+        t = make_time_from_dur(durs[i], r_deviation, subdiv_bpm, start_time=start_time)
         start_time = t[-1]
         analysis = analyze(t)
         analyses.append(analysis)
@@ -413,9 +413,33 @@ def test_patterns(durs, subdiv_bpm=120, r_deviation=0, printit=True):
             print_analysis(analysis)
     return analyses
 
-def test_two_patterns(durs, subdiv_bpm=120, r_deviation=0):
-    print(f'\ntesting analysis of two consecutive patterns. Simplify={simplify}')
-    # analyze two consecutive rhythm patterns
+def reconcile_tempi(tempi1,tempi2, tolerance=0.1):
+    # Compare arrays of tempi, try to find compatible tempo combinations
+    # Compatible means they are almost equal (within tolerance limit)
+    # If they can become compatible by integer multiplication (e.g. 120bpm and 240bpm),
+    # save the factor needed to reconcile them.
+    # Allow only multipliers [2,3], as these can represent reconcilable tempo ratios
+    # The non-redundant tempo factors are then [1,1],[1,2],[1,3],[2,1],[2,3],[3,1],[3,2]
+    tempo_factors = [[1,1],[1,2],[1,3],[2,1],[2,3],[3,1],[3,2]]
+    reconcile_combos = []
+    for tf in tempo_factors:
+        for i in range(len(tempi1)):
+            tmp = tempi1[i]*tf[0]
+            near_match = np.isclose(tempi2*tf[1], tmp, tolerance) 
+            for j in range(len(near_match)):
+                if near_match[j]:
+                    reconcile_combos.append([[i,j],tf])
+    # return indices for reconcilable tempi, and the factors needed for reconciliation
+    return reconcile_combos
+
+#tempi1 = np.array([236,884])
+#tempi2 = np.array([237,920,3107])
+tempi1 = np.array([60,180])
+tempi2 = np.array([120,240])
+print(reconcile_tempi(tempi1,tempi2))
+
+def reconciliation(analyses):
+    # When analyzing two or more consecutive rhythm patterns
     # try to reconcile the interpretation of the two patterns
     # allow re-interpretation of the first in light of evidence from the second
     # also allow interpretation of the second in light of eveidence from the first
@@ -426,22 +450,6 @@ def test_two_patterns(durs, subdiv_bpm=120, r_deviation=0):
     # Case to solve: if no match can be found (does it indicate a tempo change in the input?)
     #   - if this indicates a tempo change, we must break down the phrases to find the exact point of change
     # Case to solve: if several matches can be found (take the best sum of scores?)
-    start_time = 0
-    pattern_num = 0
-    analyses = []
-    for d in durs:
-        print('* dur pattern', pattern_num+1, durs[pattern_num])
-        pattern_num += 1
-        t = make_time_from_dur(d, r_deviation, subdiv_bpm, start_time=start_time)
-        print('t:', t)
-        start_time = t[-1]
-        best, pulse, pulsepos, duration_patterns, deviations, scores, tempi = analyze(t)
-        analyses.append([best, pulse, pulsepos, duration_patterns, deviations, scores, tempi])
-    for i in range(len(analyses)):
-        best, pulse, pulsepos, duration_patterns, deviations, scores, tempi = analyses[i]
-        print('best, pulse, pulsepos', best, pulse, pulsepos)
-        for i in np.argsort(scores):
-            print(f'{i}, {duration_patterns[i]} {scores[i]:.2f}, tempo: {tempi[i]:.2f} \n  dev: {deviations[i]} ')
     print('analysis reconciliation')
     best1 = analyses[0][0]
     best2 = analyses[1][0]
@@ -505,7 +513,8 @@ if __name__ == '__main__':
     
     durs = [[2,1,1,2],[1,1,2,2]]
     durs = [[3,3,4,3,3],[1,1,2,2]]
-    #test_patterns(durs, r_deviation=0.1, subdiv_bpm=240)
+    #analyses = test_patterns(durs, r_deviation=0.1, subdiv_bpm=240)
+    #reconciliation(analyses)
     
     #num_test = 1
     #num_success = 0
@@ -518,8 +527,8 @@ if __name__ == '__main__':
     #test_timedata(timedata)
 
     # analyze two time series (consecutive, where the last in the first timeseries = the first in the second)
-    timedata1 = np.array([0., 0.734, 1.512, 2.497, 3.256, 4.025])
-    timedata2 = np.array([4.025, 4.252, 4.5, 5.009, 5.54 ])
-    t = [timedata1,timedata2]
-    test_timedatas(t,2)
+    #timedata1 = np.array([0., 0.734, 1.512, 2.497, 3.256, 4.025])
+    #timedata2 = np.array([4.025, 4.252, 4.5, 5.009, 5.54 ])
+    #t = [timedata1,timedata2]
+    #test_timedatas(t,2)
 
