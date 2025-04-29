@@ -142,6 +142,13 @@ def get_dur_pattern_deviations(dur_pattern, t, tempo):
     #print('test', test)
     return dur_dev
 
+#timeseries = np.array([0,.100,.201,.300])
+#dur = [1,1,1]
+#tempo = fit_tempo_from_dur_pattern(dur,timeseries)
+#print('tempo', tempo)
+#dev = get_dur_pattern_deviations(dur, timeseries, tempo)
+#print('dev', dev)
+
 def get_deviation_polarity(deviations, threshold):
     # for each deviation, give a -1, 0, or 1 polarity
     # depending on the sign, but keep a range close to zero as 0 polarity
@@ -330,6 +337,54 @@ def indispensability_subdiv(trigger_seq):
             break
     return int(subdiv), int(position)
 
+def reconcile_tempi(tempi1,tempi2, tolerance=0.1):
+    # When analyzing two or more consecutive rhythm patterns
+    # try to reconcile the interpretation of the two patterns
+    # allow changing the selection of best representation of the first in light of evidence from the second
+    # also allow changing best representation of the second in light of evidence from the first
+    #
+    # Compare arrays of tempi, try to find compatible tempo combinations
+    # Compatible means they are almost equal (within tolerance limit)
+    # If they can become compatible by integer multiplication (e.g. 120bpm and 240bpm),
+    # save the factor needed to reconcile them.
+    # Allow only multipliers [2,3], as these can represent reconcilable tempo ratios
+    # The non-redundant tempo factors are then [1,1],[1,2],[1,3],[2,1],[2,3],[3,1],[3,2]
+    tempo_factors = [[1,1],[1,2],[1,3],[2,1],[2,3],[3,1],[3,2]]
+    reconcile_combos = []
+    for tf in tempo_factors:
+        for i in range(len(tempi1)):
+            tmp = tempi1[i]*tf[0]
+            near_match = np.isclose(tempi2*tf[1], tmp, tolerance) 
+            for j in range(len(near_match)):
+                if near_match[j]:
+                    reconcile_combos.append([[i,j],tf])
+    # return indices for reconcilable tempi, and the factors needed for reconciliation
+    return reconcile_combos
+
+def eval_reconciled(analyses, reconcile_combos):  
+    # re-evaluate reconciled suggestions according to height and deviation
+    # height might have changed, deviation is the same as before
+    i = 1
+    reconciled_dur_deviations = []
+    for r in reconcile_combos:
+        dur_pat = (np.array(analyses[0][3][r[0][0]])*r[1][0]).tolist()
+        dur_pat2 = (np.array(analyses[1][3][r[0][1]])*r[1][1]).tolist()
+        dur_pat.extend(dur_pat2)
+        rec_deviations = (analyses[0][4][r[0][0]]).tolist()
+        rec_deviations.extend((analyses[1][4][r[0][1]]).tolist())
+        reconciled_dur_deviations.append([dur_pat, rec_deviations])
+        i += 1
+    heights = []
+    deviations = []
+    for i in range(len(reconciled_dur_deviations)):
+        dur_pattern, dp_deviations = reconciled_dur_deviations[i]
+        height = dur_pattern_height(dur_pattern)
+        heights.append(height)
+        deviations.append(np.sum(np.abs(dp_deviations)))
+    scoresum = normalize_and_add_scores([deviations, heights], weights)
+    # Returns the score for combined phrases, and also return the phrases
+    return scoresum, reconciled_dur_deviations 
+
 def analyze(t, div_limit=4):
     """Analysis of time sequence, resulting in a duration pattern with tempo estimation"""
     duration_patterns, deviations, tempi = dur_pattern_suggestions(t)
@@ -416,127 +471,181 @@ def test_patterns(durs, subdiv_bpm=120, r_deviation=0, printit=True):
             print_analysis(analysis)
     return analyses, timetest
 
-def reconcile_tempi(tempi1,tempi2, tolerance=0.1):
-    # When analyzing two or more consecutive rhythm patterns
-    # try to reconcile the interpretation of the two patterns
-    # allow changing the selection of best representation of the first in light of evidence from the second
-    # also allow changing best representation of the second in light of evidence from the first
-    #
-    # Compare arrays of tempi, try to find compatible tempo combinations
-    # Compatible means they are almost equal (within tolerance limit)
-    # If they can become compatible by integer multiplication (e.g. 120bpm and 240bpm),
-    # save the factor needed to reconcile them.
-    # Allow only multipliers [2,3], as these can represent reconcilable tempo ratios
-    # The non-redundant tempo factors are then [1,1],[1,2],[1,3],[2,1],[2,3],[3,1],[3,2]
-    tempo_factors = [[1,1],[1,2],[1,3],[2,1],[2,3],[3,1],[3,2]]
-    reconcile_combos = []
-    for tf in tempo_factors:
-        for i in range(len(tempi1)):
-            tmp = tempi1[i]*tf[0]
-            near_match = np.isclose(tempi2*tf[1], tmp, tolerance) 
-            for j in range(len(near_match)):
-                if near_match[j]:
-                    reconcile_combos.append([[i,j],tf])
-    # return indices for reconcilable tempi, and the factors needed for reconciliation
-    return reconcile_combos
+def test_dur_analysis_reconcile(durs, r_deviation=0.1):
+    analyses, timetest = test_patterns(durs, r_deviation=r_deviation, subdiv_bpm=240, printit=False)
+    # analyses format
+    # best, pulse, pulsepos, duration_patterns, deviations, scores, tempi
+    tempi1 = np.array(analyses[0][6])
+    tempi2 = np.array(analyses[1][6])
+    reconcile_combos = reconcile_tempi(tempi1, tempi2)
+    
+    scoresum, reconciled_dur_deviations = eval_reconciled(analyses, reconcile_combos)
+    orig_durs = [x for sublist in durs for x in sublist] # flatten list 
+    print('original durs', orig_durs)
+    best = np.argsort(scoresum)[0]
+    best_durs = reconciled_dur_deviations[best][0]
+    print('best analysis', best_durs)
+    print('t:', timetest)
+    return np.array_equal(orig_durs,best_durs) # return True if analysis == input dur_pattern
 
+def analysis_reconcile(analyses):
+    # analyses format
+    # best, pulse, pulsepos, duration_patterns, deviations, scores, tempi
+    tempi1 = np.array(analyses[0][6])
+    tempi2 = np.array(analyses[1][6])
+    reconcile_combos = reconcile_tempi(tempi1, tempi2)
+    scoresum, reconciled_dur_deviations = eval_reconciled(analyses, reconcile_combos)
+    best = np.argsort(scoresum)[0]
+    best_durs_devs = reconciled_dur_deviations[best]
+    print('best analysis', best_durs_devs)
+    return best_durs_devs
+
+def test_chunk_analysis_time(timeseries, chunk_size=5,  time_out=2):
+    # From a long timeseries, split it into chunks and analyze each chunk.
+    # For each chunk, use the last time stamp of the previous chunk as the start time
+    # If delta time is larger than time_out:
+    #   1. close previous chunk and analyze
+    #       - if this chunk is too short to analyze, combine with previous chunk and analyze that again
+    #   2. start new chunk, reset chunk counter
+    #   3. reconcile phrases, if more than one phrase since chunk closed
+    analyses = []
+    chunk_counter = -1
+    chunk_indices = [0,0] # start end end index
+    last_analyzed = 0
+    print('len', len(timeseries))
+    for i in range(len(timeseries)-1):
+        print(f'i {i}, chunk_counter {chunk_counter}')#, t {timeseries[i]}')
+        delta = timeseries[i+1]-timeseries[i]
+        chunk_counter += 1
+        if chunk_counter == chunk_size-1:
+            chunk_indices = [last_analyzed,i]
+            time_chunk = timeseries[chunk_indices[0]:chunk_indices[1]+1]
+            print(f'\nanalyze chunk, {chunk_indices} {time_chunk}')
+            analysis = analyze(time_chunk)
+            dur_pat = analysis[3][analysis[0]]
+            print('dur pat', dur_pat)
+            analyses.append(analysis)
+
+            if len(analyses) > 1:
+                durs_devs = analysis_reconcile(analyses)
+                print('analyzed:', durs_devs)
+                analyses = [analyses[1]] # delete previous phrase 
+            
+            last_analyzed = i
+            chunk_counter = 0
+        if (delta > time_out):
+            print(f'\ni {i}, close chunk {last_analyzed, chunk_indices, chunk_counter, chunk_size}')
+            if 0 < chunk_counter < chunk_size-1:
+                chunk_indices[1] = i
+                time_chunk = timeseries[chunk_indices[0]:chunk_indices[1]+1]
+                print(f'**re-analyze closed chunk, {chunk_indices} {time_chunk}')
+                analysis = analyze(time_chunk)
+                dur_pat = analysis[3][analysis[0]]
+                print('dur pat', dur_pat)
+                analyses.append(analysis)
+                
+                if len(analyses) > 1:
+                    durs_devs = analysis_reconcile(analyses)
+                    print('analyzed:', durs_devs)
+                    analyses = [analyses[1]] # delete previous phrase 
+                
+                last_analyzed = i+1
+                chunk_counter = 0
+        if i == (len(timeseries)-2):
+            print(f'\ni {i}, last event {last_analyzed, chunk_indices, chunk_counter, chunk_size}')
+            if chunk_counter < chunk_size-1:
+                chunk_indices[1] = i+1
+                time_chunk = timeseries[chunk_indices[0]:chunk_indices[1]+1]
+                print(f'**re-analyze closed chunk, {chunk_indices} {time_chunk}')
+                analysis = analyze(time_chunk)
+                analyses.append(analysis)
+                dur_pat = analysis[3][analysis[0]]
+                print('dur pat', dur_pat)
+
+                if len(analyses) > 1:
+                    durs_devs = analysis_reconcile(analyses)
+                    print('analyzed:', durs_devs)
+                    analyses = [analyses[1]] # delete previous phrase 
+
+def test_chunk_analysis_template(timeseries, chunk_size=5,  time_out=2):
+    # From a long timeseries, split it into chunks and analyze each chunk.
+    # For each chunk, use the last time stamp of the previous chunk as the start time
+    # If delta time is larger than time_out:
+    #   1. close chunk and analyze
+    #       - if this chunk is too short to analyze, combine with previous chunk and analyze that again
+    #   2. start new chunk, reset chunk counter
+    # If last event: as for delta time out above
+    chunk_counter = 0
+    chunk_indices = [0,0] # start end end index
+    last_analyzed = 0
+    print('len', len(timeseries))
+    for i in range(len(timeseries)-1):
+        print(f'i {i}, chunk_counter {chunk_counter}')#, t {timeseries[i]}')
+        delta = timeseries[i+1]-timeseries[i] # to test for time out
+        do_analysis = False
+        if chunk_counter == chunk_size-1:
+            print('regular')
+            chunk_indices = [last_analyzed,i]
+            last_analyzed = i
+            chunk_counter = 0
+            do_analysis = True
+        if (delta > time_out):
+            print('deltatime close chunk', chunk_counter)
+            if chunk_counter < chunk_size-1:
+                print('re-analyze closed chunk')
+                chunk_indices[1] = i
+                last_analyzed = i+1
+                chunk_counter = 0
+                do_analysis = True
+        if i == (len(timeseries)-2):
+            print(f'i {i+1}, last event {last_analyzed, chunk_indices, chunk_counter, chunk_size}')
+            if chunk_counter == chunk_size-2:
+                print('last: regular')
+                chunk_indices = [last_analyzed,i+1]
+                last_analyzed = i+1
+                do_analysis = True
+            elif chunk_counter < chunk_size-2:
+                print('last: re-analyze')
+                chunk_indices[1] = i+1
+                do_analysis = True
+        if do_analysis:
+            time_chunk = timeseries[chunk_indices[0]:chunk_indices[1]+1]
+            print(f'analyze chunk, {chunk_indices} {time_chunk}')
+
+        chunk_counter += 1
+
+        
+        
+        
 if __name__ == '__main__':
     set_precision(0.6) # balance between deviation and complexity
     set_simplify(True)
-    d=[2,1,1,2]
+    
+    timeseries = np.array([0,.1,.2,.3,.4,.5,.6,.7,.8,.9])
+    timeseries = np.array([0,.1,.2,.3,.4,.5,.6,.7,.8,.9,1.0])
+    timeseries = np.array([0,.1,.2,.3,.4,.5, 2.6,2.7,2.8,2.9,3.0])
+    timeseries = np.array([0,.1,.2,.3,.4,.5,.6,.7,.8,.9,1.0,1.1, 1.2, 1.3, 1.4])
+    timeseries = np.array([0., 0.49994, 0.99991, 1.49985, 1.99982, 2.99973, 3.49966, 3.74963, 4., 4.49994, 5.49985, 5.99982, 6.16632, 6.33322, 6.49976])
+    timeseries = np.array([0., 0.5, 1, 1.5, 2, 2.5, 2.75, 3, 3.5, 4., 4.166, 4.33, 4.5, 5])
+    timeseries = np.array([0., 0.5, 1, 1.5, 2, 2.1, 2.25, 2.5, 2.75, 3, 13.5, 14., 14.166, 14.33])
+    # works for combining and reconciling phrases
+    # now, add output also in cases where we have only a single phrase
+    # and add flag to signify if the oldest phrase (of the ones reconciled) has changed 
+    #   - so we know we need to update the corpus and prob lobgic
+    #test_chunk_analysis_time(timeseries)
+    test_chunk_analysis_template(timeseries)
+
+    #d=[2,1,1,2]
     #d=[6,3,3,6,4,2,6,3,3,6]
     #d=[6,3,3,4,4,4]
     #test_pattern(d, r_deviation=0.1, subdiv_bpm=240)
     
-    def test_analysis_reconcile(durs, r_deviation=0.1):
-        analyses, timetest = test_patterns(durs, r_deviation=r_deviation, subdiv_bpm=240, printit=False)
-        # analyses format
-        # best, pulse, pulsepos, duration_patterns, deviations, scores, tempi
-        #reconciliation(analyses)
-        tempi1 = np.array(analyses[0][6])
-        tempi2 = np.array(analyses[1][6])
-        reconcile_combos = reconcile_tempi(tempi1, tempi2)
-        i = 1
-        reconciled_dur_deviations = []
-        for r in reconcile_combos:
-            #print(i, 'reconcile indices', r[0], 'factors', r[1])
-            dur_pat = (np.array(analyses[0][3][r[0][0]])*r[1][0]).tolist()
-            dur_pat2 = (np.array(analyses[1][3][r[0][1]])*r[1][1]).tolist()
-            dur_pat.extend(dur_pat2)
-            rec_deviations = (analyses[0][4][r[0][0]]).tolist()
-            rec_deviations.extend((analyses[1][4][r[0][1]]).tolist())
-            reconciled_dur_deviations.append([dur_pat, rec_deviations])
-            #print('dur_pat', dur_pat)
-            #print('sum score', analyses[0][5][r[0][0]] + analyses[1][5][r[0][1]])
-            i += 1
-        # re-evaluate reconciled suggestions according to height and deviation
-        #print('**')
-        heights = []
-        deviations = []
-        for i in range(len(reconciled_dur_deviations)):
-            dur_pattern, dp_deviations = reconciled_dur_deviations[i]
-            height = dur_pattern_height(dur_pattern)
-            heights.append(height)
-            deviations.append(np.sum(np.abs(dp_deviations)))
-        scoresum = normalize_and_add_scores([deviations, heights], weights)
-        for i in np.argsort(scoresum):
-            dur_pattern = reconciled_dur_deviations[i][0]
-            score = scoresum[i]
-            #print('* pat, score', dur_pattern, score)
-    
-        # check if best suggestion == original dur pattern, and test 1000 times
-        # Flattening list using list comprehension  
-        orig_durs = [x for sublist in durs for x in sublist] 
-        print('original durs', orig_durs)
-        best= np.argsort(scoresum)[0]
-        best_durs = reconciled_dur_deviations[best][0]
-        print('best analysis', best_durs)
-        print('t:', timetest)
-
-        return np.array_equal(orig_durs,best_durs)
-    
-    durs = [[2,1,1,2],[1,1,2,2]]
-    durs = [[3,3,4,3,3],[1,1,2,2]]
-    def testing(n_times=100):
-        test = 0
-        for i in range(n_times):
-            test += test_analysis_reconcile(durs, r_deviation=0.1)
-        print(f' correct {test} out of {i+1} attempts')
-    testing(100)
-
-    # profiling tests
-    #import time
-    #timenow = time.time()
-    #testing(1000)
-    #print('elapsed', time.time()-timenow)
-    #import cProfile
-    #cProfile.run('testing(1000)')
-
-    # if no match:
-    # - with synthetic test sequences: 
-    #   - double check if the time series would be perceptually interpretable as the duration pattern
-    #   - see how we can massage the algorithm to interpret it correctly
-    # - with real data:
-    #   - perhaps there was a tempo or time signature change during the analysed phrase
-    #   - see if we can break up the phrase to find the switch point:
-    #       - run ratio analyzer on subsequences, adding one event at a time 
-    #       - look for the point where we get a significantly higer deviation
-    #       - divide the phrase there, analyze first and second half independently 
-    #         (not reconcile across this phrase border)
-
-    #num_test = 1
-    #num_success = 0
-    #for i in range(num_test):
-    #    success = test_two_patterns(durs, r_deviation=0.1, subdiv_bpm=240)
-    #    num_success += success
-    #print('num test', num_test, 'num_success', num_success)
-
-    #timedata = np.array([0. , 0.485, 0.735, 0.994, 1.496])
-    #test_timedata(timedata)
-
-    # analyze two time series (consecutive, where the last in the first timeseries = the first in the second)
-    #timedata1 = np.array([0., 0.734, 1.512, 2.497, 3.256, 4.025])
-    #timedata2 = np.array([4.025, 4.252, 4.5, 5.009, 5.54 ])
-    #t = [timedata1,timedata2]
-    #test_timedatas(t,2)
+    #durs = [[2,1,1,2],[1,1,2,2]]
+    #durs = [[3,3,4,3,3],[1,1,2,2]]
+    #def testing(n_times=100):
+    #    test = 0
+    #    for i in range(n_times):
+    #        test += test_dur_analysis_reconcile(durs, r_deviation=0.1)
+    #    print(f' correct {test} out of {i+1} attempts')
+    #testing(100)
 

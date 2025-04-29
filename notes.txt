@@ -1,3 +1,29 @@
+
+# Reconciliation
+# if no match:
+    - with synthetic test sequences: 
+      - double check if the time series would be perceptually interpretable as the duration pattern
+      - see how we can massage the algorithm to interpret it correctly
+    - with real data:
+      - perhaps there was a tempo or time signature change during the analysed phrase
+      - see if we can break up the phrase to find the switch point:
+          - run ratio analyzer on subsequences, adding one event at a time 
+          - look for the point where we get a significantly higer deviation
+          - divide the phrase there, analyze first and second half independently 
+            (not reconcile across this phrase border)
+    - BUT: the best and simplest approach is if we find no reconciliation match, do not reconciliate
+      - that is, keep the analyses of the two phrases as they are
+      - if we encountered a tempo change, the first phrase is from the old tempo, the second in the new tempo
+        - in this case, keeping them as they are would be good
+        - any uncertainties regarding the second phrase will be solve in the next iteration (next new phrase)
+      - possible problem: if the tempo shift does not occur on an analysis boundary (likely)
+        - that is, we divide the input into arbutrary chunks that most likely does not correspond to played phrases
+        - might need to investigate the phrase(s) to find the location of the tempo shift
+          - use method outlined above (ratio approximation on incremental subsequence) to find the point
+
+
+
+
 * Compare scores for these examples
 0 1 1 0.3 1 0.2 0.3 0.99 (good?)
 1 1 1 1   1 1   1   1 (not so good)
