@@ -532,65 +532,38 @@ def test_dur_analysis_reconcile(durs, r_deviation=0.1, test_bpm=240, prev_tempo=
 
 def test_chunk_analysis_time(timeseries, chunk_size=5,  time_out=1.9):
     # From a long timeseries, split it into chunks and analyze each chunk.
-    # For each chunk, use the last time stamp of the previous chunk as the start time
-    # If delta time is larger than time_out:
-    #   1. close chunk and analyze
-    #       - if this chunk is too short to analyze, combine with previous chunk and analyze that again
-    #   2. start new chunk, reset chunk counter
-    # If last event:  close chunk and analyze (as above, but other indices)
+    # The events in the time series occur in real time but we use an array here for testing
+    # The chunks will be overlapping by one event ([1,2,3,4],[4,5,6,7])
+    # When we have a full chunk size of events: analyze
+    # On last event: 
+    #   - if we have already analyzed: pass
+    #   - if there are any events not yet analyzed: analyze the last chunk again, including these events
+    #   - if too few events altogether, print warning and exit
+
+    # split to separate function:    
     # If more than one phrase since chunk closed: Reconcile phrases
-    analyses = []
-    chunk_counter = 0
-    chunk_indices = [0,0] # start end end index
-    last_analyzed = 0
-    for i in range(len(timeseries)-1):
-        delta = timeseries[i+1]-timeseries[i] # to test for time out
-        do_analysis = 0 # a flag for analysis, set to 1 for regular, 2 if a phrase is re-analyzed
-        if chunk_counter == (chunk_size-1): # regular chunk
-            print('*regular')
-            chunk_indices = [last_analyzed,i]
-            last_analyzed = i
-            chunk_counter = 0
-            do_analysis = 1
-        if (delta > time_out): # time out close chunk
-            print('*time out', chunk_counter)
-            if chunk_counter < (chunk_size-1): # analyze any new events with previous chunk
-                print('time out extended')
-                chunk_indices[1] = i
-                last_analyzed = i+1
-                if chunk_counter == 0: do_analysis = 1
-                else: do_analysis = 2
-                chunk_counter = 0
-        if i == (len(timeseries)-2): # last event in time series
-            print('*last event', chunk_counter, chunk_size)
-            if chunk_counter == (chunk_size-2): # regular chunk
-                print('*last event regular')
-                chunk_indices = [last_analyzed,i+1]
-                last_analyzed = i+1
-                do_analysis = 1
-            else: # analyze any new events with previous chunk
-                print('*last event extended')
-                chunk_indices[1] = i+1
-                if chunk_counter == 0: do_analysis = 1
-                else: do_analysis = 2
-        if do_analysis > 0:
-            time_chunk = timeseries[chunk_indices[0]:chunk_indices[1]+1]
-            print(f'analyze chunk, {chunk_indices} {time_chunk}, do_analysis=',do_analysis)
-        chunk_counter += 1  
-timeseries = np.array([1,2,2.5,3,4,5,5.25,5.5,6,7,8,9,10,11,11.25,12,13,14,15])
-timeseries[5:] += 10
-timeseries[9:] += 10
+    chunk = []
+    for t in timeseries:
+        if t >= 0:
+            chunk.append(t)
+            if len(chunk) == chunk_size:
+                print('analyze', chunk)
+            if len(chunk) == (chunk_size*2)-1:
+                chunk = chunk[chunk_size-1:]
+                print('analyze', chunk)
+        if t < 0:
+            if len(chunk) == chunk_size:
+                pass # already analyzed
+            elif len(chunk) > chunk_size:
+                print('analyze2', chunk)
+            else: 
+                print('Not enough time data to analyze')
+            chunk = []
+
+timeseries = np.array([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19])
+timeseries[13] = -1 
 print(timeseries)
-test_chunk_analysis_time(timeseries)
-
-# rewrite this test to only take one time stamp
-# make another function that dispense one timestamp at a time, like realtime events
-# append to chunk
-# if chunk size=4
-# 1  1,2  1,2,3  1,2,3,4 (analyze) 1,2,3,4,5  1,2,3,4,5,6  1,2,3,4,5,6,7  1,2,3,4,5,6,7,8 (analyze and shuffle)
-# 5,6,7,8,9  5,6,7,8,10 ...
-# if new time > time out: (analyze and shuffle)
-
+test_chunk_analysis_time(timeseries, chunk_size=4)
 
 '''
             analysis = analyze(time_chunk)
