@@ -5,6 +5,15 @@ import numpy as np
 np.set_printoptions(suppress=True)
 np.set_printoptions(precision=2)
 
+def create_accel():
+    t = [0]
+    delta = 1
+    for i in range(8):
+        t.append(t[-1]+delta)
+        delta *= 0.98
+    print(t)
+create_accel()
+
 def get_indispensabilities(normalize='max'):
   # Barlow's indispensability for subdivided meters
   # Naming convention here is base_subdiv, so 3_4 is 3-meter divided in 4 subdivisions
@@ -367,3 +376,50 @@ cProfile.run('multiply_arrays(data)')
 cProfile.run('sum_arrays(data)')
 cProfile.run('array_normalize(data)')
 '''
+
+def test_chunk_analysis_template(timeseries, chunk_size=5,  time_out=2):
+    # From a long timeseries, split it into chunks and analyze each chunk.
+    # For each chunk, use the last time stamp of the previous chunk as the start time
+    # If delta time is larger than time_out:
+    #   1. close chunk and analyze
+    #       - if this chunk is too short to analyze, combine with previous chunk and analyze that again
+    #   2. start new chunk, reset chunk counter
+    # If last event: as for delta time out above
+    chunk_counter = 0
+    chunk_indices = [0,0] # start end end index
+    last_analyzed = 0
+    print('len', len(timeseries))
+    for i in range(len(timeseries)-1):
+        print(f'i {i}, chunk_counter {chunk_counter}')#, t {timeseries[i]}')
+        delta = timeseries[i+1]-timeseries[i] # to test for time out
+        do_analysis = False
+        if chunk_counter == chunk_size-1:
+            print('regular')
+            chunk_indices = [last_analyzed,i]
+            last_analyzed = i
+            chunk_counter = 0
+            do_analysis = True
+        if (delta > time_out):
+            print('deltatime close chunk', chunk_counter)
+            if chunk_counter < chunk_size-1:
+                print('re-analyze closed chunk')
+                chunk_indices[1] = i
+                last_analyzed = i+1
+                chunk_counter = 0
+                do_analysis = True
+        if i == (len(timeseries)-2):
+            print(f'i {i+1}, last event {last_analyzed, chunk_indices, chunk_counter, chunk_size}')
+            if chunk_counter == chunk_size-2:
+                print('last: regular')
+                chunk_indices = [last_analyzed,i+1]
+                last_analyzed = i+1
+                do_analysis = True
+            elif chunk_counter < chunk_size-2:
+                print('last: re-analyze')
+                chunk_indices[1] = i+1
+                do_analysis = True
+        if do_analysis:
+            time_chunk = timeseries[chunk_indices[0]:chunk_indices[1]+1]
+            print(f'analyze chunk, {chunk_indices} {time_chunk}')
+
+        chunk_counter += 1
