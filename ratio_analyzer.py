@@ -530,7 +530,7 @@ def test_dur_analysis_reconcile(durs, r_deviation=0.1, test_bpm=240, prev_tempo=
     print('t:', timetest)
     return np.array_equal(orig_durs,best_durs) # return True if analysis == input dur_pattern
 
-def test_chunk_analysis_time(timeseries, chunk_size=5,  time_out=1.9):
+def test_chunk_analysis_time(timeseries, chunk_size=5):
     # From a long timeseries, split it into chunks and analyze each chunk.
     # The events in the time series occur in real time but we use an array here for testing
     # The chunks will be overlapping by one event ([1,2,3,4],[4,5,6,7])
@@ -543,51 +543,40 @@ def test_chunk_analysis_time(timeseries, chunk_size=5,  time_out=1.9):
     # split to separate function:    
     # If more than one phrase since chunk closed: Reconcile phrases
     chunk = []
+    analyses = []
+    prev_tempo = 0
     for t in timeseries:
+        new_analysis = False
         if t >= 0:
             chunk.append(t)
-            if len(chunk) == chunk_size:
+            if (len(chunk) == (chunk_size*2)-1): #if we have anough for two chunks...
+                chunk = chunk[chunk_size-1:] # the first one have already been analyzed
+            if (len(chunk) == chunk_size):
                 print('analyze', chunk)
-            if len(chunk) == (chunk_size*2)-1:
-                chunk = chunk[chunk_size-1:]
-                print('analyze', chunk)
-        if t < 0:
+                analysis = analyze(np.array(chunk))
+                analyses.append(analysis)
+                new_analysis = True
+                if (len(analyses) > 2):
+                    analyses = analyses[-2:] # keep only two last phrases
+        if t < 0: # on sequence termination
             if len(chunk) == chunk_size:
                 pass # already analyzed
             elif len(chunk) > chunk_size:
                 print('analyze2', chunk)
+                analysis = analyze(np.array(chunk))
+                new_analysis = True
+                analyses[-1] = analysis # replace the last analysis
             else: 
                 print('Not enough time data to analyze')
             chunk = []
-
-timeseries = np.array([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19])
-timeseries[13] = -1 
-print(timeseries)
-test_chunk_analysis_time(timeseries, chunk_size=4)
-
-'''
-            analysis = analyze(time_chunk)
-            dur_pat = analysis[3][analysis[0]]
-            print('dur pat', dur_pat)
-            if len(analyses) == 0: # first time
-                analyses.append(analysis)
-            elif do_analysis == 1:
-                analyses.append(analysis)
-            else:
-                analyses[-1] = analysis
-            print('len analyses', len(analyses))
-            if (len(analyses) > 2):
-                analyses = [analyses[-2],analyses[-1]] # keep only two last phrases
+        if new_analysis:
+            dur_pat1 = analyses[0][3][analyses[0][0]]
             if len(analyses) == 2:
-                #print('**reconciling 2 phrases:')
-                #for a in analyses:
-                #    for item in a:
-                #        print(item)
-                #print('')
-                durs_devs = analysis_reconcile(analyses)
-                print('reconciled:', durs_devs)
-        chunk_counter += 1  
-'''
+                dur_pat2 = analyses[1][3][analyses[1][0]]
+                print(f'**reconciling 2 phrases: \n{dur_pat1} \n{dur_pat2}')
+                durs_devs_tpo = analysis_reconcile(analyses, prev_tempo=prev_tempo)
+                prev_tempo = durs_devs_tpo[2]
+                print('reconciled:', durs_devs_tpo)
 
 
 if __name__ == '__main__':
@@ -603,8 +592,14 @@ if __name__ == '__main__':
     #timeseries = np.array([0., 0.5, 1, 1.5, 2, 2.25, 2.5, 2.75, 3, 13.5, 14., 14.166, 14.33, 14.5, 15])
     
     # analyze a time series, break up into chunks
-    #timeseries = np.array([1,2,2.5,3,4,5,5.25,5.5,6,7,8,9,10,11,11.25,12,13])
-    #test_chunk_analysis_time(timeseries)
+    timeseries = np.array([1,2,2.5,3,4,5,5.25,5.5,6,7,8,8.125,8.25,9,10,11,11.25,12,-1, 13,14,15,16,17])
+    test_chunk_analysis_time(timeseries)
+
+    #timeseries = np.array([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19])
+    #timeseries[11] = -1 
+    #print(timeseries)
+    #test_chunk_analysis_time(timeseries, chunk_size=4)
+
 
     # store tempo with dur pattern in corpus, to check if rewrite is needed
     # for each event, calculate new tempo, then use this tempo to check the next previous event
