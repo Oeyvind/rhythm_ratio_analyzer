@@ -341,9 +341,10 @@ instr 31
   ; send analyze trigger to Python
   kanalyzetrig init 0
   kanalyzetrig += krec_trig_off
-  k_ = 1
-  OSCsend kanalyzetrig, "127.0.0.1", 9901, "/client_analyze_trig", "i", k_
-  
+  ;k_ = 1
+  ;OSCsend kanalyzetrig, "127.0.0.1", 9901, "/client_analyze_trig", "i", k_
+  OSCsend kanalyzetrig, "127.0.0.1", 9901, "/client_eventdata", "fffff", -1, -1, -1, -1, -1
+
   ; send other parameter controls to Python
   kdev_vs_complexity chnget "dev_vs_complexity"
   ksimplify chnget "simplify"
