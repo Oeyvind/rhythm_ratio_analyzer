@@ -31,7 +31,8 @@ class DataContainers:
       'velocity_relative': 10, 
       'notenum': 11,
       'notenum_relative': 12,
-      'chord_index': 13
+      'chord_index': 13,
+      'tempo' : 14
     }
     print('pnum_corpus keys', self.pnum_corpus.keys())
     # corpus is the main data container for events

@@ -581,7 +581,7 @@ chunk = []
 analyses = []
 prev_tempo = 0
 
-def chunk_analysis_event(t_event, chunk_size=5):
+def test_chunk_analysis_event(t_event, chunk_size=5):
     # Receive time events one by one, split it into chunks and analyze each chunk.
     # Return duration pattern, deviation, and tempo for the analyzed chunks
     # If we make more than one chunk: Reconcile chunks and return common dur_pattern, deviation, tempo
@@ -598,7 +598,7 @@ def chunk_analysis_event(t_event, chunk_size=5):
     new_analysis = False
     if t_event >= 0:
         chunk.append(t_event)
-        if (len(chunk) == (chunk_size*2)-1): #if we have anough for two chunks...
+        if (len(chunk) == (chunk_size*2)-1): #if we have enough for two chunks...
             chunk = chunk[chunk_size-1:] # the first one have already been analyzed
         if (len(chunk) == chunk_size):
             #print('analyze', chunk)
@@ -630,28 +630,7 @@ def chunk_analysis_event(t_event, chunk_size=5):
         else: return analysis
     else: return None
 
-if __name__ == '__main__':
-    set_precision(0.6) # balance between deviation and complexity
-    set_simplify(True)
-    
-    timeseries = np.array([0,.1,.2,.3,.4,.5,.6,.7,.8,.9])
-    timeseries = np.array([0,.1,.2,.3,.4,.5,.6,.7,.8,.9,1.0])
-    timeseries = np.array([0,.1,.2,.3,.4,.5, 2.6,2.7,2.8,2.9,3.0])
-    timeseries = np.array([0,.1,.2,.3,.4,.5,.6,.7,.8,.9,1.0,1.1, 1.2, 1.3, 1.4])
-    timeseries = np.array([0., 0.49994, 0.99991, 1.49985, 1.99982, 2.99973, 3.49966, 3.74963, 4., 4.49994, 5.49985, 5.99982, 6.16632, 6.33322, 6.49976,-1])
-    #timeseries = np.array([0., 0.5, 1, 1.5, 2, 2.5, 2.75, 3, 3.5, 4., 4.166, 4.33, 4.5, 5])
-    #timeseries = np.array([0., 0.5, 1, 1.5, 2, 2.25, 2.5, 2.75, 3, 13.5, 14., 14.166, 14.33, 14.5, 15])
-    
-    # analyze a time series, break up into chunks
-    #timeseries = np.array([1,2,2.5,3,4,5,5.25,5.5,6,7,8,8.125,8.25,9,10,11,11.25,12,-1, 13,14,15,16,17])
-    #test_chunk_analysis_time(timeseries)
-
-    #timeseries = np.array([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19])
-    #timeseries[11] = -1 
-    #print(timeseries)
-    #test_chunk_analysis_time(timeseries, chunk_size=4)
-
-
+def test_analyze_chunk_rewrite_corpus(timeseries):
     # store tempo with dur pattern in corpus, to check if rewrite is needed
     # for each event, calculate new tempo, then use this tempo to check the next previous event
     # make a test corpus here to simulate what will happen
@@ -659,11 +638,10 @@ if __name__ == '__main__':
     # index, dur, tempo
     max_events = len(timeseries)
     corpus = np.zeros((max_events,3), dtype=np.float32) 
-
     indx = 0
     corp_indx = 0
     for t in timeseries:
-        thing = chunk_analysis_event(t)
+        thing = test_chunk_analysis_event(t)
         if not thing:
             pass
             #print('time:', t)
@@ -706,6 +684,27 @@ if __name__ == '__main__':
         indx += 1 
     print(corpus)
 
+if __name__ == '__main__':
+    set_precision(0.6) # balance between deviation and complexity
+    set_simplify(True)
+    
+    timeseries = np.array([0,.1,.2,.3,.4,.5,.6,.7,.8,.9])
+    timeseries = np.array([0,.1,.2,.3,.4,.5,.6,.7,.8,.9,1.0])
+    timeseries = np.array([0,.1,.2,.3,.4,.5, 2.6,2.7,2.8,2.9,3.0])
+    timeseries = np.array([0,.1,.2,.3,.4,.5,.6,.7,.8,.9,1.0,1.1, 1.2, 1.3, 1.4])
+    timeseries = np.array([0., 0.49994, 0.99991, 1.49985, 1.99982, 2.99973, 3.49966, 3.74963, 4., 4.49994, 5.49985, 5.99982, 6.16632, 6.33322, 6.49976,-1])
+    #timeseries = np.array([0., 0.5, 1, 1.5, 2, 2.5, 2.75, 3, 3.5, 4., 4.166, 4.33, 4.5, 5])
+    #timeseries = np.array([0., 0.5, 1, 1.5, 2, 2.25, 2.5, 2.75, 3, 13.5, 14., 14.166, 14.33, 14.5, 15])
+    
+    # analyze a time series, break up into chunks
+    #timeseries = np.array([1,2,2.5,3,4,5,5.25,5.5,6,7,8,8.125,8.25,9,10,11,11.25,12,-1, 13,14,15,16,17])
+    #timeseries = np.array([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19])
+    #timeseries[11] = -1  # insert a terminator to split the series
+    #print(timeseries)
+    #test_chunk_analysis_time(timeseries, chunk_size=4)
+
+    timeseries = np.array([0., 0.49994, 0.99991, 1.49985, 1.99982, 2.99973, 3.49966, 3.74963, 4., 4.49994, 5.49985, 5.99982, 6.16632, 6.33322, 6.49976,-1]) 
+    test_analyze_chunk_rewrite_corpus(timeseries)
 
     # accelerando:
     # needs a calculation of tempo tendency?
@@ -717,7 +716,7 @@ if __name__ == '__main__':
     # It should be possible to analyze phrases with only two events (one duration)
     # Revisit ratio_to_each()
     #   - skip connectionist for phrases so short that it is not possible
-    # Revisit test_chunk_analysis_time()
+    # Revisit test_chunk_analysis_time() and test_chunk_analysis_event()
     #   - allow shorter phrases
     
     # works for combining and reconciling phrases of durations
