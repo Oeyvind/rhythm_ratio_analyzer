@@ -73,8 +73,8 @@ class Osc_server():
                     #self.pending_analysis.append(index)
                 self.previous_notenum = notenum
                 self.previous_velocity = velocity
-        analysis_event = self.chunk_analysis_event(timenow)
-        self.update_corpus(analysis_event, index)
+                analysis_event = self.chunk_analysis_event(timenow)
+                self.update_corpus(analysis_event, index)
     
     def receive_eventchord(self, unused_addr, *osc_data):
         '''Receive chord data, i.e. when several notes occur simultaneously (within time window of i.e. 50 ms) in the input data'''
@@ -103,17 +103,16 @@ class Osc_server():
         #   - if there are any events not yet analyzed: analyze the last chunk again, including these events
         #   - if too few events altogether, print warning and exit
         # If more than one phrase since chunk closed: Reconcile phrases
-        self.analysis_chunk = []
-        self.recent_analyses = []
-        self.prev_tempo = 0
 
         new_analysis = False
         if t_event >= 0:
+            print(f'appending {t_event} to analysis chunk')
             self.analysis_chunk.append(t_event)
+            print('analysis chunk', self.analysis_chunk)
             if (len(self.analysis_chunk) == (chunk_size*2)-1): #if we have enough for two chunks...
                 self.analysis_chunk = self.analysis_chunk[chunk_size-1:] # the first one have already been analyzed
             if (len(self.analysis_chunk) == chunk_size):
-                #print('analyze', chunk)
+                print('analyze', self.analysis_chunk)
                 analysis = self.ra.analyze(np.array(self.analysis_chunk))
                 self.recent_analyses.append(analysis)
                 new_analysis = True
@@ -128,7 +127,7 @@ class Osc_server():
                 new_analysis = True
                 self.recent_analyses[-1] = analysis # replace the last analysis
             else: 
-                print('Not enough time data to analyze')
+                print(f'Not enough time data to analyze {self.analysis_chunk}')
             self.analysis_chunk = []
         if new_analysis:
             #best1 = self.recent_analyses[0][0]
@@ -149,8 +148,11 @@ class Osc_server():
             pass
         else: 
             if len(analysis_event) == 7: # single analysis
-                self.update_corpus_single_analysis(analysis_event)
+                self.update_corpus_single_analysis(analysis_event, index)
             if len(analysis_event) == 3: # reconciled analysis
+                length_2 = len(self.recent_analyses[1][6])
+                self.update_corpus_single_analysis(self.recent_analyses[0], index-length_2)
+                self.update_corpus_single_analysis(self.recent_analyses[1], index)
                 dur_pattern = analysis_event[0]
                 tempo = analysis_event[2]
                 print('dur pattern', dur_pattern)
@@ -199,9 +201,9 @@ class Osc_server():
         osc_io.sendOSC("python_other", returnmsg) # send OSC back to client
         
         # store the data for each event in the corpus
+        indx = start_index
         for i in range(len(duration_pattern)): 
             self.dc.corpus[indx,self.dc.pnum_corpus['index']] = indx
-            indx = start_index+1
             self.dc.corpus[indx,self.dc.pnum_corpus['phrase_num']] = self.phrase_number
             self.dc.corpus[indx,self.dc.pnum_corpus['rhythm_subdiv']] = duration_pattern[i]
             self.dc.corpus[indx,self.dc.pnum_corpus['deviation']] = deviations[i]
@@ -219,6 +221,7 @@ class Osc_server():
                 self.dc.corpus[indx,self.dc.pnum_corpus['duration']] = 0.9
             # probabilistic model encoding
             self.pl.analyze_single_event(indx)
+            indx += 1
         #self.pending_analysis = [] # clear
 
 

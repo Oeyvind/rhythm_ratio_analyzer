@@ -648,7 +648,7 @@ def test_analyze_chunk_rewrite_corpus(timeseries):
         else: 
             if len(thing) == 7: # single analysis
                 dur_pattern = thing[3][thing[0]] # best dur pattern
-                print('dur pattern', dur_pattern) 
+                print('dur pattern single', dur_pattern) 
                 corp_indx = indx-(len(dur_pattern))
                 for d in dur_pattern:
                     corpus[corp_indx][0] = corp_indx
@@ -688,14 +688,18 @@ if __name__ == '__main__':
     set_precision(0.6) # balance between deviation and complexity
     set_simplify(True)
     
-    timeseries = np.array([0,.1,.2,.3,.4,.5,.6,.7,.8,.9])
-    timeseries = np.array([0,.1,.2,.3,.4,.5,.6,.7,.8,.9,1.0])
-    timeseries = np.array([0,.1,.2,.3,.4,.5, 2.6,2.7,2.8,2.9,3.0])
-    timeseries = np.array([0,.1,.2,.3,.4,.5,.6,.7,.8,.9,1.0,1.1, 1.2, 1.3, 1.4])
-    timeseries = np.array([0., 0.49994, 0.99991, 1.49985, 1.99982, 2.99973, 3.49966, 3.74963, 4., 4.49994, 5.49985, 5.99982, 6.16632, 6.33322, 6.49976,-1])
+    #timeseries = np.array([0,.1,.2,.3,.4,.5,.6,.7,.8,.9])
+    #timeseries = np.array([0,.1,.2,.3,.4,.5,.6,.7,.8,.9,1.0])
+    #timeseries = np.array([0,.1,.2,.3,.4,.5, 2.6,2.7,2.8,2.9,3.0])
+    #timeseries = np.array([0,.1,.2,.3,.4,.5,.6,.7,.8,.9,1.0,1.1, 1.2, 1.3, 1.4])
+    #timeseries = np.array([0., 0.49994, 0.99991, 1.49985, 1.99982, 2.99973, 3.49966, 3.74963, 4., 4.49994, 5.49985, 5.99982, 6.16632, 6.33322, 6.49976,-1])
     #timeseries = np.array([0., 0.5, 1, 1.5, 2, 2.5, 2.75, 3, 3.5, 4., 4.166, 4.33, 4.5, 5])
+    #timeseries += 10
     #timeseries = np.array([0., 0.5, 1, 1.5, 2, 2.25, 2.5, 2.75, 3, 13.5, 14., 14.166, 14.33, 14.5, 15])
-    
+    #timeseries = np.array([17.115646362304688, 17.585487365722656, 17.6156005859375, 17.865215301513672, 17.865577697753906])
+    #timeseries = np.array([17.1, 17.5, 17.6, 17.8, 17.9])
+    #print(analyze(timeseries))
+
     # analyze a time series, break up into chunks
     #timeseries = np.array([1,2,2.5,3,4,5,5.25,5.5,6,7,8,8.125,8.25,9,10,11,11.25,12,-1, 13,14,15,16,17])
     #timeseries = np.array([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19])
