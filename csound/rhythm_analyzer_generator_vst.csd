@@ -329,7 +329,7 @@ instr 31
       endif
       ;Sdebug sprintfk "rec: %i, %.2f, %i, %i, %i", kindex_send, ktime, kevent_onoff, knotenum, kvelocity
       ;puts Sdebug, ksend_osc
-      OSCsend ksend_osc, "127.0.0.1", 9901, "/client_eventdata", "fffff", kindex_send, ktime, kevent_onoff, knotenum, kvelocity
+      OSCsend ksend_osc, "127.0.0.1", 9901, "/client_eventdata", "ffff", ktime, kevent_onoff, knotenum, kvelocity
     endif
     if kevent_on > 0 then
       cabbageSetValue "velocity_last_event", kvelocity
@@ -343,7 +343,7 @@ instr 31
   kanalyzetrig += krec_trig_off
   ;k_ = 1
   ;OSCsend kanalyzetrig, "127.0.0.1", 9901, "/client_analyze_trig", "i", k_
-  OSCsend kanalyzetrig, "127.0.0.1", 9901, "/client_eventdata", "fffff", -1, -1, -1, -1, -1
+  OSCsend kanalyzetrig, "127.0.0.1", 9901, "/client_eventdata", "ffff", -1, -1, -1, -1
 
   ; send other parameter controls to Python
   kdev_vs_complexity chnget "dev_vs_complexity"

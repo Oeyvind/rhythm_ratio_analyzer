@@ -26,12 +26,13 @@ class Osc_server():
     def __init__(self, dc, ratio_analyzer, pl_instance):
         self.dc = dc # data container
         #self.pending_analysis = [] # indices for events not yet analyzed
-        self.last_analyzed_phrase = [] # indices for events in the last analyzed phrase
+        self.last_analyzed_phrase = [] # NOT USED indices for events in the last analyzed phrase
+        self.index = 0
         self.analysis_chunk = []
         self.recent_analyses = []
         self.prev_tempo = 0
         self.minimum_delta_time = 50
-        self.previous_timestamp = -1
+        self.previous_timenow = -1
         self.previous_notenum = -1
         self.previous_velocity = -1
         self.phrase_number = 0
@@ -44,37 +45,60 @@ class Osc_server():
 
     def receive_eventdata(self, unused_addr, *osc_data):
         '''Message handler. This is called when we receive an OSC message'''
-        index, timenow, on_off, notenum, velocity = osc_data # unpack the OSC data, must have the same number of variables as we have items in the data
-        index = int(index)
-        logging.debug(f'received: {index}, {timenow:.2f}, {on_off}, {notenum}, {velocity}')
+        timenow, on_off, notenum, velocity = osc_data # unpack the OSC data, must have the same number of variables as we have items in the data
+        #index = int(index)
+        if on_off > 0:
+            logging.debug(f'received: {self.index}, {timenow:.2f}, {on_off}, {notenum}, {velocity}')
+        else:
+            logging.debug(f'received: {self.index-1}, {timenow:.2f}, {on_off}, {notenum}, {velocity}')
         
         # timenow == -1 is a phrase termination event, skip storing event data, just trigger chunk_analysis_event()
+        # And: if delta time > threshold (2 sec), terminate previous chunk and start a new one
+        phrase_division_time = 2
+        if ((timenow-self.previous_timenow) > phrase_division_time) and (self.index > 0) and (on_off > 0):
+            # terminate previous phrase
+            analysis_event = self.chunk_analysis_event(-1)
+            self.update_corpus(analysis_event, self.index-1)
+            self.set_corpus_last_event(self.index-1)
+            self.phrase_number += 1
+            self.analysis_chunk = [] # no reconciliation across phrase terminations
+            self.recent_analyses =[] # as above
+            # then go on with the timestamp, creating a new phrase
+        self.previous_timenow = timenow
         if timenow >= 0:
             if on_off == 0:
-                self.dc.corpus[index, self.dc.pnum_corpus['time_off']] = timenow
-            if on_off == 1:
-                # put events in analysis queue
-                if index == 0:
-                    self.dc.corpus[index, self.dc.pnum_corpus['timestamp']] = timenow
-                    self.dc.corpus[index, self.dc.pnum_corpus['notenum']] = notenum
-                    self.dc.corpus[index, self.dc.pnum_corpus['velocity']] = velocity
-                    #self.pending_analysis.append(index)
+                self.dc.corpus[self.index-1, self.dc.pnum_corpus['time_off']] = timenow
+            elif on_off == 1:
+                if self.index == 0:
+                    self.dc.corpus[self.index, self.dc.pnum_corpus['timestamp']] = timenow
+                    self.dc.corpus[self.index, self.dc.pnum_corpus['notenum']] = notenum
+                    self.dc.corpus[self.index, self.dc.pnum_corpus['velocity']] = velocity
                 else:
-                    if timenow < (self.dc.corpus[index-1, self.dc.pnum_corpus['timestamp']] + (self.minimum_delta_time/1000)):
-                        timenow += (self.minimum_delta_time/1000)
-                    self.dc.corpus[index,self.dc.pnum_corpus['timestamp']] = timenow
-                    self.dc.corpus[index, self.dc.pnum_corpus['notenum']] = notenum
-                    self.dc.corpus[index, self.dc.pnum_corpus['velocity']] = velocity
+                    if timenow < (self.dc.corpus[self.index-1, self.dc.pnum_corpus['timestamp']] + (self.minimum_delta_time/1000)):
+                        timenow += (self.minimum_delta_time/1000) # set minimum delta time
+                    self.dc.corpus[self.index,self.dc.pnum_corpus['timestamp']] = timenow
+                    self.dc.corpus[self.index,self.dc.pnum_corpus['index']] = self.index
+                    self.dc.corpus[self.index, self.dc.pnum_corpus['notenum']] = notenum
+                    self.dc.corpus[self.index, self.dc.pnum_corpus['velocity']] = velocity
                     # relative notenumber and velocity
                     if self.previous_notenum > -1:
-                        self.dc.corpus[index, self.dc.pnum_corpus['notenum_relative']] = notenum-self.previous_notenum
+                        self.dc.corpus[self.index, self.dc.pnum_corpus['notenum_relative']] = notenum-self.previous_notenum
                     if self.previous_velocity > -1:
-                        self.dc.corpus[index, self.dc.pnum_corpus['velocity_relative']] = velocity-self.previous_velocity
-                    #self.pending_analysis.append(index)
+                        self.dc.corpus[self.index, self.dc.pnum_corpus['velocity_relative']] = velocity-self.previous_velocity
                 self.previous_notenum = notenum
                 self.previous_velocity = velocity
                 analysis_event = self.chunk_analysis_event(timenow)
-                self.update_corpus(analysis_event, index)
+                self.update_corpus(analysis_event, self.index)
+        else:
+            # when terminating phrase:
+            analysis_event = self.chunk_analysis_event(-1)
+            self.update_corpus(analysis_event, self.index-1)
+            self.set_corpus_last_event(self.index-1)
+            self.phrase_number += 1
+            self.analysis_chunk = [] # no reconciliation across phrase terminations
+            self.recent_analyses =[] # as above
+        if (timenow >= 0) and (on_off > 0):
+            self.index += 1 # only increment for on events
     
     def receive_eventchord(self, unused_addr, *osc_data):
         '''Receive chord data, i.e. when several notes occur simultaneously (within time window of i.e. 50 ms) in the input data'''
@@ -103,7 +127,7 @@ class Osc_server():
         #   - if there are any events not yet analyzed: analyze the last chunk again, including these events
         #   - if too few events altogether, print warning and exit
         # If more than one phrase since chunk closed: Reconcile phrases
-
+ 
         new_analysis = False
         if t_event >= 0:
             print(f'appending {t_event} to analysis chunk')
@@ -112,7 +136,7 @@ class Osc_server():
             if (len(self.analysis_chunk) == (chunk_size*2)-1): #if we have enough for two chunks...
                 self.analysis_chunk = self.analysis_chunk[chunk_size-1:] # the first one have already been analyzed
             if (len(self.analysis_chunk) == chunk_size):
-                print('analyze', self.analysis_chunk)
+                print('*\nanalyze', np.array(self.analysis_chunk), '\n at index', self.index)
                 analysis = self.ra.analyze(np.array(self.analysis_chunk))
                 self.recent_analyses.append(analysis)
                 new_analysis = True
@@ -122,7 +146,7 @@ class Osc_server():
             if len(self.analysis_chunk) == chunk_size:
                 pass # already analyzed
             elif len(self.analysis_chunk) > chunk_size:
-                #print('analyze2', chunk)
+                print('*\nanalyze2', np.array(self.analysis_chunk), '\n at index', self.index)
                 analysis = self.ra.analyze(np.array(self.analysis_chunk))
                 new_analysis = True
                 self.recent_analyses[-1] = analysis # replace the last analysis
@@ -139,27 +163,27 @@ class Osc_server():
                 durs_devs_tpo = self.ra.analysis_reconcile(self.recent_analyses, prev_tempo=self.prev_tempo)
                 self.prev_tempo = durs_devs_tpo[2]
                 #print('reconciled:', durs_devs_tpo)
-                return durs_devs_tpo
+                return analysis, durs_devs_tpo
             else: return analysis
         else: return None
     
     def update_corpus(self, analysis_event, index):
+        print('update_corpus()', analysis_event, index)
         if not analysis_event:
             pass
         else: 
             if len(analysis_event) == 7: # single analysis
                 self.update_corpus_single_analysis(analysis_event, index)
-            if len(analysis_event) == 3: # reconciled analysis
-                length_2 = len(self.recent_analyses[1][6])
-                self.update_corpus_single_analysis(self.recent_analyses[0], index-length_2)
-                self.update_corpus_single_analysis(self.recent_analyses[1], index)
-                dur_pattern = analysis_event[0]
-                tempo = analysis_event[2]
-                print('dur pattern', dur_pattern)
-                print('tempo', tempo)
+            if len(analysis_event) == 2: # reconciled analysis
+                print('***reconciled analysis***', analysis_event)
+                self.update_corpus_single_analysis(analysis_event[0], index)
+                dur_pattern = analysis_event[1][0]
+                tempo = analysis_event[1][2]
+                print('reconciled dur pattern', dur_pattern)
+                print('reconciled tempo', tempo)
                 corp_indx = index-(len(dur_pattern))
-                chunk_start = corp_indx
                 for d in dur_pattern:
+                    print(f'rewrite corpus with reconciled dur {d} at index{corp_indx}')
                     self.dc.corpus[corp_indx,self.dc.pnum_corpus['rhythm_subdiv']] = d
                     self.dc.corpus[corp_indx,self.dc.pnum_corpus['tempo']] = tempo
                     # REWRITE probabilistic model encoding for the new interpretation
@@ -169,11 +193,12 @@ class Osc_server():
                 # for each event, check tempo factor and tolerance
                 # if tolerance ok, multiply dur with tempo_factor, then write new dur and tempo
                 # if tolerance not ok, stop
-                tmpo_rewrite_index = chunk_start
-                tmpo_tolerance = 0.1
+                tmpo_rewrite_index = index-(len(dur_pattern))
+                tmpo_tolerance = 0.33
                 while tmpo_rewrite_index > 0:
-                    tempo_factor = self.dc.corpus[tmpo_rewrite_index,self.dc.pnum_corpus['tempo']] / \
-                                   self.dc.corpus[tmpo_rewrite_index-1,self.dc.pnum_corpus['tempo']] 
+                    prev_tempo = self.dc.corpus[tmpo_rewrite_index-1,self.dc.pnum_corpus['tempo']]
+                    if prev_tempo == 0: prev_tempo = 1
+                    tempo_factor = self.dc.corpus[tmpo_rewrite_index,self.dc.pnum_corpus['tempo']] / prev_tempo
                     tempo_dev = round(tempo_factor)-tempo_factor
                     if tempo_dev < tmpo_tolerance:
                         self.dc.corpus[tmpo_rewrite_index-1,self.dc.pnum_corpus['rhythm_subdiv']] *= round(tempo_factor) # rewrite dur
@@ -184,9 +209,8 @@ class Osc_server():
                         break # stop rewriting if we encounter incompatible tempi
                     tmpo_rewrite_index -= 1                
 
-    def update_corpus_single_analysis(self, analysis, start_index):
+    def update_corpus_single_analysis(self, analysis, index):
         # Update corpus with analyzed data
-        self.phrase_number += 1
         best, pulse, pulsepos, duration_patterns, deviations_, scores, tempi = analysis
         duration_pattern = duration_patterns[best]
         deviations = deviations_[best]
@@ -201,29 +225,38 @@ class Osc_server():
         osc_io.sendOSC("python_other", returnmsg) # send OSC back to client
         
         # store the data for each event in the corpus
-        indx = start_index
         for i in range(len(duration_pattern)): 
-            self.dc.corpus[indx,self.dc.pnum_corpus['index']] = indx
+            indx = index - len(duration_pattern) + i
+            print('update_corpus_single: index:', indx)
+            self.dc.corpus[indx,self.dc.pnum_corpus['index_test']] = indx
             self.dc.corpus[indx,self.dc.pnum_corpus['phrase_num']] = self.phrase_number
             self.dc.corpus[indx,self.dc.pnum_corpus['rhythm_subdiv']] = duration_pattern[i]
             self.dc.corpus[indx,self.dc.pnum_corpus['deviation']] = deviations[i]
             self.dc.corpus[indx,self.dc.pnum_corpus['deviation_polarity']] = deviation_polarity[i]
+            self.dc.corpus[indx,self.dc.pnum_corpus['tempo']] = tempo
             # event duration relative to time until next event
-            if self.dc.corpus[indx+1,self.dc.pnum_corpus['timestamp']] > 0: # regular event
-                self.dc.corpus[indx,self.dc.pnum_corpus['duration']] = \
-                    ((self.dc.corpus[indx,self.dc.pnum_corpus['time_off']] \
-                    - self.dc.corpus[indx,self.dc.pnum_corpus['timestamp']]) \
-                    / (self.dc.corpus[indx+1,self.dc.pnum_corpus['timestamp']] \
-                    - self.dc.corpus[indx,self.dc.pnum_corpus['timestamp']]))
-            else:
-                self.dc.corpus[indx,self.dc.pnum_corpus['rhythm_subdiv']] = duration_pattern[-1] # hack for last event
-                # event duration for last event
-                self.dc.corpus[indx,self.dc.pnum_corpus['duration']] = 0.9
+            self.dc.corpus[indx,self.dc.pnum_corpus['duration']] = \
+                ((self.dc.corpus[indx,self.dc.pnum_corpus['time_off']] \
+                - self.dc.corpus[indx,self.dc.pnum_corpus['timestamp']]) \
+                / (self.dc.corpus[indx+1,self.dc.pnum_corpus['timestamp']] \
+                - self.dc.corpus[indx,self.dc.pnum_corpus['timestamp']]))
             # probabilistic model encoding
             self.pl.analyze_single_event(indx)
-            indx += 1
-        #self.pending_analysis = [] # clear
-
+        
+    def set_corpus_last_event(self, indx):
+        # set data for last event
+        print('set_corpus_last_event()', indx)
+        tempo = self.dc.corpus[indx-1,self.dc.pnum_corpus['tempo']] # take tempo from second last event
+        self.dc.corpus[indx,self.dc.pnum_corpus['tempo']] = tempo
+        seconds_per_beat = 60/tempo
+        print(f"last event tempo {tempo}, spb {seconds_per_beat}, timestamp {self.dc.corpus[indx,self.dc.pnum_corpus['timestamp']]} time_off {self.dc.corpus[indx,self.dc.pnum_corpus['time_off']]}")
+        duration_last = ((self.dc.corpus[indx,self.dc.pnum_corpus['time_off']] \
+                    - self.dc.corpus[indx,self.dc.pnum_corpus['timestamp']]) \
+                    / seconds_per_beat)    
+        self.dc.corpus[indx,self.dc.pnum_corpus['duration']] = duration_last
+        subdiv = round(duration_last)
+        if subdiv < 1: subdiv = 1
+        self.dc.corpus[indx,self.dc.pnum_corpus['rhythm_subdiv']] = subdiv
 
     def pl_generate(self, unused_addr, *osc_data):
         '''Message handler. This is called when we receive an OSC message'''
@@ -296,13 +329,13 @@ class Osc_server():
     def eventdata_admin(self, unused_addr, *osc_data):
         clear_last_phrase, clear_all, save_all = osc_data
         if clear_last_phrase > 0:
-            print('Clear last recorded phrase')
-            for i in self.last_analyzed_phrase:
-                self.dc.clear_corpus_item(i)
-            self.phrase_number -= 1
-            if self.phrase_number < 0: 
-                self.phrase_number = 0
-            self.pl.clear_phrase(self.last_analyzed_phrase)
+            print('Clear last recorded phrase: NOT IMPLEMENTED')
+            #for i in self.last_analyzed_phrase:
+            #    self.dc.clear_corpus_item(i)
+            #self.phrase_number -= 1
+            #if self.phrase_number < 0: 
+            #    self.phrase_number = 0
+            #self.pl.clear_phrase(self.last_analyzed_phrase)
         if clear_all > 0:
             print('CLEAR CORPUS')
             self.dc.clear_corpus()
@@ -311,6 +344,7 @@ class Osc_server():
             self.pl.clear_all()
             self.previous_notenum = -1
             self.previous_velocity = -1
+            self.index = 0
         if save_all > 0:
             self.dc.save_corpus()
             self.pl.save_all()

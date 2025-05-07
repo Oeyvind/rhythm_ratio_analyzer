@@ -705,10 +705,11 @@ if __name__ == '__main__':
     #timeseries = np.array([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19])
     #timeseries[11] = -1  # insert a terminator to split the series
     #print(timeseries)
-    #test_chunk_analysis_time(timeseries, chunk_size=4)
-
-    timeseries = np.array([0., 0.49994, 0.99991, 1.49985, 1.99982, 2.99973, 3.49966, 3.74963, 4., 4.49994, 5.49985, 5.99982, 6.16632, 6.33322, 6.49976,-1]) 
-    test_analyze_chunk_rewrite_corpus(timeseries)
+    timeseries = np.array([3812.174560546875, 3812.424560546875, 3812.674560546875, 3812.924560546875, 3813.17431640625, 3813.42431640625, 3813.67431640625, 3813.9248046875, 3816.3486328125])
+    test_chunk_analysis_time(timeseries, chunk_size=5)
+    #timeseries = np.array([3816.3486328125, 3816.5986328125, 3816.8486328125, 3817.0986328125, 3817.3486328125])
+    #timeseries = np.array([0., 0.49994, 0.99991, 1.49985, 1.99982, 2.99973, 3.49966, 3.74963, 4., 4.49994, 5.49985, 5.99982, 6.16632, 6.33322, 6.49976,-1]) 
+    #test_analyze_chunk_rewrite_corpus(timeseries)
 
     # accelerando:
     # needs a calculation of tempo tendency?

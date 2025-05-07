@@ -19,14 +19,14 @@ class DataContainers:
     # parameter names and their indices in the corpus
     self.pnum_corpus = {
       'index': 0, # register indices for data points currently in use
-      'timestamp' : 1, # time of note on 
-      'time_off' : 2, # time of note off
-      'duration' : 3, # relative duration (time_off - timestamp) / (timestamp next event/timestamp this event)
-      'rhythm_subdiv': 4, # duration pattern value (int)
-      'deviation' : 5, # deviation
-      'deviation_polarity' : 6, # deviation quantized, for prob logic (-1, 0, 1)
-      'phrase_num': 7, 
-      'downbeat_trig': 8, # to be implemented
+      'index_test' : 1,
+      'timestamp' : 2, # time of note on 
+      'time_off' : 3, # time of note off
+      'duration' : 4, # relative duration (time_off - timestamp) / (timestamp next event/timestamp this event)
+      'rhythm_subdiv': 5, # duration pattern value (int)
+      'deviation' : 6, # deviation
+      'deviation_polarity' : 7, # deviation quantized, for prob logic (-1, 0, 1)
+      'phrase_num': 8, 
       'velocity': 9,
       'velocity_relative': 10, 
       'notenum': 11,
