@@ -31,6 +31,7 @@ class Probabilistic_encoder:
         self.name = name # just for debugging printing
 
     def analyze(self, item, index):
+        print('analyze', index, item, self.previous_item)
         if self.previous_item == None: # first item received is treated differently
             self.previous_item = item
             return
@@ -353,6 +354,10 @@ def encoder_test():
         pe.analyze(data[i],i)
         indices[i+max_order] = i
         current_datasize += 1
+    print('*stm*:')
+    for k,v in pe.stm.items():
+        print(k,v)
+    '''
     v = ('A')
     temperature_coef = 1
     for i in range(10):
@@ -366,7 +371,7 @@ def encoder_test():
         next_item_index = int(np.random.choice(indices,p=prob))
         v = data[next_item_index]
         print(v)
-
+    '''
 def basic_test():
     max_events = 1000
     dc = Datacontainer_test(max_events)
