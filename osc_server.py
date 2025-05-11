@@ -375,3 +375,14 @@ class Osc_server():
         osc_io.dispatcher.map("/client_print", self.printstuff) # 
         osc_io.asyncio.run(osc_io.run_osc_server()) # run the OSC server and client
 
+if __name__ == '__main__':
+    import data_containers
+    import probabilistic_logic
+    import ratio_analyzer
+    max_events = 20 # test
+    dc = data_containers.DataContainers(max_events)
+    pl = probabilistic_logic.Probabilistic_logic(dc, max_size=max_events, max_order=4, max_voices=10)
+    s = Osc_server(dc, ratio_analyzer, pl)
+    # make test sequence here
+    event = [216.06, 1.0, 50.0, 100.0]
+    s.receive_eventdata(False, *event)
