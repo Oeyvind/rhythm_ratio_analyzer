@@ -5,6 +5,39 @@ import numpy as np
 np.set_printoptions(suppress=True)
 np.set_printoptions(precision=2)
 
+def get_tempo_factor(n):
+    tempofac = np.array([2,3])
+    while n/2 > tempofac[0]:
+        tempofac *= 2
+    print('..n, n/2,tempofac', n, n/2,tempofac)
+    if n-tempofac[1] > (tempofac[0]*2-tempofac[1])/2:
+        print('...for triples', n-tempofac[1], (tempofac[0]*2-tempofac[1])/2)
+        tempofac *= 2
+        print(tempofac)
+    idx = (np.abs(tempofac - n)).argmin()
+    return tempofac[idx]
+
+#print(get_tempo_factor((480*2)/(580*3))) 
+480*2
+
+#print(get_tempo_factor(5)) #4
+#print(get_tempo_factor(5.1))
+#print(get_tempo_factor(7.1))
+
+'''
+print(get_tempo_factor(1.5))
+print(get_tempo_factor(3.9))
+print(get_tempo_factor(4.1))
+print(get_tempo_factor(5)) #4
+print(get_tempo_factor(5.1)) #6
+print(get_tempo_factor(7)) #6
+print(get_tempo_factor(7.1))
+print(get_tempo_factor(10.0)) #8
+print(get_tempo_factor(10.1)) #12
+print(get_tempo_factor(14)) #12
+print(get_tempo_factor(14.1)) #16
+'''
+'''
 def create_accel():
     t = [0]
     delta = 1
@@ -66,7 +99,7 @@ def autocorr(data):
     mean = np.mean(data)
     data = data-mean
     return np.correlate(data, data, 'full')[len(data)-1:]
-
+'''
 '''
 def deviation_scaler(n, num,denom):
   ratio_seq_up = np.array([[2,3],[3,4]])

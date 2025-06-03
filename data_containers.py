@@ -7,6 +7,7 @@ Data containers for event corpus and probabilistic logic
 
 import numpy as np 
 np.set_printoptions(precision=2)
+
 import sys
 
 class DataContainers:
@@ -19,20 +20,20 @@ class DataContainers:
     # parameter names and their indices in the corpus
     self.pnum_corpus = {
       'index': 0, # register indices for data points currently in use
-      'index_test' : 1,
-      'timestamp' : 2, # time of note on 
-      'time_off' : 3, # time of note off
-      'duration' : 4, # relative duration (time_off - timestamp) / (timestamp next event/timestamp this event)
-      'rhythm_subdiv': 5, # duration pattern value (int)
-      'deviation' : 6, # deviation
-      'deviation_polarity' : 7, # deviation quantized, for prob logic (-1, 0, 1)
-      'phrase_num': 8, 
-      'velocity': 9,
-      'velocity_relative': 10, 
-      'notenum': 11,
-      'notenum_relative': 12,
-      'chord_index': 13,
-      'tempo' : 14
+      'timestamp' : 1, # time of note on 
+      'time_off' : 2, # time of note off
+      'duration' : 3, # relative duration (time_off - timestamp) / (timestamp next event/timestamp this event)
+      'rhythm_subdiv': 4, # duration pattern value (int)
+      'deviation' : 5, # deviation
+      'deviation_polarity' : 6, # deviation quantized, for prob logic (-1, 0, 1)
+      'phrase_num': 7, 
+      'velocity': 8,
+      'velocity_relative': 9, 
+      'notenum': 10,
+      'notenum_relative': 11,
+      'chord_index': 12,
+      'tempo' : 13,
+      'pulse_subdiv' : 14
     }
     print('pnum_corpus keys', self.pnum_corpus.keys())
     # corpus is the main data container for events

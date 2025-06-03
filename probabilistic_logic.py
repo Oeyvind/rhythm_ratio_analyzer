@@ -32,12 +32,23 @@ class Probabilistic_encoder:
 
     def analyze(self, item, index):
         # "analysis" is just storing the indices at which the item occurs
+        #print('prob logic analyze', self.name, item, index)
         if item not in self.stm.keys():
             index_container = np.copy(self.empty_index_container)
             index_container[index+self.max_order] = 1
             self.stm[item] = index_container
         else:
             self.stm[item][index+self.max_order] = 1
+
+    def delete_item(self, item, index):
+        # removing the indices at which the item occurde, make ready for reanalysis
+        if item not in self.stm.keys():
+            pass
+        else:
+            #print(f'prob logic deleting {index}')
+            #print(f'old {index} {self.stm[item]}')
+            self.stm[item][index+self.max_order] = 0
+            #print(f'new {index} {self.stm[item]}')
 
     def get_item_indices(self, item=None):
         # as we are live recording items for analysis, dead ends are likely, and needs to be dealt with
@@ -117,6 +128,14 @@ class Probabilistic_logic:
             pe.analyze(self.dc.corpus[i, self.dc.pnum_corpus[parm]], i)
         self.current_datasize += 1
         self.indices = self.dc.corpus[:self.current_datasize, self.dc.pnum_corpus['index']]
+
+    def delete_single_event(self, i):
+        # use this when data in corpus is about to change (before the change is entered)
+        # due to new context (more phrases, reconciliation etc)
+        for parm in self.dc.prob_parms.keys():
+            pe = self.dc.prob_parms[parm][1]
+            pe.delete_item(self.dc.corpus[i, self.dc.pnum_corpus[parm]], i)
+
 
     def set_weights(self, weights):
         self.weights = weights

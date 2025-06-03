@@ -297,6 +297,8 @@ def indispensability_subdiv(trigger_seq):
     indis_2 = np.array([1,0])    
     indis_3 = np.array([2,0,1])
     indis_3 = (indis_3/np.max(indis_3))
+    #indis_6 = np.array([11, 0, 6, 2, 8, 4, 10, 1, 7, 3, 9, 5,])
+    #indis_6 = (indis_6/np.max(indis_6))
 
     # all indispensabilities
     indis_all = [indis_3, indis_2] # list in increasing order of preference
@@ -396,7 +398,10 @@ def analysis_reconcile(analyses, prev_tempo=0):
     best = np.argsort(scoresum)[0]
     best_durs_devs_tmpos = reconciled_dur_dev_tmpo[best]
     #print('best analysis', best_durs_devs_tmpos)
-    return best_durs_devs_tmpos
+    # recalculate pulse based on best reconciled dur pattern
+    trigger_seq = make_box_notation(best_durs_devs_tmpos[0])
+    pulse, pulsepos = indispensability_subdiv(trigger_seq)
+    return best_durs_devs_tmpos, (pulse, pulsepos)
 
 def eval_reconciled(analyses, reconcile_combos):  
     # re-evaluate reconciled suggestions according to height and deviation
@@ -425,7 +430,17 @@ def eval_reconciled(analyses, reconcile_combos):
     # Returns the score for combined phrases, and also return the phrases and the tempo for each phrase
     return scoresum, reconciled_dur_dev_tmpo
 
-def analyze(t, div_limit=4):
+def get_tempo_factor(n):
+    # find the next tempo factor (multiples of 2 or 3), when reconciling different tempi
+    tempofac = np.array([2,3])
+    while n/2 > tempofac[0]:
+        tempofac *= 2
+    if n-tempofac[1] > (tempofac[0]*2-tempofac[1])/2:
+        tempofac *= 2
+    idx = (np.abs(tempofac - n)).argmin()
+    return tempofac[idx]
+    
+def analyze(t, prev_tempo=1):
     """Analysis of time sequence, resulting in a duration pattern with tempo estimation"""
     duration_patterns, deviations, tempi = dur_pattern_suggestions(t)
     devsums = []
@@ -437,6 +452,11 @@ def analyze(t, div_limit=4):
     best_dur_pattern = duration_patterns[best]
     trigger_seq = make_box_notation(best_dur_pattern)
     pulse, pulsepos = indispensability_subdiv(trigger_seq)
+    for i in range(len(tempi)):
+        if tempi[i] < prev_tempo:
+            tempo_fact = get_tempo_factor(prev_tempo/tempi[i])
+            tempi[i] = tempi[i]*tempo_fact
+            duration_patterns[i] = (np.array(duration_patterns[i])*tempo_fact).tolist()
     return best, pulse, pulsepos, duration_patterns, deviations, scores, tempi
 
 # testing functions
@@ -572,9 +592,10 @@ def test_chunk_analysis_time(timeseries, chunk_size=5):
             if len(analyses) == 2:
                 dur_pat2 = analyses[1][3][analyses[1][0]]
                 print(f'**reconciling 2 phrases: \n{dur_pat1} \n{dur_pat2}')
-                durs_devs_tpo = analysis_reconcile(analyses, prev_tempo=prev_tempo)
+                durs_devs_tpo, pulse_ppos = analysis_reconcile(analyses, prev_tempo=prev_tempo)
                 prev_tempo = durs_devs_tpo[2]
                 print('reconciled:', durs_devs_tpo)
+                print('pulse', pulse_ppos)
 
 # globals ...
 chunk = []
@@ -623,7 +644,7 @@ def test_chunk_analysis_event(t_event, chunk_size=5):
         if len(analyses) == 2:
             dur_pat2 = analyses[1][3][analyses[1][0]]
             #print(f'**reconciling 2 phrases: \n{dur_pat1} \n{dur_pat2}')
-            durs_devs_tpo = analysis_reconcile(analyses, prev_tempo=prev_tempo)
+            durs_devs_tpo, pulse = analysis_reconcile(analyses, prev_tempo=prev_tempo)
             prev_tempo = durs_devs_tpo[2]
             #print('reconciled:', durs_devs_tpo)
             return durs_devs_tpo
@@ -695,7 +716,6 @@ if __name__ == '__main__':
     #timeseries = np.array([0., 0.49994, 0.99991, 1.49985, 1.99982, 2.99973, 3.49966, 3.74963, 4., 4.49994, 5.49985, 5.99982, 6.16632, 6.33322, 6.49976,-1])
     #timeseries = np.array([0., 0.5, 1, 1.5, 2, 2.5, 2.75, 3, 3.5, 4., 4.166, 4.33, 4.5, 5])
     #timeseries += 10
-    #timeseries = np.array([0., 0.5, 1, 1.5, 2, 2.25, 2.5, 2.75, 3, 13.5, 14., 14.166, 14.33, 14.5, 15])
     #timeseries = np.array([17.115646362304688, 17.585487365722656, 17.6156005859375, 17.865215301513672, 17.865577697753906])
     #timeseries = np.array([17.1, 17.5, 17.6, 17.8, 17.9])
     #print(analyze(timeseries))
@@ -705,11 +725,25 @@ if __name__ == '__main__':
     #timeseries = np.array([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19])
     #timeseries[11] = -1  # insert a terminator to split the series
     #print(timeseries)
-    timeseries = np.array([3812.174560546875, 3812.424560546875, 3812.674560546875, 3812.924560546875, 3813.17431640625, 3813.42431640625, 3813.67431640625, 3813.9248046875, 3816.3486328125])
+    #timeseries = np.array([3812.174560546875, 3812.424560546875, 3812.674560546875, 3812.924560546875, 3813.17431640625, 3813.42431640625, 3813.67431640625, 3813.9248046875, 3816.3486328125])
+
+    timeseries = np.array([0., 0.5, 1, 1.5, 2, 2.25, 2.5, 2.75, 3, -1, 13, 13.5, 14., 14.33, 14.66, 15, -1])
     test_chunk_analysis_time(timeseries, chunk_size=5)
+
     #timeseries = np.array([3816.3486328125, 3816.5986328125, 3816.8486328125, 3817.0986328125, 3817.3486328125])
     #timeseries = np.array([0., 0.49994, 0.99991, 1.49985, 1.99982, 2.99973, 3.49966, 3.74963, 4., 4.49994, 5.49985, 5.99982, 6.16632, 6.33322, 6.49976,-1]) 
     #test_analyze_chunk_rewrite_corpus(timeseries)
+
+    # test indispensability, longer patterns
+    #dur_pat = [6, 3, 3, 6, 6, 6, 2, 2, 2, 6]
+    #dur_pat = [3,2,1,3]
+    #dur_pat = [6,3,3,6,4,2,6]
+    #trigger_seq = make_box_notation(dur_pat)
+    #pulse, pulsepos = indispensability_subdiv(trigger_seq)    
+    #print('dur_pat', dur_pat)
+    #print('pulse, pos', pulse, pulsepos)
+
+
 
     # accelerando:
     # needs a calculation of tempo tendency?

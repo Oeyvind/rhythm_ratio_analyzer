@@ -366,7 +366,8 @@ instr 31
   nextmsg_other:
   kmess_other OSClisten gihandle, "python_other", "fff", ktempo_bpm, kpulse_subdiv, kphraselen ; receive OSC data from Python
   cabbageSetValue "tempo_bpm_last_phrase", ktempo_bpm, changed(ktempo_bpm)
-  cabbageSetValue "gen_tempo_bpm", ktempo_bpm, changed(ktempo_bpm*kauto_tempo_update)
+  kplay_event_triggered chnget "play_event_triggered"
+  cabbageSetValue "gen_tempo_bpm", ktempo_bpm, changed(ktempo_bpm*kauto_tempo_update*kplay_event_triggered)
   cabbageSetValue "pulse_subdiv", kpulse_subdiv, changed(kpulse_subdiv)
   cabbageSetValue "phrase_len", kphraselen, changed(kphraselen)
   if kmess_other == 0 goto done_other
@@ -530,6 +531,9 @@ instr 109
   ;printk2 knext_event_time
   ; get event data from server
   if (kbeat_clock > knext_event_time) then
+    kplay_event_triggered changed kcount ; trig on any new event
+    kplay_event_triggered += 	kgen_once
+    chnset kplay_event_triggered, "play_event_triggered"
     if strcmpk(Srequest_parm, "index") == 0 then 
       if (strcmpk(Srequest_type, "next") == 0) || (strcmpk(Srequest_type, "prev") == 0) then
         krequest_value = kgen_index ; request next/previous index
