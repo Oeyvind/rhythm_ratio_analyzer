@@ -338,11 +338,14 @@ instr 31
     endif
   endif
 
-  ; send analyze trigger to Python
-  kanalyzetrig init 0
-  kanalyzetrig += krec_trig_off
-  ;k_ = 1
-  ;OSCsend kanalyzetrig, "127.0.0.1", 9901, "/client_analyze_trig", "i", k_
+  ; send analyze trigger to Python on record off, and auto trig after n seconds silence
+  ktime_this_event init 0 ; for timeout phrase end trigger
+  ktime_this_event = kevent_trig > 0 ? ktime : ktime_this_event
+  kphrase_auto_terminate = 2
+  ktimeout_phrase_trig trigger ktime-ktime_this_event, kphrase_auto_terminate, 0
+  ktimeout_phrase_trig *= krecord_enable
+  kanalyzetrig init 0 
+  kanalyzetrig += (krec_trig_off + ktimeout_phrase_trig)
   OSCsend kanalyzetrig, "127.0.0.1", 9901, "/client_eventdata", "ffff", -1, -1, -1, -1
 
   ; send other parameter controls to Python

@@ -33,7 +33,6 @@ class Osc_server():
         self.recent_analyses = []
         self.prev_tempo = 1
         self.minimum_delta_time = 50
-        self.previous_timenow = -1
         self.previous_notenum = -1
         self.previous_velocity = -1
         self.phrase_number = 0
@@ -54,18 +53,6 @@ class Osc_server():
             logging.debug(f'received: {self.index-1}, {timenow:.2f}, {on_off}, {notenum}, {velocity}')
         
         # timenow == -1 is a phrase termination event, skip storing event data, just trigger chunk_analysis_event()
-        # And: if delta time > threshold (2 sec), terminate previous chunk and start a new one
-        phrase_division_time = 2
-        if ((timenow-self.previous_timenow) > phrase_division_time) and (self.index > 0) and (on_off > 0):
-            # terminate previous phrase
-            analysis_event = self.chunk_analysis_event(-1)
-            self.update_corpus(analysis_event, self.index-1)
-            self.set_corpus_last_event(self.index-1)
-            self.phrase_number += 1
-            self.analysis_chunk = [] # no reconciliation across phrase terminations
-            self.recent_analyses =[] # as above
-            # then go on with the timestamp, creating a new phrase
-        self.previous_timenow = timenow
         if timenow >= 0:
             if on_off == 0:
                 self.dc.corpus[self.index-1, self.dc.pnum_corpus['time_off']] = timenow
