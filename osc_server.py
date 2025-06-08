@@ -37,7 +37,9 @@ class Osc_server():
         self.previous_velocity = -1
         self.phrase_number = 0
         self.chord_on = 0
-
+        self.phrase_reconciliation = 1
+        self.tempo_rewrite = 1
+        self.phrase_length_analysis = 5
         self.pl = pl_instance # probabilistic logic instance
         self.pl.weights[1] = 1 # first order for best ratio
         self.pl.weights[2] = 1 # 2nd order for best ratio
@@ -85,7 +87,7 @@ class Osc_server():
             self.set_corpus_last_event(self.index-1)
             self.phrase_number += 1
             self.analysis_chunk = [] # no reconciliation across phrase terminations
-            self.recent_analyses =[] # as above
+            self.recent_analyses = [] # as above
         if (timenow >= 0) and (on_off > 0):
             self.index += 1 # only increment for on events
     
@@ -104,7 +106,7 @@ class Osc_server():
         else:
             self.dc.chord_list[chord_index-1].append(chord_note) # next notes in previously existing chord
 
-    def chunk_analysis_event(self, t_event, chunk_size=5):
+    def chunk_analysis_event(self, t_event):
         # Receive time events one by one, split it into chunks and analyze each chunk.
         # Return duration pattern, deviation, and tempo for the analyzed chunks
         # If we make more than one chunk: Reconcile chunks and return common dur_pattern, deviation, tempo
@@ -117,42 +119,38 @@ class Osc_server():
         #   - if too few events altogether, print warning and exit (...no?)
         
         # Clear analysis chunk on phrase termination, so we do not reconcile patterns that have been recorded separately.
+
+        chunk_size = self.phrase_length_analysis
         print('chunk_analysis_event()', t_event)
         new_analysis = False
         if t_event >= 0:
-            #print(f'appending {t_event} to analysis chunk')
             self.analysis_chunk.append(t_event)
-            #print('analysis chunk', self.analysis_chunk)
             if (len(self.analysis_chunk) == (chunk_size*2)-1): #if we have enough for two chunks...
                 self.analysis_chunk = self.analysis_chunk[chunk_size-1:] # the first one have already been analyzed
             if (len(self.analysis_chunk) == chunk_size):
-                #print('*\nanalyze', np.array(self.analysis_chunk), '\n at index', self.index)
                 analysis = self.ra.analyze(np.array(self.analysis_chunk), prev_tempo=self.prev_tempo)
                 self.recent_analyses.append(analysis)
                 new_analysis = True
                 if (len(self.recent_analyses) > 2):
                     self.recent_analyses = self.recent_analyses[-2:] # keep only two last phrases
         if t_event < 0: # on sequence termination
+            chunk_low_limit = 4
             if len(self.analysis_chunk) == chunk_size:
                 pass # already analyzed
-            elif len(self.analysis_chunk) > chunk_size:
-                #print('*\nanalyze2', np.array(self.analysis_chunk), '\n at index', self.index)
+            elif len(self.analysis_chunk) > chunk_low_limit: # dragons? was > chunk size
                 analysis = self.ra.analyze(np.array(self.analysis_chunk), prev_tempo=self.prev_tempo)
                 new_analysis = True
-                self.recent_analyses[-1] = analysis # replace the last analysis
+                if len(self.recent_analyses) == 0:
+                    self.recent_analyses.append(analysis)
+                else:     
+                    self.recent_analyses[-1] = analysis # replace the last analysis
             else: 
                 print(f'Not enough time data to analyze {self.analysis_chunk}')
             self.analysis_chunk = [] # clear analysis_chunk on any phrase termination
         if new_analysis:
-            #best1 = self.recent_analyses[0][0]
-            #dur_pat1 = self.recent_analyses[0][3][best1]
-            if len(self.recent_analyses) == 2:
-                #best2 = self.recent_analyses[1][0]
-                #dur_pat2 = self.recent_analyses[1][3][best2]
-                #print(f'**reconciling 2 phrases: \n{dur_pat1} \n{dur_pat2}')
+            if (len(self.recent_analyses) == 2) and (self.phrase_reconciliation > 0):
                 durs_devs_tpo, pulse_ppos = self.ra.analysis_reconcile(self.recent_analyses, prev_tempo=self.prev_tempo)
                 self.prev_tempo = durs_devs_tpo[2]
-                #print('reconciled:', durs_devs_tpo)
                 return analysis, durs_devs_tpo, pulse_ppos
             else: return analysis
         else: return None
@@ -188,48 +186,66 @@ class Osc_server():
                 self.dc.corpus[corp_indx,self.dc.pnum_corpus['pulse_subdiv']] = pulse # need to write pulse for last event separately
                 #self.pl.analyze_single_event(corp_indx) # add new prob logic encoding
 
-                # When reconciling: Rewrite tempi backwards also for events previous to the reconciled phrase
-                # - rewriting tempo might lead to multiplying the duration pattern with some power of 2 integer
-                # rewrite tempo and duration pattern for previous events in corpus
-                tmpo_rewrite_index = index-(len(dur_pattern))
-                while tmpo_rewrite_index > 0:
-                    prev_tempo = self.dc.corpus[tmpo_rewrite_index-1,self.dc.pnum_corpus['tempo']]
-                    current_tempo = self.dc.corpus[tmpo_rewrite_index,self.dc.pnum_corpus['tempo']]
-                    #print('t_rewrite index', tmpo_rewrite_index)
-                    if (prev_tempo > 0) and prev_tempo < current_tempo: 
-                        #print('cur, prev', current_tempo, prev_tempo)
-                        tempo_factor = self.ra.get_tempo_factor(current_tempo / prev_tempo)
-                        #print('*** tempo factor', tempo_factor)
-                    else: 
-                        tempo_factor = 1
-                    
-                    self.pl.delete_single_event(tmpo_rewrite_index-1) # delete old prob logic encoding at these indices
-                    self.dc.corpus[tmpo_rewrite_index-1,self.dc.pnum_corpus['rhythm_subdiv']] *= tempo_factor # rewrite dur
-                    self.dc.corpus[tmpo_rewrite_index-1,self.dc.pnum_corpus['tempo']] *= tempo_factor # rewrite tempo
-                    self.pl.analyze_single_event(tmpo_rewrite_index-1) # add new prob logic encoding
-                    tmpo_rewrite_index -= 1                
+                if self.tempo_rewrite > 0:
+                    # When reconciling: Rewrite tempi backwards also for events previous to the reconciled phrase
+                    # - rewriting tempo might lead to multiplying the duration pattern with some power of 2 integer
+                    # rewrite tempo and duration pattern for previous events in corpus
+                    tmpo_rewrite_index = index-(len(dur_pattern))
+                    while tmpo_rewrite_index > 0:
+                        prev_tempo = self.dc.corpus[tmpo_rewrite_index-1,self.dc.pnum_corpus['tempo']]
+                        current_tempo = self.dc.corpus[tmpo_rewrite_index,self.dc.pnum_corpus['tempo']]
+                        if (prev_tempo > 0) and prev_tempo < current_tempo: 
+                            tempo_factor = self.ra.get_tempo_factor(current_tempo / prev_tempo)
+                        else: 
+                            tempo_factor = 1
+                        print('*** ***t_rewrite index', tmpo_rewrite_index)
+                        print('cur, prev, fact', current_tempo, prev_tempo, tempo_factor)
+                        self.pl.delete_single_event(tmpo_rewrite_index-1) # delete old prob logic encoding at these indices
+                        self.dc.corpus[tmpo_rewrite_index-1,self.dc.pnum_corpus['rhythm_subdiv']] *= tempo_factor # rewrite dur
+                        self.dc.corpus[tmpo_rewrite_index-1,self.dc.pnum_corpus['tempo']] *= tempo_factor # rewrite tempo
+                        tempo = self.dc.corpus[tmpo_rewrite_index-1,self.dc.pnum_corpus['tempo']]
+                        self.pl.analyze_single_event(tmpo_rewrite_index-1) # add new prob logic encoding
+                        tmpo_rewrite_index -= 1                
 
-                # HERE BE DRAGONS?
-                tmpo_rewrite_index = index-(len(dur_pattern))-1
-                pulse_factor = 1
-                while tmpo_rewrite_index >= 0:
-                    old_pulse = self.dc.corpus[tmpo_rewrite_index,self.dc.pnum_corpus['pulse_subdiv']]
-                    #print('pulses', tmpo_rewrite_index, old_pulse, pulse)
-                    if pulse != old_pulse:
-                        # find factor (int) that can convert dur_pat and tempo to use a common pulse
-                        if old_pulse == 2: 
-                            pulse_factor = 1.5
-                        else:
-                            pulse_factor = 2
-                    self.pl.delete_single_event(tmpo_rewrite_index) # delete old prob logic encoding at these indices
-                    self.dc.corpus[tmpo_rewrite_index,self.dc.pnum_corpus['rhythm_subdiv']] *= pulse_factor # rewrite dur
-                    self.dc.corpus[tmpo_rewrite_index,self.dc.pnum_corpus['tempo']] *= pulse_factor # rewrite tempo
-                    self.dc.corpus[tmpo_rewrite_index,self.dc.pnum_corpus['pulse_subdiv']] *= pulse_factor
-                    self.pl.analyze_single_event(tmpo_rewrite_index) # add new prob logic encoding
-                    tmpo_rewrite_index -= 1                
-                # return tempo to client
-                returnmsg = tempo, pulse, len(dur_pattern) # tempo and phrase length
-                osc_io.sendOSC("python_other", returnmsg) # send OSC back to client
+                    # HERE BE DRAGONS?
+                    tmpo_rewrite_index = index-(len(dur_pattern))-1
+                    pulse_factor = 1
+                    while tmpo_rewrite_index >= 0:
+                        old_pulse = self.dc.corpus[tmpo_rewrite_index,self.dc.pnum_corpus['pulse_subdiv']]
+                        #print('pulses', tmpo_rewrite_index, old_pulse, pulse)
+                        if pulse != old_pulse:
+                            # find factor (int) that can convert dur_pat and tempo to use a common pulse
+                            if old_pulse == 2: 
+                                pulse_factor = 1.5
+                            else:
+                                pulse_factor = 2
+                        self.pl.delete_single_event(tmpo_rewrite_index) # delete old prob logic encoding at these indices
+                        self.dc.corpus[tmpo_rewrite_index,self.dc.pnum_corpus['rhythm_subdiv']] *= pulse_factor # rewrite dur
+                        self.dc.corpus[tmpo_rewrite_index,self.dc.pnum_corpus['tempo']] *= pulse_factor # rewrite tempo
+                        tempo = self.dc.corpus[tmpo_rewrite_index,self.dc.pnum_corpus['tempo']]
+                        self.dc.corpus[tmpo_rewrite_index,self.dc.pnum_corpus['pulse_subdiv']] *= pulse_factor
+                        self.pl.analyze_single_event(tmpo_rewrite_index) # add new prob logic encoding
+                        tmpo_rewrite_index -= 1
+
+                    # Check if we need to rewrite tempo forward (if the rewritten tempo has become > current tempo)
+                    tmpo_rewrite_index = index-(len(dur_pattern))
+                    while tmpo_rewrite_index < index:
+                        print('* check tempo', tmpo_rewrite_index, self.dc.corpus[tmpo_rewrite_index,self.dc.pnum_corpus['tempo']])
+                        tempo_factor = self.dc.corpus[tmpo_rewrite_index-1,self.dc.pnum_corpus['tempo']]/self.dc.corpus[tmpo_rewrite_index,self.dc.pnum_corpus['tempo']]
+                        if tempo_factor > 1.5:
+                            print(f'forward rewrite tempo at {tmpo_rewrite_index} with factor {int(tempo_factor)}')
+                            self.pl.delete_single_event(tmpo_rewrite_index) # delete old prob logic encoding at these indices
+                            self.dc.corpus[tmpo_rewrite_index,self.dc.pnum_corpus['tempo']] *= int(tempo_factor)
+                            tempo = self.dc.corpus[tmpo_rewrite_index,self.dc.pnum_corpus['tempo']]
+                            self.dc.corpus[tmpo_rewrite_index,self.dc.pnum_corpus['rhythm_subdiv']] *= int(tempo_factor)         
+                            self.pl.analyze_single_event(tmpo_rewrite_index) # add new prob logic encoding
+                        tmpo_rewrite_index += 1
+
+                    # return tempo to client
+                    tempo = float(tempo)
+                    print('tempo', tempo, type(tempo))
+                    returnmsg = tempo, pulse, len(dur_pattern) # tempo and phrase length
+                    osc_io.sendOSC("python_other", returnmsg) # send OSC back to client
 
     def update_corpus_single_analysis(self, analysis, index, pulse_override=None):
         # Update corpus with analyzed data
@@ -270,13 +286,9 @@ class Osc_server():
         
     def set_corpus_last_event(self, indx):
         # set data for last event
-        print('set_corpus_last_event()', indx)
         tempo = self.dc.corpus[indx-1,self.dc.pnum_corpus['tempo']] # take tempo from second last event
-        #prev_rhythm_subdiv = self.dc.corpus[indx-1,self.dc.pnum_corpus['rhythm_subdiv']]
-        #print('prev_rhythm_subdiv', prev_rhythm_subdiv)
         self.dc.corpus[indx,self.dc.pnum_corpus['tempo']] = tempo
         seconds_per_beat = 60/tempo
-        #print(f"last event tempo {tempo}, spb {seconds_per_beat}, timestamp {self.dc.corpus[indx,self.dc.pnum_corpus['timestamp']]} time_off {self.dc.corpus[indx,self.dc.pnum_corpus['time_off']]}")
         duration_delta_last = ((self.dc.corpus[indx,self.dc.pnum_corpus['time_off']] \
                     - self.dc.corpus[indx,self.dc.pnum_corpus['timestamp']]))    
         duration_relative = duration_delta_last/seconds_per_beat
@@ -284,13 +296,12 @@ class Osc_server():
         if subdiv < 1: subdiv = 1
         duration = duration_relative / subdiv
         self.dc.corpus[indx,self.dc.pnum_corpus['duration']] = duration
-        print('t', tempo, 's/beat',seconds_per_beat)
-        print(f'last_event: sub {subdiv} delta {duration_delta_last:.2f} dur_rel {duration_relative:.2f} dur {duration:.2}')
         self.dc.corpus[indx,self.dc.pnum_corpus['rhythm_subdiv']] = subdiv
-        #print('phrase num', self.phrase_number)
-        #self.dc.corpus[indx,self.dc.pnum_corpus['phrase_num']] = self.phrase_number
+        # copy pulse subdiv from previous event
+        self.dc.corpus[indx,self.dc.pnum_corpus['pulse_subdiv']] = self.dc.corpus[indx-1,self.dc.pnum_corpus['pulse_subdiv']]
+        
         # probabilistic model encoding
-        #self.pl.analyze_single_event(indx)
+        self.pl.analyze_single_event(indx)
         
     def pl_generate(self, unused_addr, *osc_data):
         '''Message handler. This is called when we receive an OSC message'''
@@ -387,7 +398,8 @@ class Osc_server():
         '''Message handler. This is called when we receive an OSC message'''
         # set control parameters, like score weights etc
         kdev_vs_complexity, ksimplify, krhythm_order, \
-            kdeviation_order, knotenum_order, kinterval_order, kchord_on = osc_data
+            kdeviation_order, knotenum_order, kinterval_order, kchord_on,\
+                 kphrase_reconciliation, ktempo_rewrite, kphrase_length = osc_data
         
         self.ra.set_precision(kdev_vs_complexity)
         self.ra.set_simplify(ksimplify)
@@ -397,6 +409,10 @@ class Osc_server():
         self.pl.set_weights_pname('notenum', knotenum_order) 
         self.pl.set_weights_pname('notenum_relative', kinterval_order)
         self.chord_on = kchord_on 
+        self.phrase_reconciliation = kphrase_reconciliation
+        self.tempo_rewrite = ktempo_rewrite
+        self.phrase_length_analysis = int(kphrase_length)
+
         logging.debug('receive_parameter_controls {}'.format(osc_data))
 
     def start_server(self):

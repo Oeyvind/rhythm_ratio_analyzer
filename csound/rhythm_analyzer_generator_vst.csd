@@ -14,11 +14,14 @@ nslider bounds(10, 25, 50, 22), channel("tempo_bpm_last_phrase"), range(1, 2999,
 label bounds(70, 2, 80, 18), text("pulse"), fontSize(11), align("left")
 nslider bounds(70, 25, 50, 22), channel("pulse_subdiv"), range(1, 3, 1, 1, 1), fontSize(14)
 label bounds(138, 2, 80, 18), text("phrase_len"), fontSize(11), align("left")
-nslider bounds(143, 25, 50, 22), channel("phrase_len"), range(0, 999, 0, 1, 1), fontSize(14)
+nslider bounds(143, 25, 50, 22), channel("phrase_len"), range(0, 99, 0, 1, 1), fontSize(14)
 }
 
 button bounds(467, 5, 70, 23), text("clear_all","clearing"), channel("clear_all"), colour:0("green"), colour:1("red"), latched(0)
 button bounds(467, 30, 70, 23), text("save_all","saving"), channel("save_all"), colour:0("green"), colour:1("red"), latched(0)
+
+checkbox bounds(545, 5, 50, 11), text(" "," "), channel("print_event_time"), colour:0("green"), colour:1("red"), latched(1)
+label bounds(545, 18, 50, 11), text("pr.evt.t")
 
 groupbox bounds(5, 60, 240, 65), text("last recorded event"), colour(20,30,45){
   nslider bounds(5,25,60,20), channel("timestamp_last_event"), fontSize(14), range(0,99999999, 0, 1, 0.1)
@@ -34,8 +37,17 @@ groupbox bounds(5, 60, 240, 65), text("last recorded event"), colour(20,30,45){
 groupbox bounds(250, 60, 400, 65), text("rhythm analysis settings"), colour(20,30,45){
 hslider bounds(5, 27, 100, 20), channel("dev_vs_complexity"), range(0, 1, 0.5), fontSize(14)
 label bounds(5, 45, 100, 20), text("precision"), fontSize(12)
-checkbox bounds(125, 27, 18, 18), channel("simplify");, range(0, 1, 0.7), fontSize(14)
+checkbox bounds(125, 27, 18, 18), channel("simplify")
 label bounds(115, 45, 40, 20), text("simplify"), fontSize(12)
+
+checkbox bounds(190, 27, 18, 18), channel("phrase_reconciliation")
+label bounds(185, 45, 40, 20), text("reconcile"), fontSize(12)
+
+checkbox bounds(240, 27, 18, 18), channel("tempo_rewrite")
+label bounds(235, 45, 40, 20), text("t_rewrite"), fontSize(12)
+
+nslider bounds(290, 27, 40, 18), channel("phrase_length"), range(4, 20, 5, 1, 1), fontSize(14)
+label bounds(290, 45, 40, 20), text("phr.len"), fontSize(12)
 }
 
 groupbox bounds(5, 135, 760, 170), text("generate events with prob logic"), colour(25,45,30){
@@ -119,7 +131,7 @@ nslider bounds(95, 47, 60, 20), channel("gen_tempo_bpm"), range(1, 2999, 60), fo
 groupbox bounds(160, 98, 160, 72), text("beat clock modulation") {
 nslider bounds(10, 25, 40, 25), channel("beat_clock_mod_index"), range(0, 4, 0, 1), fontSize(14)
 label bounds(13, 50, 40, 18), text("indx"), fontSize(12), align("left")
-nslider bounds(60, 25, 40, 25), channel("beat_clock_mod_ratio"), range(0.5, 8, 1, 1, 0.5), fontSize(14)
+nslider bounds(60, 25, 40, 25), channel("beat_clock_mod_ratio"), range(0.5, 32, 1, 1, 0.5), fontSize(14)
 label bounds(63, 50, 40, 18), text("ratio"), fontSize(12), align("left")
 nslider bounds(110, 25, 40, 25), channel("beat_clock_mod_phase"), range(0, 1, 0, 1), fontSize(14)
 label bounds(113, 50, 40, 18), text("phase"), fontSize(12), align("left")
@@ -356,11 +368,16 @@ instr 31
   knotenum_order chnget "gen_pitch_order"
   kinterval_order chnget "gen_interval_order"
   kchords_on chnget "chords_on"
+  kphrase_reconciliation chnget "phrase_reconciliation"
+  ktempo_rewrite chnget "tempo_rewrite"
+  kphrase_length chnget "phrase_length"
   kparm_update = changed(kdev_vs_complexity, ksimplify, krhythm_order, 
-                      kdeviation_order, knotenum_order, kinterval_order, kchords_on)
-  OSCsend kparm_update, "127.0.0.1", 9901, "/client_parametercontrols", "fffffff", 
+                      kdeviation_order, knotenum_order, kinterval_order, 
+                      kchords_on, kphrase_reconciliation, ktempo_rewrite, kphrase_length)
+  OSCsend kparm_update, "127.0.0.1", 9901, "/client_parametercontrols", "ffffffffff", 
                       kdev_vs_complexity, ksimplify, krhythm_order, 
-                      kdeviation_order, knotenum_order, kinterval_order, kchords_on
+                      kdeviation_order, knotenum_order, kinterval_order, 
+                      kchords_on, kphrase_reconciliation, ktempo_rewrite, kphrase_length
 
   ; receive other data from Python
   ktempo_bpm init 60
@@ -531,7 +548,13 @@ instr 109
   kchord_count init 0
   igen_instr = 121
   ktime timeinsts ; for debug
-  ;printk2 knext_event_time
+  kprint_time chnget "print_event_time"
+  if kprint_time > 0 then
+    ;Sevent_time sprintfk "next event %f, beat clock %f", knext_event_time, kbeat_clock
+    ;puts Sevent_time, changed(knext_event_time, kbeat_clock)
+    printk2 floor(kbeat_clock)
+    printk2 knext_event_time, 10
+  endif
   ; get event data from server
   if (kbeat_clock > knext_event_time) then
     kplay_event_triggered changed kcount ; trig on any new event
