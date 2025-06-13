@@ -579,8 +579,8 @@ instr 109
            kzero = 0
            cabbageSetValue Sbeat_sync, kzero, changed(knext_event_time)
         endif
-        Sdebug sprintfk "receive: voice %i, ndx %i, beat clock %.2f, next event %.2f, ratio %.2f, note %i vel %.2f dur %.2f", ivoice, kgen_index, kbeat_clock, knext_event_time, kgen_rhythm_subdiv, kgen_notenum, kgen_velocity, kgen_duration
-        puts Sdebug, knext_event_time+kgen_rhythm_subdiv+kgen_deviation+kgen_notenum
+        ;Sdebug sprintfk "receive: voice %i, ndx %i, beat clock %.2f, next event %.2f, ratio %.2f, note %i vel %.2f dur %.2f", ivoice, kgen_index, kbeat_clock, knext_event_time, kgen_rhythm_subdiv, kgen_notenum, kgen_velocity, kgen_duration
+        ;puts Sdebug, knext_event_time+kgen_rhythm_subdiv+kgen_deviation+kgen_notenum
         
 	      kdeviation = kgen_deviation * kdeviation_scale 
         kEvent_queue[kcount % lenarray(kEvent_queue)][0] = knext_event_time
@@ -592,7 +592,7 @@ instr 109
         kEvent_queue[kcount % lenarray(kEvent_queue)][6] = -1 ; is not a chord
         kprevious_rhythm = kgen_rhythm_subdiv
         kcount += 1
-        printarray kEvent_queue
+        ;printarray kEvent_queue
       else
         kdeviation = kgen_deviation * kdeviation_scale 
         kChord_event[0] = (kcount-1) % lenarray(kEvent_queue) ; we use the kcount event counter to synchronize base events and chord events on playback
@@ -671,8 +671,8 @@ instr 109
       kgen_notenum = kEvent_queue[keventqueue_index][3]
     endif
     
-    kDebug_play[] getrow kEvent_queue, keventqueue_index
-    printarray kDebug_play
+    ;kDebug_play[] getrow kEvent_queue, keventqueue_index
+    ;printarray kDebug_play
     
     kprev_notenum = kgen_notenum
 		kgen_velocity = kEvent_queue[keventqueue_index][5]
@@ -746,7 +746,7 @@ endin
 instr 121
   iamp = ampdbfs(-6)
   inote = p4
-  print p2, inote
+  ;print p2, inote
   if inote == 0 then
     turnoff
     igoto skip
