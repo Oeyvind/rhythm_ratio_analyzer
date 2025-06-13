@@ -1,3 +1,48 @@
+* Skriv til corpus
+  * ny, påbegynt, implementeres ferdig
+    - Varighetsmønster som float
+    - Meter analyse
+    - Beat bpm tempo
+    - kvalitetsmål for meter analyse (dvs også for tempo)
+    - implementere prob logic fra float-varighet
+
+
+* 11.06.2025
+  * ikke omskrive tempo
+  - bruke opprinnelig varighetsmønster, reconcile mellom 2 er ok
+    - reconcile enkelt-fraser med sist innspilte(?) (option)
+  - omregne tempo ved avspilling
+  - holde bpm lav
+  - ta utgangspunkt i forrie bpm tempo, hvis kjent
+  - beat sync
+  - knapp for "nytt tempo, ny kontekst, ikke reconcile, ikke se på tidligere tempo)
+  - input for pulse, kan sette downbeat, og kan sette tempo
+    - som taptempo, men velger blant de tilgjengelige alternativer
+
+  * bruke brøk i prob logic
+  - reconcile phrases som nå, gir varighetsmønster
+  - til box notasjon, indispensability, finne 2 eller 3 delt meter
+  - det gir puls
+  - vurdere puls i forhold til tempo omfang
+    - hvis tempo > 150, må grupperes i 2 eller 3 (brøk blir 2/3, 3/4) etc
+    - hvis tempo < 80, grupperes ikke, brøkene blir 1/1, 2/1, etc
+    - kan ha kvalitetsmål på tempo og meter antagelse
+      - kan brukes senere hvis det viser seg at brøkene må skrives om,
+        bruke kvalitet i antagelse til å velge mellom to alternative representasjoner
+    - her har vi nok info til å lage riktig brøk og skrive den til prob logic
+    - brøkene kan også brukes til å sikre at mønster går opp i hele pulsslag (2/3 + 1/3, ikke 2/3 + 1/4), optional
+
+  * hvis man må omskrive lenger bakover enn siste recording
+    - kan sette sammen fraser ved å bruke siste event i frase 1 som første event i frase 2: 
+      - får en lang frase, og kan finne nye brøker som er felles for de to frasene
+      - kan *ikke* bruke den sammensatte frasen for pulse/meter induction fordi de er flyttet i forhold til hverandre
+  * hvis man ikke klarer å finne felles representasjon av 3 fraser
+    - ta alle 15 events (3x5), del opp i 2 fraser, og analysere de på nytt fra delta tider etc
+    - reconcile 2 fraser (og sammenligne med de forrige antagelsene?)
+
+
+
+
 
 # Reconciliation
 # if no match:

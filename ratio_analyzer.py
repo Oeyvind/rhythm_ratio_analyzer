@@ -707,7 +707,7 @@ def test_analyze_chunk_rewrite_corpus(timeseries):
 
 if __name__ == '__main__':
     set_precision(0.6) # balance between deviation and complexity
-    set_simplify(True)
+    set_simplify(False)
     
     #timeseries = np.array([0,.1,.2,.3,.4,.5,.6,.7,.8,.9])
     #timeseries = np.array([0,.1,.2,.3,.4,.5,.6,.7,.8,.9,1.0])
@@ -719,6 +719,35 @@ if __name__ == '__main__':
     #timeseries = np.array([17.115646362304688, 17.585487365722656, 17.6156005859375, 17.865215301513672, 17.865577697753906])
     #timeseries = np.array([17.1, 17.5, 17.6, 17.8, 17.9])
     #print(analyze(timeseries))
+    
+    timeseries = np.array([0., 1, 1.5, 2, 3, 3.75, 4., 5, 5.33, 5.66, 6, 7])
+    #timeseries = np.array([4., 5, 5.33, 5.66, 6, 7, 7.75, 8, 9])
+    #timeseries = np.array([0., 1, 1.5, 2, 3])
+    #timeseries = np.array([0., 1, 1.5, 2, 3, 3.75, 4., 5])
+    best, pulse, pulsepos, duration_patterns, deviations, scores, tempi = analyze(timeseries)
+    print('d:', duration_patterns[best])
+    print('tempo:', tempi[best])
+    print('pulse', pulse)
+    # find reasonable tempo for beat bpm by dividing tempo by pulse, and then dividing by 2 until within range (80-160)
+    tempo_divisor = 1
+    beat_bpm = tempi[best]/tempo_divisor
+    div_counter = 1
+    while beat_bpm > 160:
+        div_counter += 1
+        tempo_divisor = pulse*div_counter
+        beat_bpm = tempi[best]/tempo_divisor
+    #while beat_bpm < 80:
+    #    div_counter -= 1
+    #    tempo_divisor = pulse*div_counter
+    #    beat_bpm = tempi[best]/tempo_divisor
+    print('beat_bpm', beat_bpm, 'tempo_divisor', tempo_divisor)
+    dur_pat_float = np.array(duration_patterns[best])/tempo_divisor
+    print('dur_pat_float', dur_pat_float)
+    #dur_pat_frac = []
+    #from fractions import Fraction
+    #for d in dur_pat_float:
+    #    dur_pat_frac.append(Fraction(d).limit_denominator(32))
+    #print('dur_pat_frac', dur_pat_frac)
 
     # analyze a time series, break up into chunks
     #timeseries = np.array([1,2,2.5,3,4,5,5.25,5.5,6,7,8,8.125,8.25,9,10,11,11.25,12,-1, 13,14,15,16,17])
@@ -727,8 +756,8 @@ if __name__ == '__main__':
     #print(timeseries)
     #timeseries = np.array([3812.174560546875, 3812.424560546875, 3812.674560546875, 3812.924560546875, 3813.17431640625, 3813.42431640625, 3813.67431640625, 3813.9248046875, 3816.3486328125])
 
-    timeseries = np.array([0., 0.5, 1, 1.5, 2, 2.25, 2.5, 2.75, 3, -1, 13, 13.5, 14., 14.33, 14.66, 15, -1])
-    test_chunk_analysis_time(timeseries, chunk_size=5)
+    #timeseries = np.array([0., 0.5, 1, 1.5, 2, 2.25, 2.5, 2.75, 3, -1, 13, 13.5, 14., 14.33, 14.66, 15, -1])
+    #test_chunk_analysis_time(timeseries, chunk_size=5)
 
     #timeseries = np.array([3816.3486328125, 3816.5986328125, 3816.8486328125, 3817.0986328125, 3817.3486328125])
     #timeseries = np.array([0., 0.49994, 0.99991, 1.49985, 1.99982, 2.99973, 3.49966, 3.74963, 4., 4.49994, 5.49985, 5.99982, 6.16632, 6.33322, 6.49976,-1]) 

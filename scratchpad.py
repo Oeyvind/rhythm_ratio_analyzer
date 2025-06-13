@@ -5,6 +5,13 @@ import numpy as np
 np.set_printoptions(suppress=True)
 np.set_printoptions(precision=2)
 
+def make_ratio_from_dur_pattern(d):
+    ratios = []
+    for d in dur pattern:
+      ratios.append()
+
+
+'''
 def get_tempo_factor(n):
     tempofac = np.array([2,3])
     while n/2 > tempofac[0]:
@@ -23,7 +30,7 @@ def get_tempo_factor(n):
 #print(get_tempo_factor(5)) #4
 #print(get_tempo_factor(5.1))
 #print(get_tempo_factor(7.1))
-
+'''
 '''
 print(get_tempo_factor(1.5))
 print(get_tempo_factor(3.9))
