@@ -43,9 +43,6 @@ label bounds(115, 45, 40, 20), text("simplify"), fontSize(12)
 checkbox bounds(190, 27, 18, 18), channel("phrase_reconciliation")
 label bounds(185, 45, 40, 20), text("reconcile"), fontSize(12)
 
-checkbox bounds(240, 27, 18, 18), channel("tempo_rewrite")
-label bounds(235, 45, 40, 20), text("t_rewrite"), fontSize(12)
-
 nslider bounds(290, 27, 40, 18), channel("phrase_length"), range(4, 20, 5, 1, 1), fontSize(14)
 label bounds(290, 45, 40, 20), text("phr.len"), fontSize(12)
 }
@@ -369,15 +366,14 @@ instr 31
   kinterval_order chnget "gen_interval_order"
   kchords_on chnget "chords_on"
   kphrase_reconciliation chnget "phrase_reconciliation"
-  ktempo_rewrite chnget "tempo_rewrite"
   kphrase_length chnget "phrase_length"
   kparm_update = changed(kdev_vs_complexity, ksimplify, krhythm_order, 
                       kdeviation_order, knotenum_order, kinterval_order, 
-                      kchords_on, kphrase_reconciliation, ktempo_rewrite, kphrase_length)
-  OSCsend kparm_update, "127.0.0.1", 9901, "/client_parametercontrols", "ffffffffff", 
+                      kchords_on, kphrase_reconciliation, kphrase_length)
+  OSCsend kparm_update, "127.0.0.1", 9901, "/client_parametercontrols", "fffffffff", 
                       kdev_vs_complexity, ksimplify, krhythm_order, 
                       kdeviation_order, knotenum_order, kinterval_order, 
-                      kchords_on, kphrase_reconciliation, ktempo_rewrite, kphrase_length
+                      kchords_on, kphrase_reconciliation, kphrase_length
 
   ; receive other data from Python
   ktempo_bpm init 60
@@ -570,6 +566,10 @@ instr 109
   nextmsg:
     Saddr sprintf "python_prob_gen_voice%i", ivoice
     kmess OSClisten gihandle, Saddr, "fffffff", kgen_index, kgen_rhythm_subdiv, kgen_deviation, kgen_duration, kgen_notenum, kgen_interval, kgen_velocity ; receive OSC data from Python
+    ;Sdebug sprintfk "received i:%i, rhythm:%f, dev:%f, dur:%f, note:%i", kgen_index, kgen_rhythm_subdiv, kgen_deviation, kgen_duration, kgen_notenum
+    ;kdebug_print init 1
+    ;kdebug_print += kmess
+    ;puts Sdebug, kdebug_print
     if kmess == 0 goto done
       ; store events in queue for playback
       if kgen_rhythm_subdiv > 0 then ; if it is not a chord event
@@ -579,18 +579,20 @@ instr 109
            kzero = 0
            cabbageSetValue Sbeat_sync, kzero, changed(knext_event_time)
         endif
-        ;Sdebug sprintfk "receive: voice %i, ndx %i, beat clock %.2f, next event %.2f, ratio %.2f, note %i vel %.2f dur %.2f", ivoice, kgen_index, kbeat_clock, knext_event_time, kgen_rhythm_subdiv, kgen_notenum, kgen_velocity, kgen_duration
-        ;puts Sdebug, knext_event_time+kgen_rhythm_subdiv+kgen_deviation+kgen_notenum
-        kprevious_rhythm = kgen_rhythm_subdiv
+        Sdebug sprintfk "receive: voice %i, ndx %i, beat clock %.2f, next event %.2f, ratio %.2f, note %i vel %.2f dur %.2f", ivoice, kgen_index, kbeat_clock, knext_event_time, kgen_rhythm_subdiv, kgen_notenum, kgen_velocity, kgen_duration
+        puts Sdebug, knext_event_time+kgen_rhythm_subdiv+kgen_deviation+kgen_notenum
+        
 	      kdeviation = kgen_deviation * kdeviation_scale 
-        kEvent_queue[kcount % lenarray(kEvent_queue)][0] = knext_event_time + (kgen_rhythm_subdiv*(60/ktempo_bpm))+kdeviation; store this event time with deviation, for correct playback
-        kEvent_queue[kcount % lenarray(kEvent_queue)][2] = kgen_duration*(kgen_rhythm_subdiv*(60/ktempo_bpm))
+        kEvent_queue[kcount % lenarray(kEvent_queue)][0] = knext_event_time
+        kEvent_queue[(kcount+1) % lenarray(kEvent_queue)][0] = knext_event_time + kgen_rhythm_subdiv + kdeviation; store this event time with deviation, for correct playback
+        kEvent_queue[kcount % lenarray(kEvent_queue)][2] = kgen_duration*kgen_rhythm_subdiv
         kEvent_queue[kcount % lenarray(kEvent_queue)][3] = kgen_notenum
         kEvent_queue[kcount % lenarray(kEvent_queue)][4] = kgen_interval
         kEvent_queue[kcount % lenarray(kEvent_queue)][5] = kgen_velocity
         kEvent_queue[kcount % lenarray(kEvent_queue)][6] = -1 ; is not a chord
+        kprevious_rhythm = kgen_rhythm_subdiv
         kcount += 1
-        ;printarray kEvent_queue
+        printarray kEvent_queue
       else
         kdeviation = kgen_deviation * kdeviation_scale 
         kChord_event[0] = (kcount-1) % lenarray(kEvent_queue) ; we use the kcount event counter to synchronize base events and chord events on playback
@@ -668,11 +670,13 @@ instr 109
     else
       kgen_notenum = kEvent_queue[keventqueue_index][3]
     endif
-    ;kDebug_play[] getrow kEvent_queue, keventqueue_index
-    ;printarray kDebug_play
+    
+    kDebug_play[] getrow kEvent_queue, keventqueue_index
+    printarray kDebug_play
+    
     kprev_notenum = kgen_notenum
 		kgen_velocity = kEvent_queue[keventqueue_index][5]
-    kdur = kEvent_queue[keventqueue_index][2]*kdur_scale 
+    kdur = kEvent_queue[keventqueue_index][2]*kdur_scale*(60/ktempo_bpm)
   	event "i", igen_instr, 0, kdur, kgen_notenum, kgen_velocity, ivoice
     kchords_on chnget "chords_on"
     if kchords_on > 0 then
@@ -742,7 +746,7 @@ endin
 instr 121
   iamp = ampdbfs(-6)
   inote = p4
-  ;print p2
+  print p2, inote
   if inote == 0 then
     turnoff
     igoto skip

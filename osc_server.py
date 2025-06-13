@@ -38,7 +38,6 @@ class Osc_server():
         self.phrase_number = 0
         self.chord_on = 0
         self.phrase_reconciliation = 1
-        self.tempo_rewrite = 1
         self.phrase_length_analysis = 5
         self.pl = pl_instance # probabilistic logic instance
         self.pl.weights[1] = 1 # first order for best ratio
@@ -166,18 +165,20 @@ class Osc_server():
                 print(f'***reconciled analysis*** at index {index} \n {analysis_event}')
                 self.update_corpus_single_analysis(analysis_event[0], index, pulse_override=analysis_event[2])
                 dur_pattern = analysis_event[1][0]
-                tempo = analysis_event[1][2]
+                subdiv_tempo = analysis_event[1][2]
                 pulse, pulsepos = analysis_event[2]
                 print('reconciled dur pattern', dur_pattern)
-                print('reconciled tempo', tempo)
+                print('reconciled tempo', subdiv_tempo)
                 print('reconciled pulse', pulse, pulsepos)
+                beat_bpm, dur_pat_float = self.ra.align_tempo_meter(pulse, dur_pattern, subdiv_tempo)
                 corp_indx = index-(len(dur_pattern))
-                for d in dur_pattern:
+                for i in range(len(dur_pattern)):
                     self.pl.delete_single_event(corp_indx) # delete old prob logic encoding at these indices
   
-                    print(f'rewrite corpus with reconciled dur {d} at index {corp_indx}')
-                    self.dc.corpus[corp_indx,self.dc.pnum_corpus['rhythm_subdiv']] = d
-                    self.dc.corpus[corp_indx,self.dc.pnum_corpus['tempo']] = tempo
+                    print(f'rewrite corpus with reconciled dur {dur_pat_float[i]} at index {corp_indx}')
+                    self.dc.corpus[corp_indx,self.dc.pnum_corpus['rhythm_beat']] = dur_pat_float[i]
+                    self.dc.corpus[corp_indx,self.dc.pnum_corpus['rhythm_subdiv']] = dur_pattern[i]
+                    self.dc.corpus[corp_indx,self.dc.pnum_corpus['tempo']] = beat_bpm
                     self.dc.corpus[corp_indx,self.dc.pnum_corpus['pulse_subdiv']] = pulse
                     self.pl.analyze_single_event(corp_indx) # add new prob logic encoding
                     corp_indx += 1
@@ -186,81 +187,28 @@ class Osc_server():
                 self.dc.corpus[corp_indx,self.dc.pnum_corpus['pulse_subdiv']] = pulse # need to write pulse for last event separately
                 #self.pl.analyze_single_event(corp_indx) # add new prob logic encoding
 
-                if self.tempo_rewrite > 0:
-                    # When reconciling: Rewrite tempi backwards also for events previous to the reconciled phrase
-                    # - rewriting tempo might lead to multiplying the duration pattern with some power of 2 integer
-                    # rewrite tempo and duration pattern for previous events in corpus
-                    tmpo_rewrite_index = index-(len(dur_pattern))
-                    while tmpo_rewrite_index > 0:
-                        prev_tempo = self.dc.corpus[tmpo_rewrite_index-1,self.dc.pnum_corpus['tempo']]
-                        current_tempo = self.dc.corpus[tmpo_rewrite_index,self.dc.pnum_corpus['tempo']]
-                        if (prev_tempo > 0) and prev_tempo < current_tempo: 
-                            tempo_factor = self.ra.get_tempo_factor(current_tempo / prev_tempo)
-                        else: 
-                            tempo_factor = 1
-                        print('*** ***t_rewrite index', tmpo_rewrite_index)
-                        print('cur, prev, fact', current_tempo, prev_tempo, tempo_factor)
-                        self.pl.delete_single_event(tmpo_rewrite_index-1) # delete old prob logic encoding at these indices
-                        self.dc.corpus[tmpo_rewrite_index-1,self.dc.pnum_corpus['rhythm_subdiv']] *= tempo_factor # rewrite dur
-                        self.dc.corpus[tmpo_rewrite_index-1,self.dc.pnum_corpus['tempo']] *= tempo_factor # rewrite tempo
-                        tempo = self.dc.corpus[tmpo_rewrite_index-1,self.dc.pnum_corpus['tempo']]
-                        self.pl.analyze_single_event(tmpo_rewrite_index-1) # add new prob logic encoding
-                        tmpo_rewrite_index -= 1                
-
-                    # HERE BE DRAGONS?
-                    tmpo_rewrite_index = index-(len(dur_pattern))-1
-                    pulse_factor = 1
-                    while tmpo_rewrite_index >= 0:
-                        old_pulse = self.dc.corpus[tmpo_rewrite_index,self.dc.pnum_corpus['pulse_subdiv']]
-                        #print('pulses', tmpo_rewrite_index, old_pulse, pulse)
-                        if pulse != old_pulse:
-                            # find factor (int) that can convert dur_pat and tempo to use a common pulse
-                            if old_pulse == 2: 
-                                pulse_factor = 1.5
-                            else:
-                                pulse_factor = 2
-                        self.pl.delete_single_event(tmpo_rewrite_index) # delete old prob logic encoding at these indices
-                        self.dc.corpus[tmpo_rewrite_index,self.dc.pnum_corpus['rhythm_subdiv']] *= pulse_factor # rewrite dur
-                        self.dc.corpus[tmpo_rewrite_index,self.dc.pnum_corpus['tempo']] *= pulse_factor # rewrite tempo
-                        tempo = self.dc.corpus[tmpo_rewrite_index,self.dc.pnum_corpus['tempo']]
-                        self.dc.corpus[tmpo_rewrite_index,self.dc.pnum_corpus['pulse_subdiv']] *= pulse_factor
-                        self.pl.analyze_single_event(tmpo_rewrite_index) # add new prob logic encoding
-                        tmpo_rewrite_index -= 1
-
-                    # Check if we need to rewrite tempo forward (if the rewritten tempo has become > current tempo)
-                    tmpo_rewrite_index = index-(len(dur_pattern))
-                    while tmpo_rewrite_index < index:
-                        print('* check tempo', tmpo_rewrite_index, self.dc.corpus[tmpo_rewrite_index,self.dc.pnum_corpus['tempo']])
-                        tempo_factor = self.dc.corpus[tmpo_rewrite_index-1,self.dc.pnum_corpus['tempo']]/self.dc.corpus[tmpo_rewrite_index,self.dc.pnum_corpus['tempo']]
-                        if tempo_factor > 1.5:
-                            print(f'forward rewrite tempo at {tmpo_rewrite_index} with factor {int(tempo_factor)}')
-                            self.pl.delete_single_event(tmpo_rewrite_index) # delete old prob logic encoding at these indices
-                            self.dc.corpus[tmpo_rewrite_index,self.dc.pnum_corpus['tempo']] *= int(tempo_factor)
-                            tempo = self.dc.corpus[tmpo_rewrite_index,self.dc.pnum_corpus['tempo']]
-                            self.dc.corpus[tmpo_rewrite_index,self.dc.pnum_corpus['rhythm_subdiv']] *= int(tempo_factor)         
-                            self.pl.analyze_single_event(tmpo_rewrite_index) # add new prob logic encoding
-                        tmpo_rewrite_index += 1
-
-                    # return tempo to client
-                    tempo = float(tempo)
-                    print('tempo', tempo, type(tempo))
-                    returnmsg = tempo, pulse, len(dur_pattern) # tempo and phrase length
-                    osc_io.sendOSC("python_other", returnmsg) # send OSC back to client
+                # return tempo to client
+                beat_bpm = float(beat_bpm)
+                print('beat_bpm', beat_bpm, type(beat_bpm))
+                returnmsg = beat_bpm, pulse, len(dur_pattern) # tempo and phrase length
+                osc_io.sendOSC("python_other", returnmsg) # send OSC back to client
 
     def update_corpus_single_analysis(self, analysis, index, pulse_override=None):
         # Update corpus with analyzed data
         best, pulse, pulsepos, duration_patterns, deviations_, scores, tempi = analysis
         if pulse_override: pulse, pulsepos = pulse_override
         duration_pattern = duration_patterns[best]
+        subdiv_tempo = tempi[best]
+        print(f'subdiv tempo {subdiv_tempo}')
+        print(f'pulse subdiv {pulse}, start position {pulsepos}')
+        beat_bpm, dur_pat_float = self.ra.align_tempo_meter(pulse, duration_pattern, subdiv_tempo)
         deviations = deviations_[best]
         print(f'dur pattern {duration_pattern}')
         print(f'deviations {deviations}')
+        print(f'dur pattern float {dur_pat_float}')
         deviation_polarity = self.ra.get_deviation_polarity(deviations, 0.01)
-        tempo = tempi[best]
-        print(f'subdiv tempo {tempo}')
-        print(f'pulse subdiv {pulse}, start position {pulsepos}')
         # return tempo to client
-        returnmsg = tempo, pulse, len(duration_pattern) # tempo and phrase length
+        returnmsg = beat_bpm, pulse, len(duration_pattern) # tempo and phrase length
         osc_io.sendOSC("python_other", returnmsg) # send OSC back to client
         
         # store the data for each event in the corpus
@@ -270,10 +218,11 @@ class Osc_server():
             self.pl.delete_single_event(indx) # delete (if any) old prob logic encoding at these indices
             # write new
             #self.dc.corpus[indx,self.dc.pnum_corpus['phrase_num']] = self.phrase_number
+            self.dc.corpus[indx,self.dc.pnum_corpus['rhythm_beat']] = dur_pat_float[i]
             self.dc.corpus[indx,self.dc.pnum_corpus['rhythm_subdiv']] = duration_pattern[i]
             self.dc.corpus[indx,self.dc.pnum_corpus['deviation']] = deviations[i]
             self.dc.corpus[indx,self.dc.pnum_corpus['deviation_polarity']] = deviation_polarity[i]
-            self.dc.corpus[indx,self.dc.pnum_corpus['tempo']] = tempo
+            self.dc.corpus[indx,self.dc.pnum_corpus['tempo']] = beat_bpm
             self.dc.corpus[indx,self.dc.pnum_corpus['pulse_subdiv']] = pulse
             # event duration relative to time until next event
             self.dc.corpus[indx,self.dc.pnum_corpus['duration']] = \
@@ -286,6 +235,8 @@ class Osc_server():
         
     def set_corpus_last_event(self, indx):
         # set data for last event
+        pulse_subdiv = self.dc.corpus[indx-1,self.dc.pnum_corpus['pulse_subdiv']] # copy pulse subdiv from previous event
+        self.dc.corpus[indx,self.dc.pnum_corpus['pulse_subdiv']] = pulse_subdiv
         tempo = self.dc.corpus[indx-1,self.dc.pnum_corpus['tempo']] # take tempo from second last event
         self.dc.corpus[indx,self.dc.pnum_corpus['tempo']] = tempo
         seconds_per_beat = 60/tempo
@@ -297,8 +248,8 @@ class Osc_server():
         duration = duration_relative / subdiv
         self.dc.corpus[indx,self.dc.pnum_corpus['duration']] = duration
         self.dc.corpus[indx,self.dc.pnum_corpus['rhythm_subdiv']] = subdiv
-        # copy pulse subdiv from previous event
-        self.dc.corpus[indx,self.dc.pnum_corpus['pulse_subdiv']] = self.dc.corpus[indx-1,self.dc.pnum_corpus['pulse_subdiv']]
+        subdiv_beat = np.ceil(subdiv/pulse_subdiv) # round up to next whole beat
+        self.dc.corpus[indx,self.dc.pnum_corpus['rhythm_beat']] = subdiv_beat
         
         # probabilistic model encoding
         self.pl.analyze_single_event(indx)
@@ -313,7 +264,7 @@ class Osc_server():
             request =  [None]
         else: 
             # translation of gui labels to data container labels
-            if request_parm == 'rhythm': request_parm = 'rhythm_subdiv'
+            if request_parm == 'rhythm': request_parm = 'rhythm_beat'
             if request_parm == 'pitch': request_parm = 'notenum'
             if request_parm == 'interval': request_parm = 'notenum_relative'
             if request_parm == 'phrase': request_parm = 'phrase_num'
@@ -323,7 +274,7 @@ class Osc_server():
 
         next_item_index = self.pl.generate(query, voicenum, temperature) #query probabilistic models for next event and update query for next iteration
         returnmsg = [int(next_item_index), 
-                     float(self.dc.corpus[next_item_index, self.dc.pnum_corpus['rhythm_subdiv']]),
+                     float(self.dc.corpus[next_item_index, self.dc.pnum_corpus['rhythm_beat']]),
                      float(self.dc.corpus[next_item_index, self.dc.pnum_corpus['deviation']]),
                      float(self.dc.corpus[next_item_index, self.dc.pnum_corpus['duration']]),
                      float(self.dc.corpus[next_item_index, self.dc.pnum_corpus['notenum']]),
@@ -336,7 +287,7 @@ class Osc_server():
         if chord_index > 0:
             for event in self.dc.chord_list[int(chord_index-1)]:
                 returnmsg = [int(next_item_index), 
-                             0.0, # rhythm_subdiv
+                             0.0, # rhythm_beat
                              event[2], # deviation (...)
                              float(self.dc.corpus[next_item_index, self.dc.pnum_corpus['duration']]),
                              event[0]+float(self.dc.corpus[next_item_index, self.dc.pnum_corpus['notenum']]),
@@ -363,9 +314,9 @@ class Osc_server():
             print('chord list: \n', self.dc.chord_list)
 
         elif printcode == 2:
-            print('last_phrase: indx, rhythm_subdiv')
-            print(self.dc.pnum_corpus['index'], self.dc.pnum_corpus['rhythm_subdiv'], self.last_analyzed_phrase)
-            parmindxs = [self.dc.pnum_corpus['index'], self.dc.pnum_corpus['rhythm_subdiv']]
+            print('last_phrase: indx, rhythm_beat')
+            print(self.dc.pnum_corpus['index'], self.dc.pnum_corpus['rhythm_beat'], self.last_analyzed_phrase)
+            parmindxs = [self.dc.pnum_corpus['index'], self.dc.pnum_corpus['rhythm_beat']]
             for i in self.last_analyzed_phrase[:-1]:
                 print(self.dc.corpus[[i,i,i],parmindxs])
         else:
@@ -399,18 +350,17 @@ class Osc_server():
         # set control parameters, like score weights etc
         kdev_vs_complexity, ksimplify, krhythm_order, \
             kdeviation_order, knotenum_order, kinterval_order, kchord_on,\
-                 kphrase_reconciliation, ktempo_rewrite, kphrase_length = osc_data
+                 kphrase_reconciliation, kphrase_length = osc_data
         
         self.ra.set_precision(kdev_vs_complexity)
         self.ra.set_simplify(ksimplify)
 
-        self.pl.set_weights_pname('rhythm_subdiv', krhythm_order)         
+        self.pl.set_weights_pname('rhythm_beat', krhythm_order)         
         self.pl.set_weights_pname('deviation_polarity', kdeviation_order) 
         self.pl.set_weights_pname('notenum', knotenum_order) 
         self.pl.set_weights_pname('notenum_relative', kinterval_order)
         self.chord_on = kchord_on 
         self.phrase_reconciliation = kphrase_reconciliation
-        self.tempo_rewrite = ktempo_rewrite
         self.phrase_length_analysis = int(kphrase_length)
 
         logging.debug('receive_parameter_controls {}'.format(osc_data))

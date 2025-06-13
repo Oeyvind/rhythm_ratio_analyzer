@@ -440,6 +440,26 @@ def get_tempo_factor(n):
     idx = (np.abs(tempofac - n)).argmin()
     return tempofac[idx]
     
+def align_tempo_meter(pulse, duration_pattern, subdiv_tempo):
+    #best, pulse, pulsepos, duration_patterns, deviations, scores, tempi = analysis
+    #print('d:', duration_patterns[best])
+    #print('tempo:', tempi[best])
+    #print('pulse', pulse)
+    # find reasonable tempo for beat bpm by dividing tempo by pulse, and then dividing by 2 until within range (80-160)
+    tempo_divisor = 1
+    beat_bpm = subdiv_tempo/tempo_divisor
+    div_counter = 1
+    while beat_bpm > 160:
+        div_counter += 1
+        tempo_divisor = pulse*div_counter
+        beat_bpm = subdiv_tempo/tempo_divisor
+    #while beat_bpm < 80:
+    #    div_counter -= 1
+    #    tempo_divisor = pulse*div_counter
+    #    beat_bpm = subdiv_tempo/tempo_divisor
+    dur_pat_float = np.array(duration_pattern)/tempo_divisor
+    return beat_bpm, dur_pat_float
+
 def analyze(t, prev_tempo=1):
     """Analysis of time sequence, resulting in a duration pattern with tempo estimation"""
     duration_patterns, deviations, tempi = dur_pattern_suggestions(t)
@@ -724,24 +744,13 @@ if __name__ == '__main__':
     #timeseries = np.array([4., 5, 5.33, 5.66, 6, 7, 7.75, 8, 9])
     #timeseries = np.array([0., 1, 1.5, 2, 3])
     #timeseries = np.array([0., 1, 1.5, 2, 3, 3.75, 4., 5])
-    best, pulse, pulsepos, duration_patterns, deviations, scores, tempi = analyze(timeseries)
+    analysis = analyze(timeseries)
+    best, pulse, pulsepos, duration_patterns, deviations, scores, tempi = analysis
     print('d:', duration_patterns[best])
     print('tempo:', tempi[best])
     print('pulse', pulse)
-    # find reasonable tempo for beat bpm by dividing tempo by pulse, and then dividing by 2 until within range (80-160)
-    tempo_divisor = 1
-    beat_bpm = tempi[best]/tempo_divisor
-    div_counter = 1
-    while beat_bpm > 160:
-        div_counter += 1
-        tempo_divisor = pulse*div_counter
-        beat_bpm = tempi[best]/tempo_divisor
-    #while beat_bpm < 80:
-    #    div_counter -= 1
-    #    tempo_divisor = pulse*div_counter
-    #    beat_bpm = tempi[best]/tempo_divisor
-    print('beat_bpm', beat_bpm, 'tempo_divisor', tempo_divisor)
-    dur_pat_float = np.array(duration_patterns[best])/tempo_divisor
+    beat_bpm, dur_pat_float = align_tempo_meter(pulse, duration_patterns[best], tempi[best])
+    print('beat_bpm', beat_bpm)
     print('dur_pat_float', dur_pat_float)
     #dur_pat_frac = []
     #from fractions import Fraction
