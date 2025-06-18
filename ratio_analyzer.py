@@ -117,11 +117,11 @@ def fit_tempo_from_dur_pattern(dur_pattern, t):
             sub_dur = dur_pattern[i:i+subsize]
             sub_time = t_diff[i:i+subsize]
             #print('dur', sub_dur, 't_diff', sub_time)
-            temp = (np.sum(sub_dur)/np.sum(sub_time))
-            #print('temp', temp)
+            temp = (np.sum(sub_time)/np.sum(sub_dur))
             tempi += temp #??? multiply with sum(sub_dur) ???
         subsize += 1
-    tempo = 60*(tempi/num_iterations) #??? and divide by sum of all dur
+    #print('tempi/num_iterations', tempi, num_iterations, tempi/num_iterations)
+    tempo = 60/(tempi/num_iterations) #??? and divide by sum of all dur
     #print('tempo', tempo)    
     return tempo
 
@@ -292,6 +292,9 @@ def dur_pattern_suggestions(t, div_limit=4):
                     deviations.append(dev)
     return duration_patterns, deviations, tempi
 
+dp, dev, tempi = dur_pattern_suggestions(np.array([0, .725, 1.120, 1.472, 2.005, 2.198, 2.933]))
+print( dp[0], dev[0], tempi[0])
+
 def indispensability_subdiv(trigger_seq):
     # Find pattern subdivision based on indispensability (Barlow)
     indis_2 = np.array([1,0])    
@@ -339,7 +342,7 @@ def indispensability_subdiv(trigger_seq):
             break
     return int(subdiv), int(position)
 
-def reconcile_tempi(tempi1, tempi2, prev_tempo=0, tolerance=0.1):
+def reconcile_tempi(tempi1, tempi2, tolerance=0.1):
     # When analyzing two or more consecutive rhythm patterns
     # try to reconcile the interpretation of the two patterns
     # allow changing the selection of best representation of the first in light of evidence from the second
@@ -369,7 +372,7 @@ def reconcile_tempi(tempi1, tempi2, prev_tempo=0, tolerance=0.1):
                 if near_match[j]:
                     reconcile_combos.append([[i,j],tf])
     # reconcile_combos now contains indices for reconcilable tempi, and the factors needed for reconciliation
-    
+    '''
     # To ensure that duration pattern representation always become more precise with new evidence, 
     # one will never want the subdivision tempo to decrease. 
     # The previous tempo can thus be entered as an optional argument to this function.
@@ -380,19 +383,63 @@ def reconcile_tempi(tempi1, tempi2, prev_tempo=0, tolerance=0.1):
         while tempi1[indices[0]]*t_factors[0]*min_factor < prev_tempo*(1-tolerance):
             min_factor += 1
         t_factors *= min_factor
-
+    '''
     if len(reconcile_combos) == 0: 
         print('reconcile_tempi(): CAN NOT BE RECONCILED', tempi1, tempi2)
         return [[[0, 0], np.array([1,  1])]]
     else:
         return reconcile_combos
 
-def analysis_reconcile(analyses, prev_tempo=0):
+def reconcile_tempi_singles(prev_tempo, new_tempo, tolerance=0.1):
+    # Reconciliation of two tempi, by finding the tempo factor
+    # When analyzing a rhythm pattern, we might want to force the interpretation to align with a previous tempo
+    # When we have the tempo factor, we can multiply the (new) duration pattern so its interpretation is compatible with the previous tempo
+
+    # Compatible tempi means they are almost equal (within tolerance limit)
+    # If they can become compatible by integer multiplication (e.g. 120bpm and 240bpm),
+    # save the factor needed to reconcile them.
+    # Allow only multipliers [2,3], as these can represent reconcilable tempo ratios
+    # The non-redundant tempo factors are then in the simplest case [1,1],[1,2],[1,3],[2,1],[2,3],[3,1],[3,2]
+    # ... but to allow for dur patterns of double relative tempi, and also rhythms of 3-groupings and 5-groupings,
+    #  we need additional combinations 
+    
+    #tempo_factors = np.array([[1,1],[1,2],[1,3],[2,1],[2,3],[3,1],[3,2]])
+    tempo_factors = [[1,1],[1,2],[1,4],
+                     [1,3],[1,6],
+                     [2,1],[4,1],
+                     [2,3],[2,6],
+                     [3,1],[6,1],
+                     [3,2],[3,4],
+                     [4,3],[5,4],[4,5]]
+    reconcile_factors = []
+    for tf in tempo_factors:
+        near_match = np.isclose(prev_tempo*tf[0], new_tempo*tf[1], tolerance) 
+        if near_match:
+            reconcile_factor = tf[0]/tf[1]
+            unquantized = new_tempo/prev_tempo
+            deviation = abs(1-reconcile_factor/unquantized)
+            #print('r,d', reconcile_factor, unquantized, deviation)
+            reconcile_factors.append([reconcile_factor,deviation])
+    if len(reconcile_factors) == 0: 
+        print('reconcile_tempi_singles(): CAN NOT BE RECONCILED', prev_tempo, new_tempo)
+        return 1
+    else:
+        # if several alternatives, select the one with least deviation
+        reconcile_factors = np.array(reconcile_factors)
+        reconcile_factors = reconcile_factors[reconcile_factors[:,1].argsort()]
+        print(reconcile_factors)
+        return reconcile_factors[0][0]
+
+#rec = reconcile_tempi_singles(180, 120, tolerance=0.1)
+#rec = reconcile_tempi_singles(120, 155, tolerance=0.10)
+#print(rec)
+
+def analysis_reconcile(analyses):
     # analyses format
     # best, pulse, pulsepos, duration_patterns, deviations, scores, tempi
     tempi1 = np.array(analyses[0][6])
     tempi2 = np.array(analyses[1][6])
-    reconcile_combos = reconcile_tempi(tempi1, tempi2, prev_tempo)
+    reconcile_combos = reconcile_tempi(tempi1, tempi2)
     #print('reconcile_combos', reconcile_combos)
     scoresum, reconciled_dur_dev_tmpo = eval_reconciled(analyses, reconcile_combos)
     best = np.argsort(scoresum)[0]
@@ -460,7 +507,7 @@ def align_tempo_meter(pulse, duration_pattern, subdiv_tempo):
     dur_pat_float = np.array(duration_pattern)/tempo_divisor
     return beat_bpm, dur_pat_float
 
-def analyze(t, prev_tempo=1):
+def analyze(t):
     """Analysis of time sequence, resulting in a duration pattern with tempo estimation"""
     duration_patterns, deviations, tempi = dur_pattern_suggestions(t)
     devsums = []
@@ -472,11 +519,6 @@ def analyze(t, prev_tempo=1):
     best_dur_pattern = duration_patterns[best]
     trigger_seq = make_box_notation(best_dur_pattern)
     pulse, pulsepos = indispensability_subdiv(trigger_seq)
-    for i in range(len(tempi)):
-        if tempi[i] < prev_tempo:
-            tempo_fact = get_tempo_factor(prev_tempo/tempi[i])
-            tempi[i] = tempi[i]*tempo_fact
-            duration_patterns[i] = (np.array(duration_patterns[i])*tempo_fact).tolist()
     return best, pulse, pulsepos, duration_patterns, deviations, scores, tempi
 
 # testing functions
@@ -739,7 +781,7 @@ if __name__ == '__main__':
     #timeseries = np.array([17.115646362304688, 17.585487365722656, 17.6156005859375, 17.865215301513672, 17.865577697753906])
     #timeseries = np.array([17.1, 17.5, 17.6, 17.8, 17.9])
     #print(analyze(timeseries))
-    
+    '''
     timeseries = np.array([0., 1, 1.5, 2, 3, 3.75, 4., 5, 5.33, 5.66, 6, 7])
     #timeseries = np.array([4., 5, 5.33, 5.66, 6, 7, 7.75, 8, 9])
     #timeseries = np.array([0., 1, 1.5, 2, 3])
@@ -752,6 +794,7 @@ if __name__ == '__main__':
     beat_bpm, dur_pat_float = align_tempo_meter(pulse, duration_patterns[best], tempi[best])
     print('beat_bpm', beat_bpm)
     print('dur_pat_float', dur_pat_float)
+    '''
     #dur_pat_frac = []
     #from fractions import Fraction
     #for d in dur_pat_float:

@@ -43,8 +43,12 @@ label bounds(115, 45, 40, 20), text("simplify"), fontSize(12)
 checkbox bounds(190, 27, 18, 18), channel("phrase_reconciliation")
 label bounds(185, 45, 40, 20), text("reconcile"), fontSize(12)
 
-nslider bounds(290, 27, 40, 18), channel("phrase_length"), range(4, 20, 5, 1, 1), fontSize(14)
-label bounds(290, 45, 40, 20), text("phr.len"), fontSize(12)
+nslider bounds(255, 27, 40, 18), channel("phrase_length"), range(4, 20, 5, 1, 1), fontSize(14)
+label bounds(255, 45, 40, 20), text("phr.len"), fontSize(12)
+
+checkbox bounds(330, 27, 18, 18), channel("force_tempo")
+label bounds(325, 45, 40, 20), text("force_tmpo"), fontSize(12)
+
 }
 
 groupbox bounds(5, 135, 760, 170), text("generate events with prob logic"), colour(25,45,30){
@@ -367,13 +371,15 @@ instr 31
   kchords_on chnget "chords_on"
   kphrase_reconciliation chnget "phrase_reconciliation"
   kphrase_length chnget "phrase_length"
+  kforce_tempo chnget "force_tempo"
+  kforce_bpm chnget "gen_tempo_bpm"
   kparm_update = changed(kdev_vs_complexity, ksimplify, krhythm_order, 
                       kdeviation_order, knotenum_order, kinterval_order, 
-                      kchords_on, kphrase_reconciliation, kphrase_length)
-  OSCsend kparm_update, "127.0.0.1", 9901, "/client_parametercontrols", "fffffffff", 
+                      kchords_on, kphrase_reconciliation, kphrase_length, kforce_tempo)
+  OSCsend kparm_update, "127.0.0.1", 9901, "/client_parametercontrols", "fffffffffff", 
                       kdev_vs_complexity, ksimplify, krhythm_order, 
                       kdeviation_order, knotenum_order, kinterval_order, 
-                      kchords_on, kphrase_reconciliation, kphrase_length
+                      kchords_on, kphrase_reconciliation, kphrase_length, kforce_tempo, kforce_bpm
 
   ; receive other data from Python
   ktempo_bpm init 60
@@ -383,7 +389,7 @@ instr 31
   kmess_other OSClisten gihandle, "python_other", "fff", ktempo_bpm, kpulse_subdiv, kphraselen ; receive OSC data from Python
   cabbageSetValue "tempo_bpm_last_phrase", ktempo_bpm, changed(ktempo_bpm)
   kplay_event_triggered chnget "play_event_triggered"
-  cabbageSetValue "gen_tempo_bpm", ktempo_bpm, changed(ktempo_bpm*kauto_tempo_update*kplay_event_triggered)
+  cabbageSetValue "gen_tempo_bpm", ktempo_bpm, changed(ktempo_bpm*kauto_tempo_update)
   cabbageSetValue "pulse_subdiv", kpulse_subdiv, changed(kpulse_subdiv)
   cabbageSetValue "phrase_len", kphraselen, changed(kphraselen)
   if kmess_other == 0 goto done_other

@@ -31,7 +31,6 @@ class Osc_server():
         self.index = 0
         self.analysis_chunk = []
         self.recent_analyses = []
-        self.prev_tempo = 1
         self.minimum_delta_time = 50
         self.previous_notenum = -1
         self.previous_velocity = -1
@@ -39,6 +38,8 @@ class Osc_server():
         self.chord_on = 0
         self.phrase_reconciliation = 1
         self.phrase_length_analysis = 5
+        self.force_tempo = 0 # force old tempo and meter
+        self.prev_tempo = -1
         self.pl = pl_instance # probabilistic logic instance
         self.pl.weights[1] = 1 # first order for best ratio
         self.pl.weights[2] = 1 # 2nd order for best ratio
@@ -127,7 +128,7 @@ class Osc_server():
             if (len(self.analysis_chunk) == (chunk_size*2)-1): #if we have enough for two chunks...
                 self.analysis_chunk = self.analysis_chunk[chunk_size-1:] # the first one have already been analyzed
             if (len(self.analysis_chunk) == chunk_size):
-                analysis = self.ra.analyze(np.array(self.analysis_chunk), prev_tempo=self.prev_tempo)
+                analysis = self.ra.analyze(np.array(self.analysis_chunk))
                 self.recent_analyses.append(analysis)
                 new_analysis = True
                 if (len(self.recent_analyses) > 2):
@@ -137,7 +138,7 @@ class Osc_server():
             if len(self.analysis_chunk) == chunk_size:
                 pass # already analyzed
             elif len(self.analysis_chunk) > chunk_low_limit: # dragons? was > chunk size
-                analysis = self.ra.analyze(np.array(self.analysis_chunk), prev_tempo=self.prev_tempo)
+                analysis = self.ra.analyze(np.array(self.analysis_chunk))
                 new_analysis = True
                 if len(self.recent_analyses) == 0:
                     self.recent_analyses.append(analysis)
@@ -148,8 +149,8 @@ class Osc_server():
             self.analysis_chunk = [] # clear analysis_chunk on any phrase termination
         if new_analysis:
             if (len(self.recent_analyses) == 2) and (self.phrase_reconciliation > 0):
-                durs_devs_tpo, pulse_ppos = self.ra.analysis_reconcile(self.recent_analyses, prev_tempo=self.prev_tempo)
-                self.prev_tempo = durs_devs_tpo[2]
+                durs_devs_tpo, pulse_ppos = self.ra.analysis_reconcile(self.recent_analyses)
+                #self.prev_tempo = durs_devs_tpo[2]
                 return analysis, durs_devs_tpo, pulse_ppos
             else: return analysis
         else: return None
@@ -171,6 +172,14 @@ class Osc_server():
                 print('reconciled tempo', subdiv_tempo)
                 print('reconciled pulse', pulse, pulsepos)
                 beat_bpm, dur_pat_float = self.ra.align_tempo_meter(pulse, dur_pattern, subdiv_tempo)
+                print('*** *** recon FORCE TEMPO ?? ***', self.force_tempo)
+                if self.force_tempo:
+                    print('force tempo...', self.prev_tempo)
+                    if self.prev_tempo > 0:
+                        tempo_factor = self.ra.reconcile_tempi_singles(beat_bpm, self.prev_tempo)
+                        print('force tempo factor', tempo_factor)
+                        dur_pat_float *= tempo_factor
+                        beat_bpm *= tempo_factor
                 corp_indx = index-(len(dur_pattern))
                 for i in range(len(dur_pattern)):
                     self.pl.delete_single_event(corp_indx) # delete old prob logic encoding at these indices
@@ -192,7 +201,9 @@ class Osc_server():
                 print('beat_bpm', beat_bpm, type(beat_bpm))
                 returnmsg = beat_bpm, pulse, len(dur_pattern) # tempo and phrase length
                 osc_io.sendOSC("python_other", returnmsg) # send OSC back to client
-
+                if self.force_tempo > 0:
+                    self.prev_tempo = beat_bpm
+                    
     def update_corpus_single_analysis(self, analysis, index, pulse_override=None):
         # Update corpus with analyzed data
         best, pulse, pulsepos, duration_patterns, deviations_, scores, tempi = analysis
@@ -202,6 +213,14 @@ class Osc_server():
         print(f'subdiv tempo {subdiv_tempo}')
         print(f'pulse subdiv {pulse}, start position {pulsepos}')
         beat_bpm, dur_pat_float = self.ra.align_tempo_meter(pulse, duration_pattern, subdiv_tempo)
+        print('*** *** FORCE TEMPO ?? ***', self.force_tempo)
+        if self.force_tempo:
+            print('force tempo...', self.prev_tempo)
+            if self.prev_tempo > 0:
+                tempo_factor = self.ra.reconcile_tempi_singles(beat_bpm, self.prev_tempo)
+                print('force tempo factor', tempo_factor)
+                dur_pat_float *= tempo_factor
+                beat_bpm *= tempo_factor
         deviations = deviations_[best]
         print(f'dur pattern {duration_pattern}')
         print(f'deviations {deviations}')
@@ -209,7 +228,10 @@ class Osc_server():
         deviation_polarity = self.ra.get_deviation_polarity(deviations, 0.01)
         # return tempo to client
         returnmsg = beat_bpm, pulse, len(duration_pattern) # tempo and phrase length
+        print('** RETURN tempo to vst', returnmsg)
         osc_io.sendOSC("python_other", returnmsg) # send OSC back to client
+        if self.force_tempo > 0:
+            self.prev_tempo = beat_bpm
         
         # store the data for each event in the corpus
         for i in range(len(duration_pattern)): 
@@ -287,12 +309,12 @@ class Osc_server():
         if chord_index > 0:
             for event in self.dc.chord_list[int(chord_index-1)]:
                 returnmsg = [int(next_item_index), 
-                             0.0, # rhythm_beat
-                             event[2], # deviation (...)
+                             float(0.0), # rhythm_beat
+                             float(event[2]), # deviation (...)
                              float(self.dc.corpus[next_item_index, self.dc.pnum_corpus['duration']]),
-                             event[0]+float(self.dc.corpus[next_item_index, self.dc.pnum_corpus['notenum']]),
-                             event[0],
-                             event[1]*float(self.dc.corpus[next_item_index, self.dc.pnum_corpus['velocity']])]
+                             float(event[0])+float(self.dc.corpus[next_item_index, self.dc.pnum_corpus['notenum']]),
+                             float(event[0]),
+                             float(event[1])*float(self.dc.corpus[next_item_index, self.dc.pnum_corpus['velocity']])]
                 #print('chord event', returnmsg)
                 if self.chord_on > 0:
                     osc_io.sendOSC(f"python_prob_gen_voice{voicenum}", returnmsg) # send OSC back to client
@@ -340,17 +362,17 @@ class Osc_server():
             self.previous_notenum = -1
             self.previous_velocity = -1
             self.index = 0
-            self.prev_tempo = 1
+            self.prev_tempo = -1
         if save_all > 0:
             self.dc.save_corpus()
-            self.pl.save_all()
+            #self.pl.save_all()
 
     def receive_parameter_controls(self, unused_addr, *osc_data):
         '''Message handler. This is called when we receive an OSC message'''
         # set control parameters, like score weights etc
         kdev_vs_complexity, ksimplify, krhythm_order, \
             kdeviation_order, knotenum_order, kinterval_order, kchord_on,\
-                 kphrase_reconciliation, kphrase_length = osc_data
+                 kphrase_reconciliation, kphrase_length, kforce_tempo, kforce_bpm = osc_data
         
         self.ra.set_precision(kdev_vs_complexity)
         self.ra.set_simplify(ksimplify)
@@ -362,6 +384,9 @@ class Osc_server():
         self.chord_on = kchord_on 
         self.phrase_reconciliation = kphrase_reconciliation
         self.phrase_length_analysis = int(kphrase_length)
+        self.force_tempo = kforce_tempo
+        if kforce_tempo > 0:
+            self.prev_tempo = kforce_bpm
 
         logging.debug('receive_parameter_controls {}'.format(osc_data))
 

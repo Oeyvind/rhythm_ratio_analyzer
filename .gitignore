@@ -4,3 +4,4 @@ __pycache__
 /csound/test.wav
 *.reapeaks
 .DS_Store
+saved_corpus*.*

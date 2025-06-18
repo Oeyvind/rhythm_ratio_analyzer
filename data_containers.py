@@ -90,6 +90,7 @@ class DataContainers:
   def save_corpus(self):
     # save corpus to file
     np.save('saved_corpus.npy', self.corpus)
+    np.savetxt('saved_corpus.txt', self.corpus, fmt='%.2f')
   
   def load_corpus(self):
     # load corpus from file
