@@ -4,7 +4,7 @@
 		"appversion" : 		{
 			"major" : 9,
 			"minor" : 0,
-			"revision" : 5,
+			"revision" : 7,
 			"architecture" : "x64",
 			"modernui" : 1
 		}
@@ -16,7 +16,7 @@
 				"box" : 				{
 					"comment" : "",
 					"id" : "obj-3",
-					"index" : 0,
+					"index" : 1,
 					"maxclass" : "outlet",
 					"numinlets" : 1,
 					"numoutlets" : 0,
@@ -28,7 +28,7 @@
 				"box" : 				{
 					"comment" : "",
 					"id" : "obj-1",
-					"index" : 0,
+					"index" : 1,
 					"maxclass" : "inlet",
 					"numinlets" : 0,
 					"numoutlets" : 1,
@@ -45,7 +45,7 @@
 					"numoutlets" : 1,
 					"outlettype" : [ "float" ],
 					"patching_rect" : [ 136.0, 216.0, 59.0, 22.0 ],
-					"text" : "sauvitatis"
+					"text" : "suavitatis"
 				}
 
 			}
@@ -55,9 +55,9 @@
 					"maxclass" : "newobj",
 					"numinlets" : 2,
 					"numoutlets" : 1,
-					"outlettype" : [ "int" ],
-					"patching_rect" : [ 118.0, 252.0, 37.333333333333343, 22.0 ],
-					"text" : "+ 0"
+					"outlettype" : [ "float" ],
+					"patching_rect" : [ 118.0, 252.0, 29.5, 22.0 ],
+					"text" : "+ 0."
 				}
 
 			}
@@ -163,24 +163,7 @@
 				}
 
 			}
- ],
-		"originid" : "pat-9871",
-		"dependency_cache" : [ 			{
-				"name" : "prime_factorization.maxpat",
-				"bootpath" : "~/Documents/forskning/rhythm_ratio_analyzer/max/patchers",
-				"patcherrelativepath" : ".",
-				"type" : "JSON",
-				"implicit" : 1
-			}
-, 			{
-				"name" : "sauvitatis.maxpat",
-				"bootpath" : "~/Documents/forskning/rhythm_ratio_analyzer/max/patchers",
-				"patcherrelativepath" : ".",
-				"type" : "JSON",
-				"implicit" : 1
-			}
- ],
-		"autosave" : 0
+ ]
 	}
 
 }
