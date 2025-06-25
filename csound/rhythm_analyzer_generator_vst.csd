@@ -768,6 +768,12 @@ instr 121
   outs a1, a1
   ; midi out
   noteondur ichan, inote, ivel, p3
+  ; OSC out
+  OSCsend 1, "127.0.0.1", 9200, "/analyzer/events", "iif", inote, ivel, p3
+  kInit init 1
+  cabbageSetValue "eventSend", trighold(changed2(kInit), 0.05)
+  kInit = 0
+
   skip:
 endin
 
