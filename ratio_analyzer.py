@@ -142,8 +142,8 @@ def get_dur_pattern_deviations(dur_pattern, t, tempo):
     #print('test', test)
     return dur_dev
 
-#timeseries = np.array([0,.100,.201,.300])
-#dur = [1,1,1]
+#timeseries = np.array([0,.100,.200,.255,.300, .400])
+#dur = [1, 1, 0.5, 0.5, 1]
 #tempo = fit_tempo_from_dur_pattern(dur,timeseries)
 #print('tempo', tempo)
 #dev = get_dur_pattern_deviations(dur, timeseries, tempo)
@@ -247,11 +247,11 @@ def dur_pattern_height(d):
     # Might also consider tesselation (combination of durations)
     s = np.sum(d)
     suavit = 0
-    #indigest = 0
+    indigest = 0
     for n in d:
         suavit += suavitatis(n)
-        #indigest += indigestability(n)
-    return suavit
+        indigest += indigestability(n)
+    return indigest # (was suavit, changed for article correspond with Daniel)
 
 def evaluate(duration_patterns, deviations, weights):
     # Evaluate the fitness of a set of suggested dur patterns,
@@ -261,6 +261,8 @@ def evaluate(duration_patterns, deviations, weights):
     for d in duration_patterns:
         height = dur_pattern_height(d)
         heights.append(height)
+    #print('complexity', heights)
+    #print('weights', weights)
     scoresum = normalize_and_add_scores([deviations, heights], weights)
     return scoresum
 
@@ -269,11 +271,13 @@ def dur_pattern_suggestions(t, div_limit=4):
     # Calculate tempo and deviations for each dur pattern
     timedata = t.tolist()
     ratios = ratio_to_each(timedata, div_limit=div_limit)
+    #print('ratios', ratios)
     duration_patterns = []
     deviations = []
     tempi = []
     for i in range(len(ratios)):
         dur_pattern = make_duration_pattern(ratios[i]).astype('int').tolist()
+        #print(i, dur_pattern, ratios[i][0][-1])
         if dur_pattern not in duration_patterns: 
             tempo = fit_tempo_from_dur_pattern(dur_pattern,t)
             #if tempo < 1000: # pulse tempo over this threshold is probably an error
@@ -292,8 +296,8 @@ def dur_pattern_suggestions(t, div_limit=4):
                     deviations.append(dev)
     return duration_patterns, deviations, tempi
 
-dp, dev, tempi = dur_pattern_suggestions(np.array([0, .725, 1.120, 1.472, 2.005, 2.198, 2.933]))
-print( dp[0], dev[0], tempi[0])
+#dp, dev, tempi = dur_pattern_suggestions(np.array([0, .725, 1.120, 1.472, 2.005, 2.198, 2.933]))
+#print( dp[0], dev[0], tempi[0])
 
 def indispensability_subdiv(trigger_seq):
     # Find pattern subdivision based on indispensability (Barlow)
@@ -510,11 +514,15 @@ def align_tempo_meter(pulse, duration_pattern, subdiv_tempo):
 def analyze(t):
     """Analysis of time sequence, resulting in a duration pattern with tempo estimation"""
     duration_patterns, deviations, tempi = dur_pattern_suggestions(t)
+    #print('article: dur_pat, tempi\n', duration_patterns, tempi)
     devsums = []
     for dev in deviations:
         devsum = np.sum(np.abs(dev))
         devsums.append(devsum)
+    #print('devsums', devsums)
     scores = evaluate(duration_patterns, devsums, weights)
+    #print('scores', scores)
+    #print('deviations', deviations)
     best = np.argsort(scores)[0]
     best_dur_pattern = duration_patterns[best]
     trigger_seq = make_box_notation(best_dur_pattern)
@@ -768,7 +776,7 @@ def test_analyze_chunk_rewrite_corpus(timeseries):
     print(corpus)
 
 if __name__ == '__main__':
-    set_precision(0.6) # balance between deviation and complexity
+    set_precision(0.5) # balance between deviation and complexity
     set_simplify(False)
     
     #timeseries = np.array([0,.1,.2,.3,.4,.5,.6,.7,.8,.9])
@@ -781,8 +789,9 @@ if __name__ == '__main__':
     #timeseries = np.array([17.115646362304688, 17.585487365722656, 17.6156005859375, 17.865215301513672, 17.865577697753906])
     #timeseries = np.array([17.1, 17.5, 17.6, 17.8, 17.9])
     #print(analyze(timeseries))
-    '''
+
     timeseries = np.array([0., 1, 1.5, 2, 3, 3.75, 4., 5, 5.33, 5.66, 6, 7])
+    timeseries = np.array([0, .725, 1.120, 1.472, 2.005, 2.198, 2.933])
     #timeseries = np.array([4., 5, 5.33, 5.66, 6, 7, 7.75, 8, 9])
     #timeseries = np.array([0., 1, 1.5, 2, 3])
     #timeseries = np.array([0., 1, 1.5, 2, 3, 3.75, 4., 5])
@@ -794,7 +803,7 @@ if __name__ == '__main__':
     beat_bpm, dur_pat_float = align_tempo_meter(pulse, duration_patterns[best], tempi[best])
     print('beat_bpm', beat_bpm)
     print('dur_pat_float', dur_pat_float)
-    '''
+    
     #dur_pat_frac = []
     #from fractions import Fraction
     #for d in dur_pat_float:

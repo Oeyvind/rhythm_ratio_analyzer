@@ -146,7 +146,9 @@ class Osc_server():
                     self.recent_analyses[-1] = analysis # replace the last analysis
             else: 
                 print(f'Not enough time data to analyze {self.analysis_chunk}')
+                self.index -= len(self.analysis_chunk) 
             self.analysis_chunk = [] # clear analysis_chunk on any phrase termination
+            
         if new_analysis:
             if (len(self.recent_analyses) == 2) and (self.phrase_reconciliation > 0):
                 durs_devs_tpo, pulse_ppos = self.ra.analysis_reconcile(self.recent_analyses)
