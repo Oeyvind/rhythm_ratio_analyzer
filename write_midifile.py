@@ -10,7 +10,7 @@ channel = 0
 time = 0  # In beats
 duration = 0.5 # relative duration  
 track = 0
-tempo    = 120   # In BPM
+tempo = 120   # In BPM
 MyMIDI = MIDIFile(1)
 MyMIDI.addTempo(track, time, tempo)
 

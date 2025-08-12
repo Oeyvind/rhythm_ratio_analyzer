@@ -13,6 +13,7 @@ import data_containers
 import ratio_analyzer 
 import probabilistic_logic
 import osc_server
+import sys
 
 # instantiate data containers
 max_events = 10000 # 100 for test, 10.000 for small scale production
@@ -23,4 +24,5 @@ pl = probabilistic_logic.Probabilistic_logic(dc, max_size=max_events, max_order=
 
 # instantiate and start osc server
 server = osc_server.Osc_server(dc, ratio_analyzer, pl)
-server.start_server()
+if __name__ == "__main__":
+    server.start_server()
