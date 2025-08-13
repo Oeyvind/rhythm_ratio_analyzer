@@ -73,3 +73,13 @@ The server returns data to the client on these OSC channels:
 "/python_skipindex" - used during recording, if Python skips an event due to too small delta time  
 "/python_triggerdata" - rhythm analysis generates a trigger sequence (1's and 0's) representing the last analyzed rhyhm phrase  
  "/python_other" - various data like ticktempo, tempo_tendency, pulseposition for the last analyzed phrase  
+
+
+To run tests on midi files:
+- the first argument is the performed midi file
+- second argument is the quantized (score) file of the same music piece
+- third argument sets how many events to analyze in both files (-1 means all events in file)
+Example:
+python test_compare_quantized_onsets_with_analyzer.py ./test_data/Shi05M.mid ./test_data/Shi05M_score.mid -1
+
+Please note that any chord events (delta time less than 50 milliseconds) will be treated as one rhythm event.

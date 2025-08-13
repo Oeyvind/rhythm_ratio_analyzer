@@ -108,8 +108,8 @@ quantized_onsets, q_tempo_bpm, q_numevents = get_onsets_from_quantized(quantized
 analyzer_onsets, a_tempo_bpm = get_onsets_from_analyzer(analyze_file, q_numevents)
 # compare
 print('\nCompare onsets from analyzer with quantized onsets in file:')
-#print('analyzer_onsets', analyzer_onsets)
-#print('quantized_onsets', quantized_onsets)
+print('analyzer_onsets', analyzer_onsets)
+print('quantized_onsets', quantized_onsets)
 
 def compare_onsets(analyzer_onsets, quantized_onsets):
     # allow tempo mismatch with an integer factor of 2 in both directions
