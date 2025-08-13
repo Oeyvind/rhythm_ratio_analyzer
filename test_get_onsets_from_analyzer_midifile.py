@@ -15,7 +15,7 @@ from mido import MidiFile
 
 # for testing, supply command line argument to specify data file for testing
 if not len(sys.argv) == 3:
-    print('need 2 arguments: midi file and num events')
+    print('need 2 arguments: midi file name and num events (numevents = -1 use all events)')
     sys.exit()
 
 testfile = './test_data/'+sys.argv[1]
