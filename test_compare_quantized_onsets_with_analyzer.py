@@ -3,8 +3,7 @@ import main as m
 import sys
 import numpy as np
 np.set_printoptions(legacy='1.25')
-np.set_printoptions(threshold=sys.maxsize)
-
+np.set_printoptions(threshold=np.inf) 
 
 def get_onsets_from_quantized(testfile, numevents):
     midifile = MidiFile(testfile)
@@ -56,7 +55,7 @@ def get_onsets_from_quantized(testfile, numevents):
     #print('inter onsets', inter_onsets)
     return np.array(inter_onsets), tempo_bpm, q_numevents
 
-def get_onsets_from_analyzer(testfile, numevents):
+def get_onsets_from_analyzer(testfile, numevents, force_tempo):
     midifile = MidiFile(testfile)
     print('midi file type', midifile.type)
     if numevents == -1:
@@ -65,6 +64,7 @@ def get_onsets_from_analyzer(testfile, numevents):
             if msg.type == 'note_on' and msg.velocity > 0:
                 numevents += 1
     print(f'get analyzer onsets from {testfile} with {numevents} events')
+    m.server.force_tempo = force_tempo
     unused_addr = ''
     i = 0
     delta = 0
@@ -94,18 +94,20 @@ def get_onsets_from_analyzer(testfile, numevents):
 
 #
 # for testing, supply command line argument to specify data file for testing
-if not len(sys.argv) == 4:
-    print('need 3 arguments: midi file name quantized,  midi file performed, and num events (numevents = -1 use all events)')
+if not len(sys.argv) == 5:
+    print('need 4 arguments: midi file name quantized,  midi file performed, num events (numevents = -1 use all events), and force_tempo')
     sys.exit()
 
 analyze_file = sys.argv[1]
 quantized_file = sys.argv[2]
 numevents = int(sys.argv[3])
+force_tempo = int(sys.argv[4])
+
 
 # get quantized onsets from file (must do first, as we will limit numevents to as many events we found here)
 quantized_onsets, q_tempo_bpm, q_numevents = get_onsets_from_quantized(quantized_file, numevents)
 # run midi file with analyzer
-analyzer_onsets, a_tempo_bpm = get_onsets_from_analyzer(analyze_file, q_numevents)
+analyzer_onsets, a_tempo_bpm = get_onsets_from_analyzer(analyze_file, q_numevents, force_tempo)
 # compare
 print('\nCompare onsets from analyzer with quantized onsets in file:')
 print('analyzer_onsets', analyzer_onsets)

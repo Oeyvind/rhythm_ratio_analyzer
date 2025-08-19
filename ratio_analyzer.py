@@ -346,14 +346,14 @@ def indispensability_subdiv(trigger_seq):
             break
     return int(subdiv), int(position)
 
-def reconcile_tempi(tempi1, tempi2, tolerance=0.1):
+def reconcile_tempi(tempi1, tempi2, tolerance=0.15):
     # When analyzing two or more consecutive rhythm patterns
     # try to reconcile the interpretation of the two patterns
     # allow changing the selection of best representation of the first in light of evidence from the second
     # also allow changing best representation of the second in light of evidence from the first
     #
     # Compare arrays of tempi, try to find compatible tempo combinations
-    # Compatible means they are almost equal (within tolerance limit)
+    # Compatible means they are almost equal (within tolerance limit) 
     # If they can become compatible by integer multiplication (e.g. 120bpm and 240bpm),
     # save the factor needed to reconcile them.
     # Allow only multipliers [2,3], as these can represent reconcilable tempo ratios
@@ -376,25 +376,13 @@ def reconcile_tempi(tempi1, tempi2, tolerance=0.1):
                 if near_match[j]:
                     reconcile_combos.append([[i,j],tf])
     # reconcile_combos now contains indices for reconcilable tempi, and the factors needed for reconciliation
-    '''
-    # To ensure that duration pattern representation always become more precise with new evidence, 
-    # one will never want the subdivision tempo to decrease. 
-    # The previous tempo can thus be entered as an optional argument to this function.
-    # We multiply any reconciled tempo and dur pattern by increasing integers until the new tempo > init tempo
-    for k in range(len(reconcile_combos)):
-        indices, t_factors = reconcile_combos[k]
-        min_factor = 1
-        while tempi1[indices[0]]*t_factors[0]*min_factor < prev_tempo*(1-tolerance):
-            min_factor += 1
-        t_factors *= min_factor
-    '''
     if len(reconcile_combos) == 0: 
         print('reconcile_tempi(): CAN NOT BE RECONCILED', tempi1, tempi2)
         return [[[0, 0], np.array([1,  1])]]
     else:
         return reconcile_combos
 
-def reconcile_tempi_singles(prev_tempo, new_tempo, tolerance=0.1):
+def reconcile_tempi_singles(prev_tempo, new_tempo, tolerance=0.15):
     # Reconciliation of two tempi, by finding the tempo factor
     # When analyzing a rhythm pattern, we might want to force the interpretation to align with a previous tempo
     # When we have the tempo factor, we can multiply the (new) duration pattern so its interpretation is compatible with the previous tempo
