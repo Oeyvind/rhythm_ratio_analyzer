@@ -395,7 +395,8 @@ def reconcile_tempi_singles(prev_tempo, new_tempo, tolerance=0.15):
     # ... but to allow for dur patterns of double relative tempi, and also rhythms of 3-groupings and 5-groupings,
     #  we need additional combinations 
     
-    #tempo_factors = np.array([[1,1],[1,2],[1,3],[2,1],[2,3],[3,1],[3,2]])
+    #tempo_factors = np.array([[1,1],[1,2],[1,4],[2,1]]) # simplified to only factors of 2, to allow classical expressive timing
+    
     tempo_factors = [[1,1],[1,2],[1,4],
                      [1,3],[1,6],
                      [2,1],[4,1],
@@ -403,6 +404,7 @@ def reconcile_tempi_singles(prev_tempo, new_tempo, tolerance=0.15):
                      [3,1],[6,1],
                      [3,2],[3,4],
                      [4,3],[5,4],[4,5]]
+    
     reconcile_factors = []
     for tf in tempo_factors:
         near_match = np.isclose(prev_tempo*tf[0], new_tempo*tf[1], tolerance) 
