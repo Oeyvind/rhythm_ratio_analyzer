@@ -40,6 +40,7 @@ class Osc_server():
         self.phrase_length_analysis = 5
         self.force_tempo = 0 # force old tempo and meter
         self.prev_tempo = -1
+        self.prev_tempo_attempts = 0
         self.pl = pl_instance # probabilistic logic instance
         self.pl.weights[1] = 1 # first order for best ratio
         self.pl.weights[2] = 1 # 2nd order for best ratio
@@ -180,8 +181,21 @@ class Osc_server():
                     if self.prev_tempo > 0:
                         tempo_factor = self.ra.reconcile_tempi_singles(beat_bpm, self.prev_tempo)
                         print('force tempo factor', tempo_factor)
-                        dur_pat_float *= tempo_factor
-                        beat_bpm *= tempo_factor
+                        change_tempo = False
+                        change_prev_tempo = False
+                        if tempo_factor in [0.5,1.0,2.0]: 
+                            change_tempo = True
+                            change_prev_tempo = True
+                        else:
+                            self.prev_tempo_attempts += 1
+                        if self.prev_tempo_attempts > 1: 
+                            change_tempo = True
+                            change_prev_tempo = True
+                            self.prev_tempo_attempts = 0
+                        if change_tempo:
+                            dur_pat_float *= tempo_factor
+                            beat_bpm *= tempo_factor
+
                 corp_indx = index-(len(dur_pattern))
                 for i in range(len(dur_pattern)):
                     self.pl.delete_single_event(corp_indx) # delete old prob logic encoding at these indices
@@ -203,7 +217,7 @@ class Osc_server():
                 print('beat_bpm', beat_bpm, type(beat_bpm))
                 returnmsg = beat_bpm, pulse, len(dur_pattern) # tempo and phrase length
                 osc_io.sendOSC("python_other", returnmsg) # send OSC back to client
-                if self.force_tempo > 0:
+                if self.force_tempo > 0 and change_prev_tempo:
                     self.prev_tempo = beat_bpm
                     
     def update_corpus_single_analysis(self, analysis, index, pulse_override=None):
