@@ -18,7 +18,10 @@ def get_onsets_from_analyzer(testfile, numevents, force_tempo):
     midifile = MidiFile(testfile)
     print('midi file type', midifile.type)
     if numevents == -1:
-        numevents = len(testfile)
+        numevents = 0
+        for msg in midifile:
+            if msg.type == 'note_on' and msg.velocity > 0:
+                numevents += 1
     print(f'get analyzer onsets from {testfile} with {numevents} events')
     m.server.force_tempo = force_tempo
     unused_addr = ''
