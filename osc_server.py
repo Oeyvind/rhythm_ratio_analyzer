@@ -78,10 +78,8 @@ class Osc_server():
                 self.dc.corpus[self.index, self.dc.pnum_corpus['phrase_num']] = self.phrase_number
                 self.previous_notenum = notenum
                 self.previous_velocity = velocity
-                print('pl.indices', self.pl.indices)
                 analysis_event = self.chunk_analysis_event(timenow)
                 self.update_corpus(analysis_event, self.index)
-                print('pl.indice2', self.pl.indices)
         else:
             # when terminating phrase:
             analysis_event = self.chunk_analysis_event(-1)
@@ -90,7 +88,6 @@ class Osc_server():
             self.phrase_number += 1
             self.analysis_chunk = [] # no reconciliation across phrase terminations
             self.recent_analyses = [] # as above
-            print('pl.indiceT', self.pl.indices)
         if (timenow >= 0) and (on_off > 0):
             self.index += 1 # only increment for on events
     
@@ -150,7 +147,6 @@ class Osc_server():
             else: 
                 print(f'Not enough time data to analyze {self.analysis_chunk}, {self.index}')
                 self.index -= len(self.analysis_chunk) 
-                print('pl.indiceN', self.pl.indices, np.max(self.pl.indices),self.index)
             self.analysis_chunk = [] # clear analysis_chunk on any phrase termination
             
         if new_analysis:
@@ -264,7 +260,10 @@ class Osc_server():
         self.dc.corpus[indx,self.dc.pnum_corpus['pulse_subdiv']] = pulse_subdiv
         tempo = self.dc.corpus[indx-1,self.dc.pnum_corpus['tempo']] # take tempo from second last event
         self.dc.corpus[indx,self.dc.pnum_corpus['tempo']] = tempo
-        seconds_per_beat = 60/tempo
+        if tempo == 0:
+            seconds_per_beat = 1
+        else:
+            seconds_per_beat = 60/tempo
         duration_delta_last = ((self.dc.corpus[indx,self.dc.pnum_corpus['time_off']] \
                     - self.dc.corpus[indx,self.dc.pnum_corpus['timestamp']]))    
         duration_relative = duration_delta_last/seconds_per_beat
@@ -298,13 +297,15 @@ class Osc_server():
         print('***pl_query', voicenum, query)
 
         next_item_index = self.pl.generate(query, voicenum, temperature) #query probabilistic models for next event and update query for next iteration
-        returnmsg = [int(next_item_index), 
-                     float(self.dc.corpus[next_item_index, self.dc.pnum_corpus['rhythm_beat']]),
-                     float(self.dc.corpus[next_item_index, self.dc.pnum_corpus['deviation']]),
-                     float(self.dc.corpus[next_item_index, self.dc.pnum_corpus['duration']]),
-                     float(self.dc.corpus[next_item_index, self.dc.pnum_corpus['notenum']]),
-                     float(self.dc.corpus[next_item_index, self.dc.pnum_corpus['notenum_relative']]),
-                     float(self.dc.corpus[next_item_index, self.dc.pnum_corpus['velocity']])]
+        if next_item_index >= 0:
+            returnmsg = [int(next_item_index), 
+                         float(self.dc.corpus[next_item_index, self.dc.pnum_corpus['rhythm_beat']]),
+                         float(self.dc.corpus[next_item_index, self.dc.pnum_corpus['deviation']]),
+                         float(self.dc.corpus[next_item_index, self.dc.pnum_corpus['duration']]),
+                         float(self.dc.corpus[next_item_index, self.dc.pnum_corpus['notenum']]),
+                         float(self.dc.corpus[next_item_index, self.dc.pnum_corpus['notenum_relative']]),
+                         float(self.dc.corpus[next_item_index, self.dc.pnum_corpus['velocity']])]
+        else: returnmsg = [0,0.5,0,0,0,0,0] # if we have no data, just return a message that will allow us to query again
         #print(f'gen returnmsg:{returnmsg}')
         osc_io.sendOSC(f"python_prob_gen_voice{voicenum}", returnmsg) # send OSC back to client
         chord_index = self.dc.corpus[next_item_index, self.dc.pnum_corpus['chord_index']]

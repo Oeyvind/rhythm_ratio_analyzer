@@ -173,52 +173,54 @@ class Probabilistic_logic:
         return history
 
     def generate(self, query, voice=1, temperature=0.2):
-        # get the next_item from the probabilistic sequence generation
-        # the request_next_item is used as a filter/bias
-        next_item_index, request_next_item = query
-        temperature_coef = self.set_temperature(temperature)
-        
-        # need to update and keep track of previous events for higher orders
-        self.prob_history[voice-1] = self.update_history(self.prob_history[voice-1], next_item_index)
+        if self.current_datasize > 0:
+            # get the next_item from the probabilistic sequence generation
+            # the request_next_item is used as a filter/bias
+            next_item_index, request_next_item = query
+            temperature_coef = self.set_temperature(temperature)
 
-        # get alternatives from Probabilistic encoder
-        for parm in self.dc.prob_parms.keys():
-            pe = self.dc.prob_parms[parm][1]
-            for ord in range(1,self.dc.prob_parms[parm][0]+1): # will skip for specific request (order 0)
-                w_index = self.dc.prob_parms[parm][2][ord] #prob weight index
-                if self.weights[w_index] != 0:
-                    offset = self.max_order-ord
-                    if self.prob_history[voice-1][-ord] < 0:
-                        query_item = None
-                    else:
-                        query_item = self.dc.corpus[self.prob_history[voice-1][-ord], self.dc.pnum_corpus[parm]]
-                    self.indices_prob_temp = pe.get_item_indices(query_item)[offset:self.current_datasize+offset]
-                    self.indx_container[:self.current_datasize, w_index] = self.indices_prob_temp[:self.current_datasize]
+            # need to update and keep track of previous events for higher orders
+            self.prob_history[voice-1] = self.update_history(self.prob_history[voice-1], next_item_index)
 
-        # Scale by weights for each prob dimension and sum: dot product indx_container and weight. Then adjust temperature
-        self.prob = np.dot(self.indx_container[:self.current_datasize, :self.numparms], self.weights)
-        if np.amax(self.prob) > 0:
-            self.prob /= np.amax(self.prob) # normalize
-            self.prob = np.power(self.prob, temperature_coef) # temperature adjustment
-        else:
-            print(f'Prob encoder zero probability from query {query}, choose one at random')
-            self.prob = np.ones(self.current_datasize)
+            # get alternatives from Probabilistic encoder
+            for parm in self.dc.prob_parms.keys():
+                pe = self.dc.prob_parms[parm][1]
+                for ord in range(1,self.dc.prob_parms[parm][0]+1): # will skip for specific request (order 0)
+                    w_index = self.dc.prob_parms[parm][2][ord] #prob weight index
+                    if self.weights[w_index] != 0:
+                        offset = self.max_order-ord
+                        if self.prob_history[voice-1][-ord] < 0:
+                            query_item = None
+                        else:
+                            query_item = self.dc.corpus[self.prob_history[voice-1][-ord], self.dc.pnum_corpus[parm]]
+                        self.indices_prob_temp = pe.get_item_indices(query_item)[offset:self.current_datasize+offset]
+                        self.indx_container[:self.current_datasize, w_index] = self.indices_prob_temp[:self.current_datasize]
 
-        # if we request a specific item, handle this here 
-        if request_next_item[0] != None:
-            request_parm, request_code, request_weight = request_next_item
-            self.set_request_mask(request_parm, request_code)
-            if request_weight == 1:
-                self.prob *= self.request_mask[:self.current_datasize]
-            else:        
-                self.prob = (self.request_mask[:self.current_datasize]*request_weight) + self.prob*(1-request_weight)
-            if np.amax(self.prob) == 0: # check to find if no values are available after masking
-                print('no prob!')
-                self.prob += self.request_mask[:self.current_datasize] # just use mask
-        sumprob = np.sum(self.prob)
-        self.prob = self.prob/sumprob #normalize sum to 1
-        next_item_index = int(np.random.choice(self.indices,p=self.prob))
-        return next_item_index
+            # Scale by weights for each prob dimension and sum: dot product indx_container and weight. Then adjust temperature
+            self.prob = np.dot(self.indx_container[:self.current_datasize, :self.numparms], self.weights)
+            if np.amax(self.prob) > 0:
+                self.prob /= np.amax(self.prob) # normalize
+                self.prob = np.power(self.prob, temperature_coef) # temperature adjustment
+            else:
+                print(f'Prob encoder zero probability from query {query}, choose one at random')
+                self.prob = np.ones(self.current_datasize)
+
+            # if we request a specific item, handle this here 
+            if request_next_item[0] != None:
+                request_parm, request_code, request_weight = request_next_item
+                self.set_request_mask(request_parm, request_code)
+                if request_weight == 1:
+                    self.prob *= self.request_mask[:self.current_datasize]
+                else:        
+                    self.prob = (self.request_mask[:self.current_datasize]*request_weight) + self.prob*(1-request_weight)
+                if np.amax(self.prob) == 0: # check to find if no values are available after masking
+                    print('no prob!')
+                    self.prob += self.request_mask[:self.current_datasize] # just use mask
+            sumprob = np.sum(self.prob)
+            self.prob = self.prob/sumprob #normalize sum to 1
+            next_item_index = int(np.random.choice(self.indices,p=self.prob))
+            return next_item_index
+        else: return -1
 
     def set_request_mask(self, request_parm, request_code):
         # request_parm = parameter name
