@@ -21,6 +21,7 @@ stop_event = asyncio.Event()
 receive_address = '127.0.0.1', 9901
 send_address = '127.0.0.1', 9999
 
+
 def init_osc_client():
     '''Initialize the OSC client'''
     global client

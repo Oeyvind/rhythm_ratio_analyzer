@@ -78,8 +78,10 @@ class Osc_server():
                 self.dc.corpus[self.index, self.dc.pnum_corpus['phrase_num']] = self.phrase_number
                 self.previous_notenum = notenum
                 self.previous_velocity = velocity
+                print('pl.indices', self.pl.indices)
                 analysis_event = self.chunk_analysis_event(timenow)
                 self.update_corpus(analysis_event, self.index)
+                print('pl.indice2', self.pl.indices)
         else:
             # when terminating phrase:
             analysis_event = self.chunk_analysis_event(-1)
@@ -88,6 +90,7 @@ class Osc_server():
             self.phrase_number += 1
             self.analysis_chunk = [] # no reconciliation across phrase terminations
             self.recent_analyses = [] # as above
+            print('pl.indiceT', self.pl.indices)
         if (timenow >= 0) and (on_off > 0):
             self.index += 1 # only increment for on events
     
@@ -145,8 +148,9 @@ class Osc_server():
                 else:     
                     self.recent_analyses[-1] = analysis # replace the last analysis
             else: 
-                print(f'Not enough time data to analyze {self.analysis_chunk}')
+                print(f'Not enough time data to analyze {self.analysis_chunk}, {self.index}')
                 self.index -= len(self.analysis_chunk) 
+                print('pl.indiceN', self.pl.indices, np.max(self.pl.indices),self.index)
             self.analysis_chunk = [] # clear analysis_chunk on any phrase termination
             
         if new_analysis:
@@ -192,12 +196,10 @@ class Osc_server():
                     self.dc.corpus[corp_indx,self.dc.pnum_corpus['rhythm_subdiv']] = dur_pattern[i]
                     self.dc.corpus[corp_indx,self.dc.pnum_corpus['tempo']] = beat_bpm
                     self.dc.corpus[corp_indx,self.dc.pnum_corpus['pulse_subdiv']] = pulse
-                    self.pl.analyze_single_event(corp_indx) # add new prob logic encoding
+                    self.pl.analyze_single_event(corp_indx, datasize=self.index) # add new prob logic encoding
                     corp_indx += 1
                 
-                #self.pl.delete_single_event(corp_indx)
                 self.dc.corpus[corp_indx,self.dc.pnum_corpus['pulse_subdiv']] = pulse # need to write pulse for last event separately
-                #self.pl.analyze_single_event(corp_indx) # add new prob logic encoding
 
                 # return tempo to client
                 beat_bpm = float(beat_bpm)
@@ -254,7 +256,7 @@ class Osc_server():
                 / (self.dc.corpus[indx+1,self.dc.pnum_corpus['timestamp']] \
                 - self.dc.corpus[indx,self.dc.pnum_corpus['timestamp']]))
             # probabilistic model encoding
-            self.pl.analyze_single_event(indx)
+            self.pl.analyze_single_event(indx, datasize=self.index)
         
     def set_corpus_last_event(self, indx):
         # set data for last event
@@ -275,7 +277,7 @@ class Osc_server():
         self.dc.corpus[indx,self.dc.pnum_corpus['rhythm_beat']] = subdiv_beat
         
         # probabilistic model encoding
-        self.pl.analyze_single_event(indx)
+        self.pl.analyze_single_event(indx, datasize=self.index)
         
     def pl_generate(self, unused_addr, *osc_data):
         '''Message handler. This is called when we receive an OSC message'''

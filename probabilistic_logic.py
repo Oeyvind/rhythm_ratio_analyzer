@@ -122,12 +122,16 @@ class Probabilistic_logic:
         self.request_mask = np.zeros(self.maxsize+self.max_order)
         self.prob = np.zeros(self.maxsize)
         
-    def analyze_single_event(self, i):
-        for parm in self.dc.prob_parms.keys():
-            pe = self.dc.prob_parms[parm][1]
-            pe.analyze(self.dc.corpus[i, self.dc.pnum_corpus[parm]], i)
-        self.current_datasize += 1
-        self.indices = self.dc.corpus[:self.current_datasize, self.dc.pnum_corpus['index']]
+    def analyze_single_event(self, i, datasize=None):
+        if not datasize: datasize=i
+        #print('pl analyze_single_event', i, datasize)
+        if i >= 0:
+            for parm in self.dc.prob_parms.keys():
+                pe = self.dc.prob_parms[parm][1]
+                pe.analyze(self.dc.corpus[i, self.dc.pnum_corpus[parm]], i)
+            self.current_datasize = datasize
+            #print('pl analyze_single_event: datasize', self.current_datasize)
+            self.indices = self.dc.corpus[:self.current_datasize, self.dc.pnum_corpus['index']]
 
     def delete_single_event(self, i):
         # use this when data in corpus is about to change (before the change is entered)
