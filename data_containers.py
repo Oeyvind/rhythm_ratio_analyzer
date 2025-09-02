@@ -49,7 +49,7 @@ class DataContainers:
       'deviation_polarity': 4,
       'notenum': 4, 
       'notenum_relative': 4,
-      'phrase_num': 1}
+      'phrase_num': 4}
 
     # set up prob_parms as dict with format: [order, prob_encoder instance, [list of prob logic indices]]
     # prob_encoder instance will be updated when the encoder is instantiated

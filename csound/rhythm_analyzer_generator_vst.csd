@@ -43,7 +43,7 @@ label bounds(115, 45, 40, 20), text("simplify"), fontSize(12)
 checkbox bounds(190, 27, 18, 18), channel("phrase_reconciliation")
 label bounds(185, 45, 40, 20), text("reconcile"), fontSize(12)
 
-nslider bounds(255, 27, 40, 18), channel("phrase_length"), range(4, 20, 5, 1, 1), fontSize(14)
+nslider bounds(255, 27, 40, 18), channel("phrase_length"), range(2, 20, 5, 1, 1), fontSize(14)
 label bounds(255, 45, 40, 20), text("phr.len"), fontSize(12)
 
 checkbox bounds(330, 27, 18, 18), channel("force_tempo")
@@ -75,7 +75,7 @@ label bounds(409, 45, 35, 18), text("range"), fontSize(12), align("left")
 
 combobox bounds(450, 26, 58, 18), channel("request_parm_v1"), items("index", "rhythm", "pitch", "interval", "phrase")
 label bounds(450, 45, 60, 18), text("req_parm"), fontSize(12), align("left")
-combobox bounds(510, 26, 58, 18), channel("request_type_v1"), items("none", "next", "prev", "==", ">", "<", "gradient", "gr_abs")
+combobox bounds(510, 26, 58, 18), channel("request_type_v1"), items("none", "next", "prev", "==", ">", "<", "abs >", "abs <", "gradient", "gr_abs")
 label bounds(510, 45, 60, 18), text("req_type"), fontSize(12), align("left")
 nslider bounds(570, 25, 37, 20), channel("request_value_v1"), range(-999, 999, 0, 1, 0.1), fontSize(14)
 label bounds(575, 45, 37, 18), text("val"), fontSize(12), align("left")
@@ -103,7 +103,7 @@ nslider bounds(380, 65, 25, 20), channel("sync_min_v2"), range(0, 10, 1, 1, 1), 
 nslider bounds(410, 65, 25, 20), channel("sync_range_v2"), range(0, 10, 1, 1, 1), fontSize(14)
 
 combobox bounds(450, 66, 58, 18), channel("request_parm_v2"), items("index", "rhythm", "pitch", "interval", "phrase")
-combobox bounds(510, 66, 58, 18), channel("request_type_v2"), items("none", "next", "prev", "==", ">", "<", "gradient", "gr_abs")
+combobox bounds(510, 66, 58, 18), channel("request_type_v2"), items("none", "next", "prev", "==", ">", "<", "abs >", "abs <", "gradient", "gr_abs")
 nslider bounds(570, 65, 37, 20), channel("request_value_v2"), range(-999, 999, 0, 1, 0.1), fontSize(14)
 nslider bounds(610, 65, 40, 20), channel("request_weight_v2"), range(0, 1, 0), fontSize(14)
 nslider bounds(715, 65, 40, 20), channel("gen_v2_temperature"), range(0.01, 10, 0.2, 1, 0.01), fontSize(14)
@@ -118,6 +118,8 @@ nslider bounds(590, 125, 40, 22), channel("gen_pitch_order"), range(0, 4, 2, 1, 
 label bounds(590, 147, 60, 18), text("ptch_ord"), fontSize(12), align("left")
 nslider bounds(655, 125, 40, 22), channel("gen_interval_order"), range(0, 4, 2, 1, 0.5), fontSize(14)
 label bounds(655, 147, 60, 18), text("intv_ord"), fontSize(12), align("left")
+nslider bounds(720, 125, 40, 22), channel("gen_phrase_order"), range(0, 4, 2, 1, 0.5), fontSize(14)
+label bounds(720, 147, 60, 18), text("phr_ord"), fontSize(12), align("left")
 
 
 groupbox bounds(0, 98, 160, 72), text("gen tempo") {
@@ -368,17 +370,18 @@ instr 31
   kdeviation_order chnget "gen_deviation_order"
   knotenum_order chnget "gen_pitch_order"
   kinterval_order chnget "gen_interval_order"
+  kphrase_order chnget "gen_phrase_order"
   kchords_on chnget "chords_on"
   kphrase_reconciliation chnget "phrase_reconciliation"
   kphrase_length chnget "phrase_length"
   kforce_tempo chnget "force_tempo"
   kforce_bpm chnget "gen_tempo_bpm"
   kparm_update = changed(kdev_vs_complexity, ksimplify, krhythm_order, 
-                      kdeviation_order, knotenum_order, kinterval_order, 
+                      kdeviation_order, knotenum_order, kinterval_order, kphrase_order,
                       kchords_on, kphrase_reconciliation, kphrase_length, kforce_tempo)
-  OSCsend kparm_update, "127.0.0.1", 9901, "/client_parametercontrols", "fffffffffff", 
+  OSCsend kparm_update, "127.0.0.1", 9901, "/client_parametercontrols", "ffffffffffff", 
                       kdev_vs_complexity, ksimplify, krhythm_order, 
-                      kdeviation_order, knotenum_order, kinterval_order, 
+                      kdeviation_order, knotenum_order, kinterval_order, kphrase_order,
                       kchords_on, kphrase_reconciliation, kphrase_length, kforce_tempo, kforce_bpm
 
   ; receive other data from Python
@@ -506,7 +509,7 @@ instr 109
 
   Srequest_type_ sprintf "request_type_v%i", ivoice
   krequest_type chnget Srequest_type_
-  Srequest_types[] fillarray "none", "none", "next", "prev", "==", ">", "<", "gradient", "gr_abs" ; pad (copy) item at index zero, as combobox init to 0 but uses 1-indexing thereafter
+  Srequest_types[] fillarray "none", "none", "next", "prev", "==", ">", "<", "abs >", "abs <", "gradient", "gr_abs" ; pad (copy) item at index zero, as combobox init to 0 but uses 1-indexing thereafter
   Srequest_type = Srequest_types[krequest_type]
   
   Srequest_parm_ sprintf "request_parm_v%i", ivoice

@@ -335,6 +335,10 @@ class Osc_server():
                     #print(key, value[pe.max_order:pe.size+pe.max_order])
                     print(key, value[pe.max_order:pe.max_order+20])
             print('corpus')
+            pnames = ''
+            for pnam in self.dc.pnum_corpus:
+                pnames += (pnam + ' ')
+            print(pnames)
             for i in range(20):
                 print(i, self.dc.corpus[i])
             print('chord list: \n', self.dc.chord_list)
@@ -375,7 +379,7 @@ class Osc_server():
         '''Message handler. This is called when we receive an OSC message'''
         # set control parameters, like score weights etc
         kdev_vs_complexity, ksimplify, krhythm_order, \
-            kdeviation_order, knotenum_order, kinterval_order, kchord_on,\
+            kdeviation_order, knotenum_order, kinterval_order, kphrase_order, kchord_on,\
                  kphrase_reconciliation, kphrase_length, kforce_tempo, kforce_bpm = osc_data
         
         self.ra.set_precision(kdev_vs_complexity)
@@ -385,6 +389,8 @@ class Osc_server():
         self.pl.set_weights_pname('deviation_polarity', kdeviation_order) 
         self.pl.set_weights_pname('notenum', knotenum_order) 
         self.pl.set_weights_pname('notenum_relative', kinterval_order)
+        self.pl.set_weights_pname('phrase_num', kphrase_order)
+        
         self.chord_on = kchord_on 
         self.phrase_reconciliation = kphrase_reconciliation
         self.phrase_length_analysis = int(kphrase_length)
