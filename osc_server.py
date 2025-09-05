@@ -134,7 +134,7 @@ class Osc_server():
                 if (len(self.recent_analyses) > 2):
                     self.recent_analyses = self.recent_analyses[-2:] # keep only two last phrases
         if t_event < 0: # on sequence termination
-            chunk_low_limit = 4
+            chunk_low_limit = 2
             if len(self.analysis_chunk) == chunk_size:
                 pass # already analyzed
             elif len(self.analysis_chunk) > chunk_low_limit: # dragons? was > chunk size
@@ -220,6 +220,8 @@ class Osc_server():
                 print('force tempo factor', tempo_factor)
                 dur_pat_float *= tempo_factor
                 beat_bpm *= tempo_factor
+                if self.prev_tempo > 0:
+                    beat_bpm = self.prev_tempo
         deviations = deviations_[best]
         print(f'dur pattern {duration_pattern}')
         print(f'deviations {deviations}')

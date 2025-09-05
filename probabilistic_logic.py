@@ -173,7 +173,7 @@ class Probabilistic_logic:
         return history
 
     def generate(self, query, voice=1, temperature=0.2):
-        print('\ngenerate', query,)
+        #print('\ngenerate', query,)
         if self.current_datasize > 0:
             # get the next_item from the probabilistic sequence generation
             # the request_next_item is used as a filter/bias
@@ -196,7 +196,7 @@ class Probabilistic_logic:
                             query_item = self.dc.corpus[self.prob_history[voice-1][-ord], self.dc.pnum_corpus[parm]]
                         self.indices_prob_temp = pe.get_item_indices(query_item)[offset:self.current_datasize+offset]
                         self.indx_container[:self.current_datasize, w_index] = self.indices_prob_temp[:self.current_datasize]
-                        print(parm, query_item, ord, '\n', self.indx_container[:self.current_datasize, w_index])
+                        #print(parm, query_item, ord, '\n', self.indx_container[:self.current_datasize, w_index])
 
             # Scale by weights for each prob dimension and sum: dot product indx_container and weight. Then adjust temperature
             self.prob = np.dot(self.indx_container[:self.current_datasize, :self.numparms], self.weights)
@@ -207,13 +207,13 @@ class Probabilistic_logic:
                 print(f'Prob encoder zero probability from query {query}, choose one at random')
                 self.prob = np.ones(self.current_datasize)
             
-            print('prob:',self.prob)
+            #print('prob:',self.prob)
 
             # if we request a specific item, handle this here 
             if request_next_item[0] != None:
                 request_parm, request_code, request_weight = request_next_item
                 self.set_request_mask(request_parm, request_code)
-                print('request mask',self.request_mask[:self.current_datasize])
+                #print('request mask',self.request_mask[:self.current_datasize])
                 if request_weight == 1:
                     self.prob *= self.request_mask[:self.current_datasize]
                 else:        
@@ -224,7 +224,7 @@ class Probabilistic_logic:
             sumprob = np.sum(self.prob)
             self.prob = self.prob/sumprob #normalize sum to 1
             
-            print('prob2',self.prob)
+            #print('prob2',self.prob)
 
             next_item_index = int(np.random.choice(self.indices,p=self.prob))
             return next_item_index
