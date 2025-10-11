@@ -4,13 +4,13 @@
 		"appversion" : 		{
 			"major" : 9,
 			"minor" : 0,
-			"revision" : 5,
+			"revision" : 9,
 			"architecture" : "x64",
 			"modernui" : 1
 		}
 ,
 		"classnamespace" : "box",
-		"rect" : [ 84.0, 131.0, 1000.0, 780.0 ],
+		"rect" : [ 134.0, 172.0, 602.0, 508.0 ],
 		"gridsize" : [ 15.0, 15.0 ],
 		"boxes" : [ 			{
 				"box" : 				{
@@ -31,7 +31,7 @@
 					"numinlets" : 1,
 					"numoutlets" : 0,
 					"patching_rect" : [ 246.0, 101.0, 150.0, 20.0 ],
-					"text" : "Euler’s 'gradus sauvitatis'"
+					"text" : "Euler’s 'gradus suavitatis'"
 				}
 
 			}
@@ -54,8 +54,8 @@
 					"maxclass" : "comment",
 					"numinlets" : 1,
 					"numoutlets" : 0,
-					"patching_rect" : [ 90.5, 38.5, 150.0, 47.0 ],
-					"text" : "input:\ndictionary of prime factors p and multiplicity d"
+					"patching_rect" : [ 91.0, 38.5, 158.0, 47.0 ],
+					"text" : "input:\ndictionary of prime factors p with multiplicity d"
 				}
 
 			}
@@ -147,11 +147,11 @@
 				"box" : 				{
 					"comment" : "",
 					"id" : "obj-99",
-					"index" : 0,
+					"index" : 1,
 					"maxclass" : "inlet",
 					"numinlets" : 0,
 					"numoutlets" : 1,
-					"outlettype" : [ "" ],
+					"outlettype" : [ "dictionary" ],
 					"patching_rect" : [ 50.0, 40.0, 30.0, 30.0 ]
 				}
 
@@ -160,7 +160,7 @@
 				"box" : 				{
 					"comment" : "",
 					"id" : "obj-100",
-					"index" : 0,
+					"index" : 1,
 					"maxclass" : "outlet",
 					"numinlets" : 1,
 					"numoutlets" : 0,
@@ -263,10 +263,7 @@
 				}
 
 			}
- ],
-		"originid" : "pat-9870",
-		"dependency_cache" : [  ],
-		"autosave" : 0
+ ]
 	}
 
 }
