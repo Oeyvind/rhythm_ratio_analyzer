@@ -1,6 +1,12 @@
-The max implementation of the rhythm analyzer and generator is organised into a 'source' directory containing max patches and abstractions and any max for live devices in current development, and another directory containing 'frozen' production versions of the max for live devices that are self contained and ready for distribution without any further dependencies. Both the analysis and generator stages are implemented with native Max objects and work without the python back end or other external objects.
+The max implementation of the rhythm analyzer and generator is distributed in this directory as 'frozen' Max for Live device, self contained and without needing any further dependencies or libraries. This device can also be opened and run directly in Max without using Ableton Live at all or just as a MIDI backend.
 
-As the implementation relies extensively on the array objects introduced in Max 9, these devices requires Max 9+ and Ableton Live 12+ to work.
+In addition, there is a 'source' directory containing max patches, abstractions and max for live devices in current development.
+
+As the implementation relies extensively on the array objects introduced in Max 9, these devices requires Max version 9+ or Ableton Live 12+ to work.
+
+
+Both the analysis and generator stages are implemented with native vanilla Max objects and work without the python back end or other external objects. The patches still in development might use other externals like the Bach library for other tasks such as score visualization, but this is not critical and it should not limit the core functionality if missing.
+
 
 Daniel Formo, NTNU, 2025
 daniel.formo@ntnu.no
