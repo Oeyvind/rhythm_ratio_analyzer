@@ -1,0 +1,225 @@
+{
+    "parameter_map": {
+        "midi": {
+            "Listen": {
+                "srcname": "35.ctrl.0.chan.midi",
+                "min": 0.0,
+                "max": 1.0,
+                "flags": 2
+            },
+            "Record": {
+                "srcname": "32.ctrl.0.chan.midi",
+                "min": 0.0,
+                "max": 1.0,
+                "flags": 2
+            },
+            "Play": {
+                "srcname": "33.ctrl.0.chan.midi",
+                "min": 0.0,
+                "max": 1.0,
+                "flags": 2
+            },
+            "Stop": {
+                "srcname": "34.ctrl.0.chan.midi",
+                "min": 0.0,
+                "max": 1.0,
+                "flags": 2
+            },
+            "Clear All": {
+                "srcname": "36.ctrl.0.chan.midi",
+                "min": 0.0,
+                "max": 1.0,
+                "flags": 2
+            },
+            "Clear last recording": {
+                "srcname": "37.ctrl.0.chan.midi",
+                "min": 0.0,
+                "max": 1.0,
+                "flags": 2
+            },
+            "Sync voices": {
+                "srcname": "38.ctrl.0.chan.midi",
+                "min": 0.0,
+                "max": 1.0,
+                "flags": 2
+            },
+            "Response mode": {
+                "srcname": "39.ctrl.0.chan.midi",
+                "min": 0.0,
+                "max": 1.0,
+                "flags": 2
+            },
+            "Same Phrase Filter": {
+                "srcname": "40.ctrl.0.chan.midi",
+                "min": 0.0,
+                "max": 1.0,
+                "flags": 2
+            },
+            "Relative Pitch": {
+                "srcname": "41.ctrl.0.chan.midi",
+                "min": 0.0,
+                "max": 1.0,
+                "flags": 2
+            },
+            "Subdivision position": {
+                "srcname": "42.ctrl.0.chan.midi",
+                "min": 0.0,
+                "max": 1.0,
+                "flags": 2
+            },
+            "Same Channel Filter": {
+                "srcname": "43.ctrl.0.chan.midi",
+                "min": 0.0,
+                "max": 1.0,
+                "flags": 2
+            },
+            "Numberof events": {
+                "srcname": "48.ctrl.0.chan.midi",
+                "min": 0.0,
+                "max": 10.0,
+                "flags": 2
+            },
+            "Probability order": {
+                "srcname": "49.ctrl.0.chan.midi",
+                "min": -3.0,
+                "max": 3.0,
+                "flags": 2
+            },
+            "Temperature": {
+                "srcname": "50.ctrl.0.chan.midi",
+                "min": 0.01,
+                "max": 10.0,
+                "scale": 3.46,
+                "flags": 2
+            },
+            "Input influence": {
+                "srcname": "51.ctrl.0.chan.midi",
+                "min": 0.0,
+                "max": 100.0,
+                "flags": 2
+            },
+            "Rhythmic Deviation": {
+                "srcname": "54.ctrl.0.chan.midi",
+                "min": 0.0,
+                "max": 100.0,
+                "flags": 2
+            },
+            "History filter": {
+                "srcname": "56.ctrl.0.chan.midi",
+                "min": -100.0,
+                "max": 100.0,
+                "flags": 2
+            },
+            "Pitch filter": {
+                "srcname": "57.ctrl.0.chan.midi",
+                "min": -100.0,
+                "max": 100.0,
+                "flags": 2
+            },
+            "Rhythmic ratio filter": {
+                "srcname": "58.ctrl.0.chan.midi",
+                "min": -100.0,
+                "max": 100.0,
+                "flags": 2
+            },
+            "Duration scaling": {
+                "srcname": "59.ctrl.0.chan.midi",
+                "min": 0.0,
+                "max": 200.0,
+                "flags": 2
+            },
+            "Autopan": {
+                "srcname": "63.ctrl.0.chan.midi",
+                "min": 0.0,
+                "max": 100.0,
+                "flags": 2
+            },
+            "Spread voices": {
+                "srcname": "62.ctrl.0.chan.midi",
+                "min": 1.0,
+                "max": 10.0,
+                "flags": 2
+            },
+            "Number of active voices": {
+                "srcname": "60.ctrl.0.chan.midi",
+                "min": 1.0,
+                "max": 4.0,
+                "flags": 2
+            },
+            "Tempo": {
+                "srcname": "52.ctrl.0.chan.midi",
+                "min": 50.0,
+                "max": 200.0,
+                "scale": 1.5849,
+                "flags": 2
+            },
+            "Quantize": {
+                "srcname": "53.ctrl.0.chan.midi",
+                "min": 0.0,
+                "max": 100.0,
+                "flags": 2
+            },
+            "Tempo Modulation Index": {
+                "srcname": "54.ctrl.0.chan.midi",
+                "min": 0.0,
+                "max": 10.0,
+                "scale": 3.4,
+                "flags": 2
+            },
+            "Tempo Modulation Period": {
+                "srcname": "55.ctrl.0.chan.midi",
+                "min": 0.0,
+                "max": 10.0,
+                "flags": 2
+            },
+            "Mute": {
+                "srcname": "61.ctrl.0.chan.midi",
+                "min": 0.0,
+                "max": 100.0,
+                "flags": 2
+            },
+            "MIDI through": {
+                "srcname": "27.ctrl.0.chan.midi",
+                "min": 0.0,
+                "max": 1.0,
+                "flags": 2
+            },
+            "Randomize Program Change": {
+                "srcname": "26.ctrl.0.chan.midi",
+                "min": 0.0,
+                "max": 1.0,
+                "flags": 2
+            },
+            "Voice 1": {
+                "srcname": "89.ctrl.7.chan.midi",
+                "min": 0.0,
+                "max": 1.0,
+                "flags": 2
+            },
+            "Voice 2": {
+                "srcname": "90.ctrl.7.chan.midi",
+                "min": 0.0,
+                "max": 1.0,
+                "flags": 2
+            },
+            "Voice 3": {
+                "srcname": "91.ctrl.7.chan.midi",
+                "min": 0.0,
+                "max": 1.0,
+                "flags": 2
+            },
+            "Voice 4": {
+                "srcname": "92.ctrl.7.chan.midi",
+                "min": 0.0,
+                "max": 1.0,
+                "flags": 2
+            },
+            "Unlinked parameter models": {
+                "srcname": "25.ctrl.0.chan.midi",
+                "min": 0.0,
+                "max": 1.0,
+                "flags": 2
+            }
+        }
+    }
+}

@@ -25,12 +25,11 @@
             {
                 "box": {
                     "id": "obj-27",
-                    "linecount": 2,
                     "maxclass": "newobj",
                     "numinlets": 1,
                     "numoutlets": 1,
                     "outlettype": [ "" ],
-                    "patching_rect": [ 324.5, 452.0, 130.0, 22.0 ],
+                    "patching_rect": [ 329.0, 456.0, 150.0, 22.0 ],
                     "text": "v #0---min_number"
                 }
             },
@@ -64,7 +63,7 @@
                     "numinlets": 1,
                     "numoutlets": 1,
                     "outlettype": [ "" ],
-                    "patching_rect": [ 393.0, 128.0, 118.0, 22.0 ],
+                    "patching_rect": [ 390.5, 138.0, 116.0, 35.0 ],
                     "text": "v #0---size 2400."
                 }
             },
@@ -124,7 +123,6 @@
                             {
                                 "box": {
                                     "id": "obj-120",
-                                    "linecount": 2,
                                     "maxclass": "newobj",
                                     "numinlets": 1,
                                     "numoutlets": 1,
@@ -136,7 +134,6 @@
                             {
                                 "box": {
                                     "id": "obj-115",
-                                    "linecount": 2,
                                     "maxclass": "newobj",
                                     "numinlets": 1,
                                     "numoutlets": 1,
@@ -605,7 +602,7 @@
                     "numinlets": 1,
                     "numoutlets": 1,
                     "outlettype": [ "" ],
-                    "patching_rect": [ 491.0, 428.0, 130.0, 22.0 ],
+                    "patching_rect": [ 491.0, 428.0, 128.0, 35.0 ],
                     "text": "v #0---min_number"
                 }
             },
@@ -617,7 +614,7 @@
                     "numinlets": 1,
                     "numoutlets": 1,
                     "outlettype": [ "" ],
-                    "patching_rect": [ 552.0, 109.0, 140.0, 22.0 ],
+                    "patching_rect": [ 552.0, 109.0, 138.0, 35.0 ],
                     "text": "v #0---min_number 3"
                 }
             },
@@ -727,9 +724,9 @@
                     "maxclass": "newobj",
                     "numinlets": 1,
                     "numoutlets": 2,
-                    "outlettype": [ "float", "float" ],
-                    "patching_rect": [ 159.0, 128.0, 59.0, 22.0 ],
-                    "text": "t f f"
+                    "outlettype": [ "", "" ],
+                    "patching_rect": [ 159.0, 128.0, 29.5, 22.0 ],
+                    "text": "t l l"
                 }
             },
             {
@@ -760,9 +757,9 @@
                     "maxclass": "newobj",
                     "numinlets": 1,
                     "numoutlets": 1,
-                    "outlettype": [ "float" ],
+                    "outlettype": [ "" ],
                     "patching_rect": [ 370.0, 109.0, 19.0, 22.0 ],
-                    "text": "t f"
+                    "text": "t l"
                 }
             },
             {
@@ -1219,7 +1216,7 @@
                     "maxclass": "inlet",
                     "numinlets": 0,
                     "numoutlets": 1,
-                    "outlettype": [ "float" ],
+                    "outlettype": [ "int" ],
                     "patching_rect": [ 70.0, 43.0, 30.0, 30.0 ]
                 }
             },
@@ -1275,7 +1272,7 @@
                     "numinlets": 2,
                     "numoutlets": 3,
                     "outlettype": [ "", "", "" ],
-                    "patching_rect": [ 159.0, 198.0, 153.0, 22.0 ],
+                    "patching_rect": [ 159.0, 198.0, 151.0, 35.0 ],
                     "saved_object_attributes": {
                         "parameter_enable": 0,
                         "parameter_mappable": 0
@@ -1592,7 +1589,7 @@
             {
                 "patchline": {
                     "destination": [ "obj-156", 0 ],
-                    "midpoints": [ 208.5, 153.0, 478.5, 153.0 ],
+                    "midpoints": [ 179.0, 153.0, 478.5, 153.0 ],
                     "source": [ "obj-251", 1 ]
                 }
             },
