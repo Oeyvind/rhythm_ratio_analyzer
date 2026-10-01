@@ -2,8 +2,8 @@
     "name": "real-time_rhythm",
     "version": 1,
     "creationdate": 3851931748,
-    "modificationdate": 3860220230,
-    "viewrect": [ 25.0, 106.0, 300.0, 500.0 ],
+    "modificationdate": 3860826584,
+    "viewrect": [ 25.0, 106.0, 335.0, 568.0 ],
     "autoorganize": 1,
     "hideprojectwindow": 1,
     "showdependencies": 1,
@@ -25,6 +25,6 @@
     "devpathtype": 0,
     "devpath": ".",
     "sortmode": 0,
-    "viewmode": 0,
+    "viewmode": 1,
     "includepackages": 0
 }

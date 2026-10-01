@@ -39,8 +39,8 @@
                     "maxclass": "newobj",
                     "numinlets": 1,
                     "numoutlets": 0,
-                    "patching_rect": [ 282.0, 357.0, 177.0, 22.0 ],
-                    "text": "debug COMBINED_FRAMES 2"
+                    "patching_rect": [ 290.0, 358.0, 187.0, 22.0 ],
+                    "text": "debug COMBINED_FRAMES 3 3"
                 }
             },
             {
@@ -592,7 +592,6 @@
                         },
                         "classnamespace": "box",
                         "rect": [ 134.0, 172.0, 672.0, 461.0 ],
-                        "visible": 1,
                         "boxes": [
                             {
                                 "box": {
@@ -967,7 +966,6 @@
                         },
                         "classnamespace": "box",
                         "rect": [ 325.0, 100.0, 1153.0, 848.0 ],
-                        "visible": 1,
                         "boxes": [
                             {
                                 "box": {
@@ -1469,7 +1467,7 @@
                                             "modernui": 1
                                         },
                                         "classnamespace": "box",
-                                        "rect": [ 569.0, 246.0, 488.0, 571.0 ],
+                                        "rect": [ 746.0, 248.0, 488.0, 571.0 ],
                                         "boxes": [
                                             {
                                                 "box": {
@@ -2070,8 +2068,29 @@
                                             "modernui": 1
                                         },
                                         "classnamespace": "box",
-                                        "rect": [ 1711.0, 425.0, 663.0, 848.0 ],
+                                        "rect": [ 134.0, 100.0, 663.0, 848.0 ],
                                         "boxes": [
+                                            {
+                                                "box": {
+                                                    "id": "obj-12",
+                                                    "maxclass": "message",
+                                                    "numinlets": 2,
+                                                    "numoutlets": 1,
+                                                    "outlettype": [ "" ],
+                                                    "patching_rect": [ 403.0, 332.0, 106.0, 22.0 ],
+                                                    "text": "array u874006605"
+                                                }
+                                            },
+                                            {
+                                                "box": {
+                                                    "id": "obj-1",
+                                                    "maxclass": "newobj",
+                                                    "numinlets": 1,
+                                                    "numoutlets": 0,
+                                                    "patching_rect": [ 403.0, 363.0, 32.0, 22.0 ],
+                                                    "text": "print"
+                                                }
+                                            },
                                             {
                                                 "box": {
                                                     "id": "obj-11",
@@ -2285,7 +2304,7 @@
                                                     "numinlets": 2,
                                                     "numoutlets": 1,
                                                     "outlettype": [ "" ],
-                                                    "patching_rect": [ 65.0, 298.0, 158.0, 22.0 ],
+                                                    "patching_rect": [ 65.0, 276.0, 158.0, 22.0 ],
                                                     "text": "array.expr (abs($f1-$f2))/$f1"
                                                 }
                                             },
@@ -2317,7 +2336,7 @@
                                                             "modernui": 1
                                                         },
                                                         "classnamespace": "box",
-                                                        "rect": [ 1732.0, 760.0, 559.0, 343.0 ],
+                                                        "rect": [ 134.0, 172.0, 559.0, 343.0 ],
                                                         "boxes": [
                                                             {
                                                                 "box": {
@@ -2739,6 +2758,12 @@
                                             },
                                             {
                                                 "patchline": {
+                                                    "destination": [ "obj-1", 0 ],
+                                                    "source": [ "obj-12", 0 ]
+                                                }
+                                            },
+                                            {
+                                                "patchline": {
                                                     "destination": [ "obj-75", 0 ],
                                                     "source": [ "obj-16", 0 ]
                                                 }
@@ -3098,7 +3123,6 @@
                                         },
                                         "classnamespace": "box",
                                         "rect": [ 745.0, 482.0, 733.0, 466.0 ],
-                                        "visible": 1,
                                         "boxes": [
                                             {
                                                 "box": {
@@ -3570,7 +3594,6 @@
                                         },
                                         "classnamespace": "box",
                                         "rect": [ 176.0, 224.0, 341.0, 540.0 ],
-                                        "visible": 1,
                                         "boxes": [
                                             {
                                                 "box": {
@@ -4486,7 +4509,7 @@
                                             "modernui": 1
                                         },
                                         "classnamespace": "box",
-                                        "rect": [ 1552.0, 269.0, 791.0, 471.0 ],
+                                        "rect": [ 134.0, 172.0, 791.0, 471.0 ],
                                         "boxes": [
                                             {
                                                 "box": {
@@ -5805,7 +5828,7 @@
                                             "modernui": 1
                                         },
                                         "classnamespace": "box",
-                                        "rect": [ 979.0, 688.0, 520.0, 622.0 ],
+                                        "rect": [ 958.0, 326.0, 520.0, 622.0 ],
                                         "boxes": [
                                             {
                                                 "box": {
