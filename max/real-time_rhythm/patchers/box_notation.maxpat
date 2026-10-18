@@ -17,8 +17,8 @@
                     "maxclass": "newobj",
                     "numinlets": 1,
                     "numoutlets": 0,
-                    "patching_rect": [ 243.5, 292.0, 114.0, 22.0 ],
-                    "text": "debug box_notation"
+                    "patching_rect": [ 243.5, 292.0, 124.0, 22.0 ],
+                    "text": "debug box_notation 3"
                 }
             },
             {
