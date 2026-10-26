@@ -3,13 +3,13 @@
         "fileversion": 1,
         "appversion": {
             "major": 9,
-            "minor": 1,
-            "revision": 4,
+            "minor": 2,
+            "revision": 0,
             "architecture": "x64",
             "modernui": 1
         },
         "classnamespace": "box",
-        "rect": [ 291.0, 477.0, 263.0, 301.0 ],
+        "rect": [ 522.0, 647.0, 263.0, 301.0 ],
         "boxes": [
             {
                 "box": {
@@ -33,8 +33,8 @@
                         "fileversion": 1,
                         "appversion": {
                             "major": 9,
-                            "minor": 1,
-                            "revision": 4,
+                            "minor": 2,
+                            "revision": 0,
                             "architecture": "x64",
                             "modernui": 1
                         },
@@ -201,9 +201,24 @@
                                     "source": [ "obj-9", 0 ]
                                 }
                             }
-                        ]
+                        ],
+                        "saved_attribute_attributes": {
+                            "default_plcolor": {
+                                "expression": ""
+                            }
+                        }
                     },
                     "patching_rect": [ 138.0, 206.0, 81.0, 22.0 ],
+                    "saved_attribute_attributes": {
+                        "default_plcolor": {
+                            "expression": ""
+                        }
+                    },
+                    "saved_object_attributes": {
+                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
+                    },
                     "text": "p monitor"
                 }
             },
@@ -218,14 +233,57 @@
                         "fileversion": 1,
                         "appversion": {
                             "major": 9,
-                            "minor": 1,
-                            "revision": 4,
+                            "minor": 2,
+                            "revision": 0,
                             "architecture": "x64",
                             "modernui": 1
                         },
                         "classnamespace": "box",
-                        "rect": [ 380.0, 173.0, 561.0, 665.0 ],
+                        "rect": [ 339.0, 419.0, 643.0, 678.0 ],
                         "boxes": [
+                            {
+                                "box": {
+                                    "id": "obj-18",
+                                    "maxclass": "newobj",
+                                    "numinlets": 2,
+                                    "numoutlets": 2,
+                                    "outlettype": [ "", "" ],
+                                    "patching_rect": [ 389.0, 246.0, 47.0, 22.0 ],
+                                    "text": "zl.nth 3"
+                                }
+                            },
+                            {
+                                "box": {
+                                    "id": "obj-17",
+                                    "linecount": 2,
+                                    "maxclass": "comment",
+                                    "numinlets": 1,
+                                    "numoutlets": 0,
+                                    "patching_rect": [ 438.0, 240.5, 150.0, 33.0 ],
+                                    "text": "third argument: start offset (only from ableton clip)"
+                                }
+                            },
+                            {
+                                "box": {
+                                    "id": "obj-13",
+                                    "maxclass": "newobj",
+                                    "numinlets": 1,
+                                    "numoutlets": 0,
+                                    "patching_rect": [ 389.0, 301.0, 149.0, 22.0 ],
+                                    "text": "s #0-add_to_beatclock"
+                                }
+                            },
+                            {
+                                "box": {
+                                    "id": "obj-7",
+                                    "maxclass": "newobj",
+                                    "numinlets": 2,
+                                    "numoutlets": 2,
+                                    "outlettype": [ "", "" ],
+                                    "patching_rect": [ 309.0, 246.0, 55.0, 22.0 ],
+                                    "text": "zl.slice 2"
+                                }
+                            },
                             {
                                 "box": {
                                     "id": "obj-42",
@@ -237,13 +295,13 @@
                                         "fileversion": 1,
                                         "appversion": {
                                             "major": 9,
-                                            "minor": 1,
-                                            "revision": 4,
+                                            "minor": 2,
+                                            "revision": 0,
                                             "architecture": "x64",
                                             "modernui": 1
                                         },
                                         "classnamespace": "box",
-                                        "rect": [ 794.0, 261.0, 1142.0, 848.0 ],
+                                        "rect": [ 527.0, 411.0, 1142.0, 848.0 ],
                                         "boxes": [
                                             {
                                                 "box": {
@@ -344,8 +402,8 @@
                                                         "fileversion": 1,
                                                         "appversion": {
                                                             "major": 9,
-                                                            "minor": 1,
-                                                            "revision": 4,
+                                                            "minor": 2,
+                                                            "revision": 0,
                                                             "architecture": "x64",
                                                             "modernui": 1
                                                         },
@@ -581,9 +639,24 @@
                                                                     "source": [ "obj-88", 0 ]
                                                                 }
                                                             }
-                                                        ]
+                                                        ],
+                                                        "saved_attribute_attributes": {
+                                                            "default_plcolor": {
+                                                                "expression": ""
+                                                            }
+                                                        }
                                                     },
                                                     "patching_rect": [ 521.0, 153.0, 117.0, 22.0 ],
+                                                    "saved_attribute_attributes": {
+                                                        "default_plcolor": {
+                                                            "expression": ""
+                                                        }
+                                                    },
+                                                    "saved_object_attributes": {
+                                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
+                                                    },
                                                     "text": "p parameter_indices"
                                                 }
                                             },
@@ -812,8 +885,8 @@
                                                         "fileversion": 1,
                                                         "appversion": {
                                                             "major": 9,
-                                                            "minor": 1,
-                                                            "revision": 4,
+                                                            "minor": 2,
+                                                            "revision": 0,
                                                             "architecture": "x64",
                                                             "modernui": 1
                                                         },
@@ -1074,9 +1147,24 @@
                                                                     "source": [ "obj-73", 0 ]
                                                                 }
                                                             }
-                                                        ]
+                                                        ],
+                                                        "saved_attribute_attributes": {
+                                                            "default_plcolor": {
+                                                                "expression": ""
+                                                            }
+                                                        }
                                                     },
                                                     "patching_rect": [ 290.0, 541.0, 89.0, 22.0 ],
+                                                    "saved_attribute_attributes": {
+                                                        "default_plcolor": {
+                                                            "expression": ""
+                                                        }
+                                                    },
+                                                    "saved_object_attributes": {
+                                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
+                                                    },
                                                     "text": "p wrap_around"
                                                 }
                                             },
@@ -1422,8 +1510,8 @@
                                                         "fileversion": 1,
                                                         "appversion": {
                                                             "major": 9,
-                                                            "minor": 1,
-                                                            "revision": 4,
+                                                            "minor": 2,
+                                                            "revision": 0,
                                                             "architecture": "x64",
                                                             "modernui": 1
                                                         },
@@ -1651,15 +1739,22 @@
                                                                 }
                                                             }
                                                         ],
-                                                        "patchlinecolor": [ 0.874509803921569, 0.811764705882353, 0.694117647058824, 1.0 ],
-                                                        "bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                                        "editing_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ]
+                                                        "saved_attribute_attributes": {
+                                                            "default_plcolor": {
+                                                                "expression": ""
+                                                            }
+                                                        }
                                                     },
                                                     "patching_rect": [ 219.0, 351.0, 157.0, 22.0 ],
+                                                    "saved_attribute_attributes": {
+                                                        "default_plcolor": {
+                                                            "expression": ""
+                                                        }
+                                                    },
                                                     "saved_object_attributes": {
-                                                        "editing_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                                        "locked_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                                        "patchlinecolor": [ 0.874509803921569, 0.811764705882353, 0.694117647058824, 1.0 ]
+                                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
                                                     },
                                                     "text": "p advance_generator_index"
                                                 }
@@ -2156,15 +2251,22 @@
                                                 }
                                             }
                                         ],
-                                        "patchlinecolor": [ 0.874509803921569, 0.811764705882353, 0.694117647058824, 1.0 ],
-                                        "bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                        "editing_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ]
+                                        "saved_attribute_attributes": {
+                                            "default_plcolor": {
+                                                "expression": ""
+                                            }
+                                        }
                                     },
                                     "patching_rect": [ 30.0, 560.0, 114.0, 22.0 ],
+                                    "saved_attribute_attributes": {
+                                        "default_plcolor": {
+                                            "expression": ""
+                                        }
+                                    },
                                     "saved_object_attributes": {
-                                        "editing_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                        "locked_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                        "patchlinecolor": [ 0.874509803921569, 0.811764705882353, 0.694117647058824, 1.0 ]
+                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
                                     },
                                     "text": "p buffer_next_event"
                                 }
@@ -2180,8 +2282,8 @@
                                         "fileversion": 1,
                                         "appversion": {
                                             "major": 9,
-                                            "minor": 1,
-                                            "revision": 4,
+                                            "minor": 2,
+                                            "revision": 0,
                                             "architecture": "x64",
                                             "modernui": 1
                                         },
@@ -2254,8 +2356,8 @@
                                                         "fileversion": 1,
                                                         "appversion": {
                                                             "major": 9,
-                                                            "minor": 1,
-                                                            "revision": 4,
+                                                            "minor": 2,
+                                                            "revision": 0,
                                                             "architecture": "x64",
                                                             "modernui": 1
                                                         },
@@ -2424,9 +2526,24 @@
                                                                     "source": [ "obj-8", 0 ]
                                                                 }
                                                             }
-                                                        ]
+                                                        ],
+                                                        "saved_attribute_attributes": {
+                                                            "default_plcolor": {
+                                                                "expression": ""
+                                                            }
+                                                        }
                                                     },
                                                     "patching_rect": [ 50.0, 417.0, 103.0, 22.0 ],
+                                                    "saved_attribute_attributes": {
+                                                        "default_plcolor": {
+                                                            "expression": ""
+                                                        }
+                                                    },
+                                                    "saved_object_attributes": {
+                                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
+                                                    },
                                                     "text": "p if_no_candidate"
                                                 }
                                             },
@@ -2770,15 +2887,22 @@
                                                 }
                                             }
                                         ],
-                                        "patchlinecolor": [ 0.874509803921569, 0.811764705882353, 0.694117647058824, 1.0 ],
-                                        "bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                        "editing_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ]
+                                        "saved_attribute_attributes": {
+                                            "default_plcolor": {
+                                                "expression": ""
+                                            }
+                                        }
                                     },
                                     "patching_rect": [ 30.0, 498.0, 115.0, 22.0 ],
+                                    "saved_attribute_attributes": {
+                                        "default_plcolor": {
+                                            "expression": ""
+                                        }
+                                    },
                                     "saved_object_attributes": {
-                                        "editing_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                        "locked_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                        "patchlinecolor": [ 0.874509803921569, 0.811764705882353, 0.694117647058824, 1.0 ]
+                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
                                     },
                                     "text": "p select_next_event"
                                 }
@@ -2794,8 +2918,8 @@
                                         "fileversion": 1,
                                         "appversion": {
                                             "major": 9,
-                                            "minor": 1,
-                                            "revision": 4,
+                                            "minor": 2,
+                                            "revision": 0,
                                             "architecture": "x64",
                                             "modernui": 1
                                         },
@@ -3034,15 +3158,22 @@
                                                 }
                                             }
                                         ],
-                                        "patchlinecolor": [ 0.874509803921569, 0.811764705882353, 0.694117647058824, 1.0 ],
-                                        "bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                        "editing_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ]
+                                        "saved_attribute_attributes": {
+                                            "default_plcolor": {
+                                                "expression": ""
+                                            }
+                                        }
                                     },
                                     "patching_rect": [ 30.0, 448.0, 122.0, 22.0 ],
+                                    "saved_attribute_attributes": {
+                                        "default_plcolor": {
+                                            "expression": ""
+                                        }
+                                    },
                                     "saved_object_attributes": {
-                                        "editing_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                        "locked_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                        "patchlinecolor": [ 0.874509803921569, 0.811764705882353, 0.694117647058824, 1.0 ]
+                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
                                     },
                                     "text": "p adjust_temperature"
                                 }
@@ -3058,8 +3189,8 @@
                                         "fileversion": 1,
                                         "appversion": {
                                             "major": 9,
-                                            "minor": 1,
-                                            "revision": 4,
+                                            "minor": 2,
+                                            "revision": 0,
                                             "architecture": "x64",
                                             "modernui": 1
                                         },
@@ -3228,8 +3359,8 @@
                                                         "fileversion": 1,
                                                         "appversion": {
                                                             "major": 9,
-                                                            "minor": 1,
-                                                            "revision": 4,
+                                                            "minor": 2,
+                                                            "revision": 0,
                                                             "architecture": "x64",
                                                             "modernui": 1
                                                         },
@@ -3459,7 +3590,6 @@
                                                             {
                                                                 "box": {
                                                                     "id": "obj-15",
-                                                                    "linecount": 2,
                                                                     "maxclass": "newobj",
                                                                     "numinlets": 2,
                                                                     "numoutlets": 3,
@@ -3602,9 +3732,24 @@
                                                                     "source": [ "obj-9", 1 ]
                                                                 }
                                                             }
-                                                        ]
+                                                        ],
+                                                        "saved_attribute_attributes": {
+                                                            "default_plcolor": {
+                                                                "expression": ""
+                                                            }
+                                                        }
                                                     },
                                                     "patching_rect": [ 330.0, 105.0, 90.0, 22.0 ],
+                                                    "saved_attribute_attributes": {
+                                                        "default_plcolor": {
+                                                            "expression": ""
+                                                        }
+                                                    },
+                                                    "saved_object_attributes": {
+                                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
+                                                    },
                                                     "text": "p channel_filter"
                                                 }
                                             },
@@ -3663,8 +3808,8 @@
                                                         "fileversion": 1,
                                                         "appversion": {
                                                             "major": 9,
-                                                            "minor": 1,
-                                                            "revision": 4,
+                                                            "minor": 2,
+                                                            "revision": 0,
                                                             "architecture": "x64",
                                                             "modernui": 1
                                                         },
@@ -3726,8 +3871,8 @@
                                                                         "fileversion": 1,
                                                                         "appversion": {
                                                                             "major": 9,
-                                                                            "minor": 1,
-                                                                            "revision": 4,
+                                                                            "minor": 2,
+                                                                            "revision": 0,
                                                                             "architecture": "x64",
                                                                             "modernui": 1
                                                                         },
@@ -3941,9 +4086,24 @@
                                                                                     "source": [ "obj-6", 0 ]
                                                                                 }
                                                                             }
-                                                                        ]
+                                                                        ],
+                                                                        "saved_attribute_attributes": {
+                                                                            "default_plcolor": {
+                                                                                "expression": ""
+                                                                            }
+                                                                        }
                                                                     },
                                                                     "patching_rect": [ 50.0, 220.0, 78.0, 22.0 ],
+                                                                    "saved_attribute_attributes": {
+                                                                        "default_plcolor": {
+                                                                            "expression": ""
+                                                                        }
+                                                                    },
+                                                                    "saved_object_attributes": {
+                                                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
+                                                                    },
                                                                     "text": "p subdivision"
                                                                 }
                                                             },
@@ -4069,7 +4229,6 @@
                                                             {
                                                                 "box": {
                                                                     "id": "obj-13",
-                                                                    "linecount": 2,
                                                                     "maxclass": "newobj",
                                                                     "numinlets": 0,
                                                                     "numoutlets": 1,
@@ -4201,9 +4360,24 @@
                                                                     "source": [ "obj-9", 1 ]
                                                                 }
                                                             }
-                                                        ]
+                                                        ],
+                                                        "saved_attribute_attributes": {
+                                                            "default_plcolor": {
+                                                                "expression": ""
+                                                            }
+                                                        }
                                                     },
                                                     "patching_rect": [ 330.0, 159.0, 155.0, 22.0 ],
+                                                    "saved_attribute_attributes": {
+                                                        "default_plcolor": {
+                                                            "expression": ""
+                                                        }
+                                                    },
+                                                    "saved_object_attributes": {
+                                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
+                                                    },
                                                     "text": "p subdivision_position_filter"
                                                 }
                                             },
@@ -4475,9 +4649,24 @@
                                                     "source": [ "obj-8", 0 ]
                                                 }
                                             }
-                                        ]
+                                        ],
+                                        "saved_attribute_attributes": {
+                                            "default_plcolor": {
+                                                "expression": ""
+                                            }
+                                        }
                                     },
                                     "patching_rect": [ 30.0, 403.0, 223.0, 22.0 ],
+                                    "saved_attribute_attributes": {
+                                        "default_plcolor": {
+                                            "expression": ""
+                                        }
+                                    },
+                                    "saved_object_attributes": {
+                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
+                                    },
                                     "text": "p selection_filters"
                                 }
                             },
@@ -4492,8 +4681,8 @@
                                         "fileversion": 1,
                                         "appversion": {
                                             "major": 9,
-                                            "minor": 1,
-                                            "revision": 4,
+                                            "minor": 2,
+                                            "revision": 0,
                                             "architecture": "x64",
                                             "modernui": 1
                                         },
@@ -4507,7 +4696,7 @@
                                                     "maxclass": "comment",
                                                     "numinlets": 1,
                                                     "numoutlets": 0,
-                                                    "patching_rect": [ 854.0, 309.0, 150.0, 248.0 ],
+                                                    "patching_rect": [ 854.0, 309.0, 153.0, 248.0 ],
                                                     "text": "prob for å atlistening historie skal bli del av generator historie: \nnå regnes sum ut hver gang fra historie av enkelt-parametre.\n\neneste løsning er vel at kanskje listening historie må lages på samme måte, slik at historie for hvert parameter erstattes av listening/influense balanse...\n\neller evt at list kopieres over til alle parametrene historie..."
                                                 }
                                             },
@@ -4632,8 +4821,8 @@
                                                         "fileversion": 1,
                                                         "appversion": {
                                                             "major": 9,
-                                                            "minor": 1,
-                                                            "revision": 4,
+                                                            "minor": 2,
+                                                            "revision": 0,
                                                             "architecture": "x64",
                                                             "modernui": 1
                                                         },
@@ -5133,9 +5322,24 @@
                                                                     "source": [ "obj-9", 0 ]
                                                                 }
                                                             }
-                                                        ]
+                                                        ],
+                                                        "saved_attribute_attributes": {
+                                                            "default_plcolor": {
+                                                                "expression": ""
+                                                            }
+                                                        }
                                                     },
                                                     "patching_rect": [ 68.0, 135.0, 109.0, 22.0 ],
+                                                    "saved_attribute_attributes": {
+                                                        "default_plcolor": {
+                                                            "expression": ""
+                                                        }
+                                                    },
+                                                    "saved_object_attributes": {
+                                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
+                                                    },
                                                     "text": "p sum_parameters"
                                                 }
                                             },
@@ -5182,8 +5386,8 @@
                                                     "maxclass": "newobj",
                                                     "numinlets": 1,
                                                     "numoutlets": 0,
-                                                    "patching_rect": [ 363.0, 636.0, 141.0, 22.0 ],
-                                                    "text": "debug SUM_HISTORY 3"
+                                                    "patching_rect": [ 363.0, 636.0, 203.0, 22.0 ],
+                                                    "text": "debug SUM_ROTATED_HISTORY 3"
                                                 }
                                             },
                                             {
@@ -5219,8 +5423,8 @@
                                                         "fileversion": 1,
                                                         "appversion": {
                                                             "major": 9,
-                                                            "minor": 1,
-                                                            "revision": 4,
+                                                            "minor": 2,
+                                                            "revision": 0,
                                                             "architecture": "x64",
                                                             "modernui": 1
                                                         },
@@ -5522,15 +5726,22 @@
                                                                 }
                                                             }
                                                         ],
-                                                        "patchlinecolor": [ 0.874509803921569, 0.811764705882353, 0.694117647058824, 1.0 ],
-                                                        "bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                                        "editing_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ]
+                                                        "saved_attribute_attributes": {
+                                                            "default_plcolor": {
+                                                                "expression": ""
+                                                            }
+                                                        }
                                                     },
                                                     "patching_rect": [ 131.0, 338.0, 111.0, 22.0 ],
+                                                    "saved_attribute_attributes": {
+                                                        "default_plcolor": {
+                                                            "expression": ""
+                                                        }
+                                                    },
                                                     "saved_object_attributes": {
-                                                        "editing_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                                        "locked_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                                        "patchlinecolor": [ 0.874509803921569, 0.811764705882353, 0.694117647058824, 1.0 ]
+                                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
                                                     },
                                                     "text": "p rotation_direction"
                                                 }
@@ -6170,9 +6381,24 @@
                                                     "source": [ "obj-67", 1 ]
                                                 }
                                             }
-                                        ]
+                                        ],
+                                        "saved_attribute_attributes": {
+                                            "default_plcolor": {
+                                                "expression": ""
+                                            }
+                                        }
                                     },
                                     "patching_rect": [ 30.0, 351.0, 105.0, 22.0 ],
+                                    "saved_attribute_attributes": {
+                                        "default_plcolor": {
+                                            "expression": ""
+                                        }
+                                    },
+                                    "saved_object_attributes": {
+                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
+                                    },
                                     "text": "p rotate_and_sum"
                                 }
                             },
@@ -6187,8 +6413,8 @@
                                         "fileversion": 1,
                                         "appversion": {
                                             "major": 9,
-                                            "minor": 1,
-                                            "revision": 4,
+                                            "minor": 2,
+                                            "revision": 0,
                                             "architecture": "x64",
                                             "modernui": 1
                                         },
@@ -6405,8 +6631,8 @@
                                                         "fileversion": 1,
                                                         "appversion": {
                                                             "major": 9,
-                                                            "minor": 1,
-                                                            "revision": 4,
+                                                            "minor": 2,
+                                                            "revision": 0,
                                                             "architecture": "x64",
                                                             "modernui": 1
                                                         },
@@ -6460,7 +6686,6 @@
                                                             {
                                                                 "box": {
                                                                     "id": "obj-15",
-                                                                    "linecount": 2,
                                                                     "maxclass": "newobj",
                                                                     "numinlets": 2,
                                                                     "numoutlets": 3,
@@ -6761,9 +6986,24 @@
                                                                     "source": [ "obj-9", 1 ]
                                                                 }
                                                             }
-                                                        ]
+                                                        ],
+                                                        "saved_attribute_attributes": {
+                                                            "default_plcolor": {
+                                                                "expression": ""
+                                                            }
+                                                        }
                                                     },
                                                     "patching_rect": [ 210.0, 153.0, 85.0, 22.0 ],
+                                                    "saved_attribute_attributes": {
+                                                        "default_plcolor": {
+                                                            "expression": ""
+                                                        }
+                                                    },
+                                                    "saved_object_attributes": {
+                                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
+                                                    },
                                                     "text": "p phrase_filter"
                                                 }
                                             },
@@ -6968,9 +7208,24 @@
                                                     "source": [ "obj-9", 0 ]
                                                 }
                                             }
-                                        ]
+                                        ],
+                                        "saved_attribute_attributes": {
+                                            "default_plcolor": {
+                                                "expression": ""
+                                            }
+                                        }
                                     },
                                     "patching_rect": [ 30.0, 301.0, 180.0, 22.0 ],
+                                    "saved_attribute_attributes": {
+                                        "default_plcolor": {
+                                            "expression": ""
+                                        }
+                                    },
+                                    "saved_object_attributes": {
+                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
+                                    },
                                     "text": "p phrase_filter"
                                 }
                             },
@@ -6985,8 +7240,8 @@
                                         "fileversion": 1,
                                         "appversion": {
                                             "major": 9,
-                                            "minor": 1,
-                                            "revision": 4,
+                                            "minor": 2,
+                                            "revision": 0,
                                             "architecture": "x64",
                                             "modernui": 1
                                         },
@@ -7169,8 +7424,8 @@
                                                         "fileversion": 1,
                                                         "appversion": {
                                                             "major": 9,
-                                                            "minor": 1,
-                                                            "revision": 4,
+                                                            "minor": 2,
+                                                            "revision": 0,
                                                             "architecture": "x64",
                                                             "modernui": 1
                                                         },
@@ -7367,9 +7622,24 @@
                                                                     "source": [ "obj-53", 0 ]
                                                                 }
                                                             }
-                                                        ]
+                                                        ],
+                                                        "saved_attribute_attributes": {
+                                                            "default_plcolor": {
+                                                                "expression": ""
+                                                            }
+                                                        }
                                                     },
                                                     "patching_rect": [ 175.0, 436.0, 68.0, 22.0 ],
+                                                    "saved_attribute_attributes": {
+                                                        "default_plcolor": {
+                                                            "expression": ""
+                                                        }
+                                                    },
+                                                    "saved_object_attributes": {
+                                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
+                                                    },
                                                     "text": "p init_array"
                                                 }
                                             },
@@ -7616,9 +7886,24 @@
                                                     "source": [ "obj-88", 0 ]
                                                 }
                                             }
-                                        ]
+                                        ],
+                                        "saved_attribute_attributes": {
+                                            "default_plcolor": {
+                                                "expression": ""
+                                            }
+                                        }
                                     },
                                     "patching_rect": [ 30.0, 259.0, 94.0, 22.0 ],
+                                    "saved_attribute_attributes": {
+                                        "default_plcolor": {
+                                            "expression": ""
+                                        }
+                                    },
+                                    "saved_object_attributes": {
+                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
+                                    },
                                     "text": "p stream_n_last"
                                 }
                             },
@@ -7633,8 +7918,8 @@
                                         "fileversion": 1,
                                         "appversion": {
                                             "major": 9,
-                                            "minor": 1,
-                                            "revision": 4,
+                                            "minor": 2,
+                                            "revision": 0,
                                             "architecture": "x64",
                                             "modernui": 1
                                         },
@@ -7729,8 +8014,8 @@
                                                         "fileversion": 1,
                                                         "appversion": {
                                                             "major": 9,
-                                                            "minor": 1,
-                                                            "revision": 4,
+                                                            "minor": 2,
+                                                            "revision": 0,
                                                             "architecture": "x64",
                                                             "modernui": 1
                                                         },
@@ -7901,9 +8186,24 @@
                                                                     "source": [ "obj-99", 0 ]
                                                                 }
                                                             }
-                                                        ]
+                                                        ],
+                                                        "saved_attribute_attributes": {
+                                                            "default_plcolor": {
+                                                                "expression": ""
+                                                            }
+                                                        }
                                                     },
                                                     "patching_rect": [ 186.0, 132.0, 229.0, 22.0 ],
+                                                    "saved_attribute_attributes": {
+                                                        "default_plcolor": {
+                                                            "expression": ""
+                                                        }
+                                                    },
+                                                    "saved_object_attributes": {
+                                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
+                                                    },
                                                     "text": "p map_generator_columns_to_probability"
                                                 }
                                             },
@@ -8301,9 +8601,24 @@
                                                     "source": [ "obj-8", 0 ]
                                                 }
                                             }
-                                        ]
+                                        ],
+                                        "saved_attribute_attributes": {
+                                            "default_plcolor": {
+                                                "expression": ""
+                                            }
+                                        }
                                     },
                                     "patching_rect": [ 30.0, 221.0, 167.0, 22.0 ],
+                                    "saved_attribute_attributes": {
+                                        "default_plcolor": {
+                                            "expression": ""
+                                        }
+                                    },
+                                    "saved_object_attributes": {
+                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
+                                    },
                                     "text": "p get_probability_distributions"
                                 }
                             },
@@ -8325,7 +8640,7 @@
                                     "maxclass": "comment",
                                     "numinlets": 1,
                                     "numoutlets": 0,
-                                    "patching_rect": [ 339.0, 79.0, 207.0, 181.0 ],
+                                    "patching_rect": [ 351.0, 29.5, 207.0, 181.0 ],
                                     "text": "generator trigger modes:\n\n1: use generator history if present, otherwise start from first event in last recorded phrase. if a second argument is present, this is used as the event index from which to start from\n\n2: use the set balance between external input ('influence') and the generator’s own internal history to find the most probable next event"
                                 }
                             },
@@ -8386,8 +8701,8 @@
                                         "fileversion": 1,
                                         "appversion": {
                                             "major": 9,
-                                            "minor": 1,
-                                            "revision": 4,
+                                            "minor": 2,
+                                            "revision": 0,
                                             "architecture": "x64",
                                             "modernui": 1
                                         },
@@ -8416,8 +8731,8 @@
                                                         "fileversion": 1,
                                                         "appversion": {
                                                             "major": 9,
-                                                            "minor": 1,
-                                                            "revision": 4,
+                                                            "minor": 2,
+                                                            "revision": 0,
                                                             "architecture": "x64",
                                                             "modernui": 1
                                                         },
@@ -8495,8 +8810,8 @@
                                                                         "fileversion": 1,
                                                                         "appversion": {
                                                                             "major": 9,
-                                                                            "minor": 1,
-                                                                            "revision": 4,
+                                                                            "minor": 2,
+                                                                            "revision": 0,
                                                                             "architecture": "x64",
                                                                             "modernui": 1
                                                                         },
@@ -8763,9 +9078,24 @@
                                                                                     "source": [ "obj-9", 0 ]
                                                                                 }
                                                                             }
-                                                                        ]
+                                                                        ],
+                                                                        "saved_attribute_attributes": {
+                                                                            "default_plcolor": {
+                                                                                "expression": ""
+                                                                            }
+                                                                        }
                                                                     },
                                                                     "patching_rect": [ 50.0, 90.0, 126.0, 22.0 ],
+                                                                    "saved_attribute_attributes": {
+                                                                        "default_plcolor": {
+                                                                            "expression": ""
+                                                                        }
+                                                                    },
+                                                                    "saved_object_attributes": {
+                                                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
+                                                                    },
                                                                     "text": "p subdivision_position"
                                                                 }
                                                             },
@@ -8870,9 +9200,24 @@
                                                                     "source": [ "obj-9", 2 ]
                                                                 }
                                                             }
-                                                        ]
+                                                        ],
+                                                        "saved_attribute_attributes": {
+                                                            "default_plcolor": {
+                                                                "expression": ""
+                                                            }
+                                                        }
                                                     },
                                                     "patching_rect": [ 121.0, 238.0, 78.0, 22.0 ],
+                                                    "saved_attribute_attributes": {
+                                                        "default_plcolor": {
+                                                            "expression": ""
+                                                        }
+                                                    },
+                                                    "saved_object_attributes": {
+                                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
+                                                    },
                                                     "text": "p subdivision"
                                                 }
                                             },
@@ -8887,8 +9232,8 @@
                                                         "fileversion": 1,
                                                         "appversion": {
                                                             "major": 9,
-                                                            "minor": 1,
-                                                            "revision": 4,
+                                                            "minor": 2,
+                                                            "revision": 0,
                                                             "architecture": "x64",
                                                             "modernui": 1
                                                         },
@@ -9015,8 +9360,8 @@
                                                                         "fileversion": 1,
                                                                         "appversion": {
                                                                             "major": 9,
-                                                                            "minor": 1,
-                                                                            "revision": 4,
+                                                                            "minor": 2,
+                                                                            "revision": 0,
                                                                             "architecture": "x64",
                                                                             "modernui": 1
                                                                         },
@@ -9283,9 +9628,24 @@
                                                                                     "source": [ "obj-9", 0 ]
                                                                                 }
                                                                             }
-                                                                        ]
+                                                                        ],
+                                                                        "saved_attribute_attributes": {
+                                                                            "default_plcolor": {
+                                                                                "expression": ""
+                                                                            }
+                                                                        }
                                                                     },
                                                                     "patching_rect": [ 50.0, 50.0, 109.0, 22.0 ],
+                                                                    "saved_attribute_attributes": {
+                                                                        "default_plcolor": {
+                                                                            "expression": ""
+                                                                        }
+                                                                    },
+                                                                    "saved_object_attributes": {
+                                                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
+                                                                    },
                                                                     "text": "p contour_duration"
                                                                 }
                                                             },
@@ -9564,9 +9924,24 @@
                                                                     "source": [ "obj-7", 0 ]
                                                                 }
                                                             }
-                                                        ]
+                                                        ],
+                                                        "saved_attribute_attributes": {
+                                                            "default_plcolor": {
+                                                                "expression": ""
+                                                            }
+                                                        }
                                                     },
                                                     "patching_rect": [ 206.0, 238.0, 62.0, 22.0 ],
+                                                    "saved_attribute_attributes": {
+                                                        "default_plcolor": {
+                                                            "expression": ""
+                                                        }
+                                                    },
+                                                    "saved_object_attributes": {
+                                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
+                                                    },
                                                     "text": "p duration"
                                                 }
                                             },
@@ -9581,8 +9956,8 @@
                                                         "fileversion": 1,
                                                         "appversion": {
                                                             "major": 9,
-                                                            "minor": 1,
-                                                            "revision": 4,
+                                                            "minor": 2,
+                                                            "revision": 0,
                                                             "architecture": "x64",
                                                             "modernui": 1
                                                         },
@@ -9661,8 +10036,8 @@
                                                                         "fileversion": 1,
                                                                         "appversion": {
                                                                             "major": 9,
-                                                                            "minor": 1,
-                                                                            "revision": 4,
+                                                                            "minor": 2,
+                                                                            "revision": 0,
                                                                             "architecture": "x64",
                                                                             "modernui": 1
                                                                         },
@@ -9929,9 +10304,24 @@
                                                                                     "source": [ "obj-9", 0 ]
                                                                                 }
                                                                             }
-                                                                        ]
+                                                                        ],
+                                                                        "saved_attribute_attributes": {
+                                                                            "default_plcolor": {
+                                                                                "expression": ""
+                                                                            }
+                                                                        }
                                                                     },
                                                                     "patching_rect": [ 50.0, 98.0, 112.0, 22.0 ],
+                                                                    "saved_attribute_attributes": {
+                                                                        "default_plcolor": {
+                                                                            "expression": ""
+                                                                        }
+                                                                    },
+                                                                    "saved_object_attributes": {
+                                                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
+                                                                    },
                                                                     "text": "p deviation_polarity"
                                                                 }
                                                             },
@@ -10053,9 +10443,24 @@
                                                                     "source": [ "obj-9", 2 ]
                                                                 }
                                                             }
-                                                        ]
+                                                        ],
+                                                        "saved_attribute_attributes": {
+                                                            "default_plcolor": {
+                                                                "expression": ""
+                                                            }
+                                                        }
                                                     },
                                                     "patching_rect": [ 279.0, 238.0, 67.0, 22.0 ],
+                                                    "saved_attribute_attributes": {
+                                                        "default_plcolor": {
+                                                            "expression": ""
+                                                        }
+                                                    },
+                                                    "saved_object_attributes": {
+                                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
+                                                    },
                                                     "text": "p deviation"
                                                 }
                                             },
@@ -10070,8 +10475,8 @@
                                                         "fileversion": 1,
                                                         "appversion": {
                                                             "major": 9,
-                                                            "minor": 1,
-                                                            "revision": 4,
+                                                            "minor": 2,
+                                                            "revision": 0,
                                                             "architecture": "x64",
                                                             "modernui": 1
                                                         },
@@ -10160,8 +10565,8 @@
                                                                         "fileversion": 1,
                                                                         "appversion": {
                                                                             "major": 9,
-                                                                            "minor": 1,
-                                                                            "revision": 4,
+                                                                            "minor": 2,
+                                                                            "revision": 0,
                                                                             "architecture": "x64",
                                                                             "modernui": 1
                                                                         },
@@ -10507,9 +10912,24 @@
                                                                                     "source": [ "obj-58", 0 ]
                                                                                 }
                                                                             }
-                                                                        ]
+                                                                        ],
+                                                                        "saved_attribute_attributes": {
+                                                                            "default_plcolor": {
+                                                                                "expression": ""
+                                                                            }
+                                                                        }
                                                                     },
                                                                     "patching_rect": [ 52.0, 225.0, 42.0, 22.0 ],
+                                                                    "saved_attribute_attributes": {
+                                                                        "default_plcolor": {
+                                                                            "expression": ""
+                                                                        }
+                                                                    },
+                                                                    "saved_object_attributes": {
+                                                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
+                                                                    },
                                                                     "text": "p gate"
                                                                 }
                                                             },
@@ -10524,8 +10944,8 @@
                                                                         "fileversion": 1,
                                                                         "appversion": {
                                                                             "major": 9,
-                                                                            "minor": 1,
-                                                                            "revision": 4,
+                                                                            "minor": 2,
+                                                                            "revision": 0,
                                                                             "architecture": "x64",
                                                                             "modernui": 1
                                                                         },
@@ -10792,9 +11212,24 @@
                                                                                     "source": [ "obj-9", 0 ]
                                                                                 }
                                                                             }
-                                                                        ]
+                                                                        ],
+                                                                        "saved_attribute_attributes": {
+                                                                            "default_plcolor": {
+                                                                                "expression": ""
+                                                                            }
+                                                                        }
                                                                     },
                                                                     "patching_rect": [ 52.25, 440.0, 89.0, 22.0 ],
+                                                                    "saved_attribute_attributes": {
+                                                                        "default_plcolor": {
+                                                                            "expression": ""
+                                                                        }
+                                                                    },
+                                                                    "saved_object_attributes": {
+                                                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
+                                                                    },
                                                                     "text": "p contour_ratio"
                                                                 }
                                                             },
@@ -10831,8 +11266,8 @@
                                                                         "fileversion": 1,
                                                                         "appversion": {
                                                                             "major": 9,
-                                                                            "minor": 1,
-                                                                            "revision": 4,
+                                                                            "minor": 2,
+                                                                            "revision": 0,
                                                                             "architecture": "x64",
                                                                             "modernui": 1
                                                                         },
@@ -11099,9 +11534,24 @@
                                                                                     "source": [ "obj-9", 0 ]
                                                                                 }
                                                                             }
-                                                                        ]
+                                                                        ],
+                                                                        "saved_attribute_attributes": {
+                                                                            "default_plcolor": {
+                                                                                "expression": ""
+                                                                            }
+                                                                        }
                                                                     },
                                                                     "patching_rect": [ 269.0, 440.0, 87.0, 22.0 ],
+                                                                    "saved_attribute_attributes": {
+                                                                        "default_plcolor": {
+                                                                            "expression": ""
+                                                                        }
+                                                                    },
+                                                                    "saved_object_attributes": {
+                                                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
+                                                                    },
                                                                     "text": "p relative_ratio"
                                                                 }
                                                             },
@@ -11138,8 +11588,8 @@
                                                                         "fileversion": 1,
                                                                         "appversion": {
                                                                             "major": 9,
-                                                                            "minor": 1,
-                                                                            "revision": 4,
+                                                                            "minor": 2,
+                                                                            "revision": 0,
                                                                             "architecture": "x64",
                                                                             "modernui": 1
                                                                         },
@@ -11405,9 +11855,24 @@
                                                                                     "source": [ "obj-9", 0 ]
                                                                                 }
                                                                             }
-                                                                        ]
+                                                                        ],
+                                                                        "saved_attribute_attributes": {
+                                                                            "default_plcolor": {
+                                                                                "expression": ""
+                                                                            }
+                                                                        }
                                                                     },
                                                                     "patching_rect": [ 573.0, 440.0, 42.0, 22.0 ],
+                                                                    "saved_attribute_attributes": {
+                                                                        "default_plcolor": {
+                                                                            "expression": ""
+                                                                        }
+                                                                    },
+                                                                    "saved_object_attributes": {
+                                                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
+                                                                    },
                                                                     "text": "p ratio"
                                                                 }
                                                             },
@@ -11725,9 +12190,24 @@
                                                                     "source": [ "obj-8", 0 ]
                                                                 }
                                                             }
-                                                        ]
+                                                        ],
+                                                        "saved_attribute_attributes": {
+                                                            "default_plcolor": {
+                                                                "expression": ""
+                                                            }
+                                                        }
                                                     },
                                                     "patching_rect": [ 355.0, 238.0, 42.0, 22.0 ],
+                                                    "saved_attribute_attributes": {
+                                                        "default_plcolor": {
+                                                            "expression": ""
+                                                        }
+                                                    },
+                                                    "saved_object_attributes": {
+                                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
+                                                    },
                                                     "text": "p ratio"
                                                 }
                                             },
@@ -11742,8 +12222,8 @@
                                                         "fileversion": 1,
                                                         "appversion": {
                                                             "major": 9,
-                                                            "minor": 1,
-                                                            "revision": 4,
+                                                            "minor": 2,
+                                                            "revision": 0,
                                                             "architecture": "x64",
                                                             "modernui": 1
                                                         },
@@ -11870,8 +12350,8 @@
                                                                         "fileversion": 1,
                                                                         "appversion": {
                                                                             "major": 9,
-                                                                            "minor": 1,
-                                                                            "revision": 4,
+                                                                            "minor": 2,
+                                                                            "revision": 0,
                                                                             "architecture": "x64",
                                                                             "modernui": 1
                                                                         },
@@ -12137,9 +12617,24 @@
                                                                                     "source": [ "obj-9", 0 ]
                                                                                 }
                                                                             }
-                                                                        ]
+                                                                        ],
+                                                                        "saved_attribute_attributes": {
+                                                                            "default_plcolor": {
+                                                                                "expression": ""
+                                                                            }
+                                                                        }
                                                                     },
                                                                     "patching_rect": [ 539.0, 248.0, 44.0, 22.0 ],
+                                                                    "saved_attribute_attributes": {
+                                                                        "default_plcolor": {
+                                                                            "expression": ""
+                                                                        }
+                                                                    },
+                                                                    "saved_object_attributes": {
+                                                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
+                                                                    },
                                                                     "text": "p pitch"
                                                                 }
                                                             },
@@ -12176,8 +12671,8 @@
                                                                         "fileversion": 1,
                                                                         "appversion": {
                                                                             "major": 9,
-                                                                            "minor": 1,
-                                                                            "revision": 4,
+                                                                            "minor": 2,
+                                                                            "revision": 0,
                                                                             "architecture": "x64",
                                                                             "modernui": 1
                                                                         },
@@ -12443,9 +12938,24 @@
                                                                                     "source": [ "obj-9", 0 ]
                                                                                 }
                                                                             }
-                                                                        ]
+                                                                        ],
+                                                                        "saved_attribute_attributes": {
+                                                                            "default_plcolor": {
+                                                                                "expression": ""
+                                                                            }
+                                                                        }
                                                                     },
                                                                     "patching_rect": [ 131.0, 248.0, 54.0, 22.0 ],
+                                                                    "saved_attribute_attributes": {
+                                                                        "default_plcolor": {
+                                                                            "expression": ""
+                                                                        }
+                                                                    },
+                                                                    "saved_object_attributes": {
+                                                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
+                                                                    },
                                                                     "text": "p octave"
                                                                 }
                                                             },
@@ -12471,8 +12981,8 @@
                                                                         "fileversion": 1,
                                                                         "appversion": {
                                                                             "major": 9,
-                                                                            "minor": 1,
-                                                                            "revision": 4,
+                                                                            "minor": 2,
+                                                                            "revision": 0,
                                                                             "architecture": "x64",
                                                                             "modernui": 1
                                                                         },
@@ -12738,9 +13248,24 @@
                                                                                     "source": [ "obj-9", 0 ]
                                                                                 }
                                                                             }
-                                                                        ]
+                                                                        ],
+                                                                        "saved_attribute_attributes": {
+                                                                            "default_plcolor": {
+                                                                                "expression": ""
+                                                                            }
+                                                                        }
                                                                     },
                                                                     "patching_rect": [ 310.0, 248.0, 78.0, 22.0 ],
+                                                                    "saved_attribute_attributes": {
+                                                                        "default_plcolor": {
+                                                                            "expression": ""
+                                                                        }
+                                                                    },
+                                                                    "saved_object_attributes": {
+                                                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
+                                                                    },
                                                                     "text": "p pitch_class"
                                                                 }
                                                             },
@@ -12811,8 +13336,8 @@
                                                                         "fileversion": 1,
                                                                         "appversion": {
                                                                             "major": 9,
-                                                                            "minor": 1,
-                                                                            "revision": 4,
+                                                                            "minor": 2,
+                                                                            "revision": 0,
                                                                             "architecture": "x64",
                                                                             "modernui": 1
                                                                         },
@@ -12830,8 +13355,8 @@
                                                                                         "fileversion": 1,
                                                                                         "appversion": {
                                                                                             "major": 9,
-                                                                                            "minor": 1,
-                                                                                            "revision": 4,
+                                                                                            "minor": 2,
+                                                                                            "revision": 0,
                                                                                             "architecture": "x64",
                                                                                             "modernui": 1
                                                                                         },
@@ -13098,9 +13623,24 @@
                                                                                                     "source": [ "obj-9", 0 ]
                                                                                                 }
                                                                                             }
-                                                                                        ]
+                                                                                        ],
+                                                                                        "saved_attribute_attributes": {
+                                                                                            "default_plcolor": {
+                                                                                                "expression": ""
+                                                                                            }
+                                                                                        }
                                                                                     },
                                                                                     "patching_rect": [ 45.0, 302.0, 91.0, 22.0 ],
+                                                                                    "saved_attribute_attributes": {
+                                                                                        "default_plcolor": {
+                                                                                            "expression": ""
+                                                                                        }
+                                                                                    },
+                                                                                    "saved_object_attributes": {
+                                                                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
+                                                                                    },
                                                                                     "text": "p contour_pitch"
                                                                                 }
                                                                             },
@@ -13137,8 +13677,8 @@
                                                                                         "fileversion": 1,
                                                                                         "appversion": {
                                                                                             "major": 9,
-                                                                                            "minor": 1,
-                                                                                            "revision": 4,
+                                                                                            "minor": 2,
+                                                                                            "revision": 0,
                                                                                             "architecture": "x64",
                                                                                             "modernui": 1
                                                                                         },
@@ -13405,9 +13945,24 @@
                                                                                                     "source": [ "obj-9", 0 ]
                                                                                                 }
                                                                                             }
-                                                                                        ]
+                                                                                        ],
+                                                                                        "saved_attribute_attributes": {
+                                                                                            "default_plcolor": {
+                                                                                                "expression": ""
+                                                                                            }
+                                                                                        }
                                                                                     },
                                                                                     "patching_rect": [ 591.0, 389.0, 57.0, 22.0 ],
+                                                                                    "saved_attribute_attributes": {
+                                                                                        "default_plcolor": {
+                                                                                            "expression": ""
+                                                                                        }
+                                                                                    },
+                                                                                    "saved_object_attributes": {
+                                                                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
+                                                                                    },
                                                                                     "text": "p interval"
                                                                                 }
                                                                             },
@@ -13560,15 +14115,22 @@
                                                                                 }
                                                                             }
                                                                         ],
-                                                                        "patchlinecolor": [ 0.874509803921569, 0.811764705882353, 0.694117647058824, 1.0 ],
-                                                                        "bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                                                        "editing_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ]
+                                                                        "saved_attribute_attributes": {
+                                                                            "default_plcolor": {
+                                                                                "expression": ""
+                                                                            }
+                                                                        }
                                                                     },
                                                                     "patching_rect": [ 50.0, 444.0, 63.0, 22.0 ],
+                                                                    "saved_attribute_attributes": {
+                                                                        "default_plcolor": {
+                                                                            "expression": ""
+                                                                        }
+                                                                    },
                                                                     "saved_object_attributes": {
-                                                                        "editing_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                                                        "locked_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                                                        "patchlinecolor": [ 0.874509803921569, 0.811764705882353, 0.694117647058824, 1.0 ]
+                                                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
                                                                     },
                                                                     "text": "p intervals"
                                                                 }
@@ -13776,9 +14338,24 @@
                                                                     "source": [ "obj-8", 0 ]
                                                                 }
                                                             }
-                                                        ]
+                                                        ],
+                                                        "saved_attribute_attributes": {
+                                                            "default_plcolor": {
+                                                                "expression": ""
+                                                            }
+                                                        }
                                                     },
                                                     "patching_rect": [ 405.0, 238.0, 44.0, 22.0 ],
+                                                    "saved_attribute_attributes": {
+                                                        "default_plcolor": {
+                                                            "expression": ""
+                                                        }
+                                                    },
+                                                    "saved_object_attributes": {
+                                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
+                                                    },
                                                     "text": "p pitch"
                                                 }
                                             },
@@ -13793,8 +14370,8 @@
                                                         "fileversion": 1,
                                                         "appversion": {
                                                             "major": 9,
-                                                            "minor": 1,
-                                                            "revision": 4,
+                                                            "minor": 2,
+                                                            "revision": 0,
                                                             "architecture": "x64",
                                                             "modernui": 1
                                                         },
@@ -13884,8 +14461,8 @@
                                                                         "fileversion": 1,
                                                                         "appversion": {
                                                                             "major": 9,
-                                                                            "minor": 1,
-                                                                            "revision": 4,
+                                                                            "minor": 2,
+                                                                            "revision": 0,
                                                                             "architecture": "x64",
                                                                             "modernui": 1
                                                                         },
@@ -14152,9 +14729,24 @@
                                                                                     "source": [ "obj-9", 0 ]
                                                                                 }
                                                                             }
-                                                                        ]
+                                                                        ],
+                                                                        "saved_attribute_attributes": {
+                                                                            "default_plcolor": {
+                                                                                "expression": ""
+                                                                            }
+                                                                        }
                                                                     },
                                                                     "patching_rect": [ 50.0, 293.0, 113.0, 22.0 ],
+                                                                    "saved_attribute_attributes": {
+                                                                        "default_plcolor": {
+                                                                            "expression": ""
+                                                                        }
+                                                                    },
+                                                                    "saved_object_attributes": {
+                                                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
+                                                                    },
                                                                     "text": "p contour_loudness"
                                                                 }
                                                             },
@@ -14191,8 +14783,8 @@
                                                                         "fileversion": 1,
                                                                         "appversion": {
                                                                             "major": 9,
-                                                                            "minor": 1,
-                                                                            "revision": 4,
+                                                                            "minor": 2,
+                                                                            "revision": 0,
                                                                             "architecture": "x64",
                                                                             "modernui": 1
                                                                         },
@@ -14459,9 +15051,24 @@
                                                                                     "source": [ "obj-9", 0 ]
                                                                                 }
                                                                             }
-                                                                        ]
+                                                                        ],
+                                                                        "saved_attribute_attributes": {
+                                                                            "default_plcolor": {
+                                                                                "expression": ""
+                                                                            }
+                                                                        }
                                                                     },
                                                                     "patching_rect": [ 286.0, 293.0, 67.0, 22.0 ],
+                                                                    "saved_attribute_attributes": {
+                                                                        "default_plcolor": {
+                                                                            "expression": ""
+                                                                        }
+                                                                    },
+                                                                    "saved_object_attributes": {
+                                                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
+                                                                    },
                                                                     "text": "p loudness"
                                                                 }
                                                             },
@@ -14521,8 +15128,8 @@
                                                                         "fileversion": 1,
                                                                         "appversion": {
                                                                             "major": 9,
-                                                                            "minor": 1,
-                                                                            "revision": 4,
+                                                                            "minor": 2,
+                                                                            "revision": 0,
                                                                             "architecture": "x64",
                                                                             "modernui": 1
                                                                         },
@@ -14747,15 +15354,22 @@
                                                                                 }
                                                                             }
                                                                         ],
-                                                                        "patchlinecolor": [ 0.874509803921569, 0.811764705882353, 0.694117647058824, 1.0 ],
-                                                                        "bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                                                        "editing_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ]
+                                                                        "saved_attribute_attributes": {
+                                                                            "default_plcolor": {
+                                                                                "expression": ""
+                                                                            }
+                                                                        }
                                                                     },
                                                                     "patching_rect": [ 50.0, 340.0, 58.0, 22.0 ],
+                                                                    "saved_attribute_attributes": {
+                                                                        "default_plcolor": {
+                                                                            "expression": ""
+                                                                        }
+                                                                    },
                                                                     "saved_object_attributes": {
-                                                                        "editing_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                                                        "locked_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                                                        "patchlinecolor": [ 0.874509803921569, 0.811764705882353, 0.694117647058824, 1.0 ]
+                                                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
                                                                     },
                                                                     "text": "p change"
                                                                 }
@@ -14871,9 +15485,24 @@
                                                                     "source": [ "obj-9", 2 ]
                                                                 }
                                                             }
-                                                        ]
+                                                        ],
+                                                        "saved_attribute_attributes": {
+                                                            "default_plcolor": {
+                                                                "expression": ""
+                                                            }
+                                                        }
                                                     },
                                                     "patching_rect": [ 456.0, 238.0, 67.0, 22.0 ],
+                                                    "saved_attribute_attributes": {
+                                                        "default_plcolor": {
+                                                            "expression": ""
+                                                        }
+                                                    },
+                                                    "saved_object_attributes": {
+                                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
+                                                    },
                                                     "text": "p loudness"
                                                 }
                                             },
@@ -14888,8 +15517,8 @@
                                                         "fileversion": 1,
                                                         "appversion": {
                                                             "major": 9,
-                                                            "minor": 1,
-                                                            "revision": 4,
+                                                            "minor": 2,
+                                                            "revision": 0,
                                                             "architecture": "x64",
                                                             "modernui": 1
                                                         },
@@ -15263,9 +15892,24 @@
                                                                     "source": [ "obj-9", 1 ]
                                                                 }
                                                             }
-                                                        ]
+                                                        ],
+                                                        "saved_attribute_attributes": {
+                                                            "default_plcolor": {
+                                                                "expression": ""
+                                                            }
+                                                        }
                                                     },
                                                     "patching_rect": [ 532.0, 238.0, 55.0, 22.0 ],
+                                                    "saved_attribute_attributes": {
+                                                        "default_plcolor": {
+                                                            "expression": ""
+                                                        }
+                                                    },
+                                                    "saved_object_attributes": {
+                                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
+                                                    },
                                                     "text": "p phrase"
                                                 }
                                             },
@@ -15280,8 +15924,8 @@
                                                         "fileversion": 1,
                                                         "appversion": {
                                                             "major": 9,
-                                                            "minor": 1,
-                                                            "revision": 4,
+                                                            "minor": 2,
+                                                            "revision": 0,
                                                             "architecture": "x64",
                                                             "modernui": 1
                                                         },
@@ -15493,9 +16137,24 @@
                                                                     "source": [ "obj-7", 0 ]
                                                                 }
                                                             }
-                                                        ]
+                                                        ],
+                                                        "saved_attribute_attributes": {
+                                                            "default_plcolor": {
+                                                                "expression": ""
+                                                            }
+                                                        }
                                                     },
                                                     "patching_rect": [ 620.0, 208.0, 62.0, 22.0 ],
+                                                    "saved_attribute_attributes": {
+                                                        "default_plcolor": {
+                                                            "expression": ""
+                                                        }
+                                                    },
+                                                    "saved_object_attributes": {
+                                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
+                                                    },
                                                     "text": "p init_size"
                                                 }
                                             },
@@ -15719,9 +16378,24 @@
                                                     "source": [ "obj-74", 0 ]
                                                 }
                                             }
-                                        ]
+                                        ],
+                                        "saved_attribute_attributes": {
+                                            "default_plcolor": {
+                                                "expression": ""
+                                            }
+                                        }
                                     },
                                     "patching_rect": [ 30.0, 184.0, 112.0, 22.0 ],
+                                    "saved_attribute_attributes": {
+                                        "default_plcolor": {
+                                            "expression": ""
+                                        }
+                                    },
+                                    "saved_object_attributes": {
+                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
+                                    },
                                     "text": "p calculate_change"
                                 }
                             },
@@ -15736,8 +16410,8 @@
                                         "fileversion": 1,
                                         "appversion": {
                                             "major": 9,
-                                            "minor": 1,
-                                            "revision": 4,
+                                            "minor": 2,
+                                            "revision": 0,
                                             "architecture": "x64",
                                             "modernui": 1
                                         },
@@ -15827,15 +16501,22 @@
                                                 }
                                             }
                                         ],
-                                        "patchlinecolor": [ 0.874509803921569, 0.811764705882353, 0.694117647058824, 1.0 ],
-                                        "bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                        "editing_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ]
+                                        "saved_attribute_attributes": {
+                                            "default_plcolor": {
+                                                "expression": ""
+                                            }
+                                        }
                                     },
                                     "patching_rect": [ 30.0, 109.0, 283.0, 22.0 ],
+                                    "saved_attribute_attributes": {
+                                        "default_plcolor": {
+                                            "expression": ""
+                                        }
+                                    },
                                     "saved_object_attributes": {
-                                        "editing_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                        "locked_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                        "patchlinecolor": [ 0.874509803921569, 0.811764705882353, 0.694117647058824, 1.0 ]
+                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
                                     },
                                     "text": "p only_generate_when_beat_clock_moves_forward"
                                 }
@@ -15861,7 +16542,21 @@
                             },
                             {
                                 "patchline": {
-                                    "destination": [ "obj-32", 0 ],
+                                    "destination": [ "obj-13", 0 ],
+                                    "source": [ "obj-18", 0 ]
+                                }
+                            },
+                            {
+                                "patchline": {
+                                    "destination": [ "obj-18", 0 ],
+                                    "order": 0,
+                                    "source": [ "obj-21", 0 ]
+                                }
+                            },
+                            {
+                                "patchline": {
+                                    "destination": [ "obj-7", 0 ],
+                                    "order": 1,
                                     "source": [ "obj-21", 0 ]
                                 }
                             },
@@ -15975,10 +16670,31 @@
                                     "destination": [ "obj-15", 0 ],
                                     "source": [ "obj-42", 0 ]
                                 }
+                            },
+                            {
+                                "patchline": {
+                                    "destination": [ "obj-32", 0 ],
+                                    "source": [ "obj-7", 0 ]
+                                }
                             }
-                        ]
+                        ],
+                        "saved_attribute_attributes": {
+                            "default_plcolor": {
+                                "expression": ""
+                            }
+                        }
                     },
                     "patching_rect": [ 42.0, 92.0, 149.0, 22.0 ],
+                    "saved_attribute_attributes": {
+                        "default_plcolor": {
+                            "expression": ""
+                        }
+                    },
+                    "saved_object_attributes": {
+                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
+                    },
                     "text": "p 1_probabilistic_selection"
                 }
             },
@@ -15989,6 +16705,10 @@
                     "numinlets": 1,
                     "numoutlets": 0,
                     "patching_rect": [ 138.0, 247.0, 35.0, 22.0 ],
+                    "saved_object_attributes": {
+                        "attr_comment": "",
+                        "c": ""
+                    },
                     "text": "out 2"
                 }
             },
@@ -15999,10 +16719,6 @@
                     "numinlets": 1,
                     "numoutlets": 0,
                     "patching_rect": [ 42.0, 247.0, 35.0, 22.0 ],
-                    "saved_object_attributes": {
-                        "attr_comment": "",
-                        "c": ""
-                    },
                     "text": "out 1"
                 }
             },
@@ -16017,24 +16733,14 @@
                         "fileversion": 1,
                         "appversion": {
                             "major": 9,
-                            "minor": 1,
-                            "revision": 4,
+                            "minor": 2,
+                            "revision": 0,
                             "architecture": "x64",
                             "modernui": 1
                         },
                         "classnamespace": "box",
                         "rect": [ 1039.0, 492.0, 439.0, 456.0 ],
                         "boxes": [
-                            {
-                                "box": {
-                                    "id": "obj-9",
-                                    "maxclass": "newobj",
-                                    "numinlets": 1,
-                                    "numoutlets": 0,
-                                    "patching_rect": [ 119.0, 395.0, 115.0, 22.0 ],
-                                    "text": "debug busy_voice 3"
-                                }
-                            },
                             {
                                 "box": {
                                     "id": "obj-6",
@@ -16246,14 +16952,6 @@
                             {
                                 "patchline": {
                                     "destination": [ "obj-5", 0 ],
-                                    "order": 1,
-                                    "source": [ "obj-35", 0 ]
-                                }
-                            },
-                            {
-                                "patchline": {
-                                    "destination": [ "obj-9", 0 ],
-                                    "order": 0,
                                     "source": [ "obj-35", 0 ]
                                 }
                             },
@@ -16288,15 +16986,22 @@
                                 }
                             }
                         ],
-                        "patchlinecolor": [ 0.874509803921569, 0.811764705882353, 0.694117647058824, 1.0 ],
-                        "bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                        "editing_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ]
+                        "saved_attribute_attributes": {
+                            "default_plcolor": {
+                                "expression": ""
+                            }
+                        }
                     },
                     "patching_rect": [ 172.0, 57.0, 47.0, 22.0 ],
+                    "saved_attribute_attributes": {
+                        "default_plcolor": {
+                            "expression": ""
+                        }
+                    },
                     "saved_object_attributes": {
-                        "editing_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                        "locked_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                        "patchlinecolor": [ 0.874509803921569, 0.811764705882353, 0.694117647058824, 1.0 ]
+                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
                     },
                     "text": "p voice"
                 }
@@ -16309,10 +17014,6 @@
                     "numoutlets": 1,
                     "outlettype": [ "" ],
                     "patching_rect": [ 172.0, 27.0, 28.0, 22.0 ],
-                    "saved_object_attributes": {
-                        "attr_comment": "",
-                        "c": ""
-                    },
                     "text": "in 1"
                 }
             },
@@ -16327,15 +17028,280 @@
                         "fileversion": 1,
                         "appversion": {
                             "major": 9,
-                            "minor": 1,
-                            "revision": 4,
+                            "minor": 2,
+                            "revision": 0,
                             "architecture": "x64",
                             "modernui": 1
                         },
                         "classnamespace": "box",
                         "rect": [ 728.0, 339.0, 750.0, 609.0 ],
-                        "visible": 1,
                         "boxes": [
+                            {
+                                "box": {
+                                    "id": "obj-8",
+                                    "maxclass": "newobj",
+                                    "numinlets": 1,
+                                    "numoutlets": 1,
+                                    "outlettype": [ "" ],
+                                    "patcher": {
+                                        "fileversion": 1,
+                                        "appversion": {
+                                            "major": 9,
+                                            "minor": 2,
+                                            "revision": 0,
+                                            "architecture": "x64",
+                                            "modernui": 1
+                                        },
+                                        "classnamespace": "box",
+                                        "rect": [ 478.0, 193.0, 395.0, 636.0 ],
+                                        "boxes": [
+                                            {
+                                                "box": {
+                                                    "id": "obj-16",
+                                                    "maxclass": "newobj",
+                                                    "numinlets": 2,
+                                                    "numoutlets": 1,
+                                                    "outlettype": [ "" ],
+                                                    "patching_rect": [ 83.0, 388.0, 125.0, 22.0 ],
+                                                    "text": "array.expr $i1 *0 + $i2"
+                                                }
+                                            },
+                                            {
+                                                "box": {
+                                                    "id": "obj-12",
+                                                    "linecount": 2,
+                                                    "maxclass": "comment",
+                                                    "numinlets": 1,
+                                                    "numoutlets": 0,
+                                                    "patching_rect": [ 118.0, 288.0, 239.0, 33.0 ],
+                                                    "text": "0: pass throug all channels (as recorded)\n> 0: set fixed channel for this voice"
+                                                }
+                                            },
+                                            {
+                                                "box": {
+                                                    "id": "obj-10",
+                                                    "maxclass": "newobj",
+                                                    "numinlets": 2,
+                                                    "numoutlets": 1,
+                                                    "outlettype": [ "int" ],
+                                                    "patching_rect": [ 50.0, 308.0, 29.5, 22.0 ],
+                                                    "text": "+ 1"
+                                                }
+                                            },
+                                            {
+                                                "box": {
+                                                    "id": "obj-9",
+                                                    "maxclass": "newobj",
+                                                    "numinlets": 2,
+                                                    "numoutlets": 1,
+                                                    "outlettype": [ "int" ],
+                                                    "patching_rect": [ 50.0, 276.0, 29.5, 22.0 ],
+                                                    "text": "> 0"
+                                                }
+                                            },
+                                            {
+                                                "box": {
+                                                    "id": "obj-8",
+                                                    "maxclass": "newobj",
+                                                    "numinlets": 2,
+                                                    "numoutlets": 2,
+                                                    "outlettype": [ "", "" ],
+                                                    "patching_rect": [ 50.0, 343.0, 52.0, 22.0 ],
+                                                    "text": "gate 2 1"
+                                                }
+                                            },
+                                            {
+                                                "box": {
+                                                    "id": "obj-4",
+                                                    "maxclass": "newobj",
+                                                    "numinlets": 2,
+                                                    "numoutlets": 1,
+                                                    "outlettype": [ "int" ],
+                                                    "patching_rect": [ 289.0, 233.0, 29.5, 22.0 ],
+                                                    "text": "- 1"
+                                                }
+                                            },
+                                            {
+                                                "box": {
+                                                    "id": "obj-3",
+                                                    "maxclass": "newobj",
+                                                    "numinlets": 2,
+                                                    "numoutlets": 2,
+                                                    "outlettype": [ "", "" ],
+                                                    "patching_rect": [ 189.0, 187.0, 81.0, 22.0 ],
+                                                    "text": "route channel"
+                                                }
+                                            },
+                                            {
+                                                "box": {
+                                                    "id": "obj-2",
+                                                    "maxclass": "newobj",
+                                                    "numinlets": 0,
+                                                    "numoutlets": 1,
+                                                    "outlettype": [ "" ],
+                                                    "patching_rect": [ 189.0, 147.0, 78.0, 22.0 ],
+                                                    "text": "r ---transform"
+                                                }
+                                            },
+                                            {
+                                                "box": {
+                                                    "id": "obj-1",
+                                                    "maxclass": "newobj",
+                                                    "numinlets": 2,
+                                                    "numoutlets": 2,
+                                                    "outlettype": [ "", "" ],
+                                                    "patching_rect": [ 189.0, 233.0, 36.0, 22.0 ],
+                                                    "text": "route"
+                                                }
+                                            },
+                                            {
+                                                "box": {
+                                                    "id": "obj-17",
+                                                    "maxclass": "newobj",
+                                                    "numinlets": 1,
+                                                    "numoutlets": 1,
+                                                    "outlettype": [ "bang" ],
+                                                    "patching_rect": [ 289.0, 147.0, 58.0, 22.0 ],
+                                                    "text": "loadbang"
+                                                }
+                                            },
+                                            {
+                                                "box": {
+                                                    "id": "obj-21",
+                                                    "maxclass": "newobj",
+                                                    "numinlets": 1,
+                                                    "numoutlets": 3,
+                                                    "outlettype": [ "int", "int", "int" ],
+                                                    "patching_rect": [ 289.0, 187.0, 56.0, 22.0 ],
+                                                    "text": "thispoly~"
+                                                }
+                                            },
+                                            {
+                                                "box": {
+                                                    "comment": "",
+                                                    "id": "obj-5",
+                                                    "index": 1,
+                                                    "maxclass": "inlet",
+                                                    "numinlets": 0,
+                                                    "numoutlets": 1,
+                                                    "outlettype": [ "" ],
+                                                    "patching_rect": [ 83.0, 148.0, 30.0, 30.0 ]
+                                                }
+                                            },
+                                            {
+                                                "box": {
+                                                    "comment": "",
+                                                    "id": "obj-31",
+                                                    "index": 1,
+                                                    "maxclass": "outlet",
+                                                    "numinlets": 1,
+                                                    "numoutlets": 0,
+                                                    "patching_rect": [ 50.0, 485.0, 30.0, 30.0 ]
+                                                }
+                                            }
+                                        ],
+                                        "lines": [
+                                            {
+                                                "patchline": {
+                                                    "destination": [ "obj-16", 1 ],
+                                                    "order": 0,
+                                                    "source": [ "obj-1", 0 ]
+                                                }
+                                            },
+                                            {
+                                                "patchline": {
+                                                    "destination": [ "obj-9", 0 ],
+                                                    "order": 1,
+                                                    "source": [ "obj-1", 0 ]
+                                                }
+                                            },
+                                            {
+                                                "patchline": {
+                                                    "destination": [ "obj-8", 0 ],
+                                                    "source": [ "obj-10", 0 ]
+                                                }
+                                            },
+                                            {
+                                                "patchline": {
+                                                    "destination": [ "obj-31", 0 ],
+                                                    "source": [ "obj-16", 0 ]
+                                                }
+                                            },
+                                            {
+                                                "patchline": {
+                                                    "destination": [ "obj-21", 0 ],
+                                                    "source": [ "obj-17", 0 ]
+                                                }
+                                            },
+                                            {
+                                                "patchline": {
+                                                    "destination": [ "obj-3", 0 ],
+                                                    "source": [ "obj-2", 0 ]
+                                                }
+                                            },
+                                            {
+                                                "patchline": {
+                                                    "destination": [ "obj-4", 0 ],
+                                                    "source": [ "obj-21", 0 ]
+                                                }
+                                            },
+                                            {
+                                                "patchline": {
+                                                    "destination": [ "obj-1", 0 ],
+                                                    "source": [ "obj-3", 0 ]
+                                                }
+                                            },
+                                            {
+                                                "patchline": {
+                                                    "destination": [ "obj-1", 1 ],
+                                                    "source": [ "obj-4", 0 ]
+                                                }
+                                            },
+                                            {
+                                                "patchline": {
+                                                    "destination": [ "obj-8", 1 ],
+                                                    "source": [ "obj-5", 0 ]
+                                                }
+                                            },
+                                            {
+                                                "patchline": {
+                                                    "destination": [ "obj-16", 0 ],
+                                                    "source": [ "obj-8", 1 ]
+                                                }
+                                            },
+                                            {
+                                                "patchline": {
+                                                    "destination": [ "obj-31", 0 ],
+                                                    "source": [ "obj-8", 0 ]
+                                                }
+                                            },
+                                            {
+                                                "patchline": {
+                                                    "destination": [ "obj-10", 0 ],
+                                                    "source": [ "obj-9", 0 ]
+                                                }
+                                            }
+                                        ],
+                                        "saved_attribute_attributes": {
+                                            "default_plcolor": {
+                                                "expression": ""
+                                            }
+                                        }
+                                    },
+                                    "patching_rect": [ 510.5, 223.0, 55.0, 22.0 ],
+                                    "saved_attribute_attributes": {
+                                        "default_plcolor": {
+                                            "expression": ""
+                                        }
+                                    },
+                                    "saved_object_attributes": {
+                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
+                                    },
+                                    "text": "p spread"
+                                }
+                            },
                             {
                                 "box": {
                                     "id": "obj-12",
@@ -16358,8 +17324,8 @@
                                         "fileversion": 1,
                                         "appversion": {
                                             "major": 9,
-                                            "minor": 1,
-                                            "revision": 4,
+                                            "minor": 2,
+                                            "revision": 0,
                                             "architecture": "x64",
                                             "modernui": 1
                                         },
@@ -17615,9 +18581,24 @@
                                                     "source": [ "obj-91", 1 ]
                                                 }
                                             }
-                                        ]
+                                        ],
+                                        "saved_attribute_attributes": {
+                                            "default_plcolor": {
+                                                "expression": ""
+                                            }
+                                        }
                                     },
-                                    "patching_rect": [ 510.5, 223.0, 111.0, 22.0 ],
+                                    "patching_rect": [ 510.5, 258.0, 111.0, 22.0 ],
+                                    "saved_attribute_attributes": {
+                                        "default_plcolor": {
+                                            "expression": ""
+                                        }
+                                    },
+                                    "saved_object_attributes": {
+                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
+                                    },
                                     "text": "p channel_autopan"
                                 }
                             },
@@ -17660,7 +18641,7 @@
                                     "maxclass": "comment",
                                     "numinlets": 1,
                                     "numoutlets": 0,
-                                    "patching_rect": [ 581.0, 154.0, 150.0, 47.0 ],
+                                    "patching_rect": [ 581.0, 162.0, 150.0, 47.0 ],
                                     "text": "get parameters of scheduled generated event"
                                 }
                             },
@@ -17675,8 +18656,8 @@
                                         "fileversion": 1,
                                         "appversion": {
                                             "major": 9,
-                                            "minor": 1,
-                                            "revision": 4,
+                                            "minor": 2,
+                                            "revision": 0,
                                             "architecture": "x64",
                                             "modernui": 1
                                         },
@@ -17892,9 +18873,24 @@
                                                     "source": [ "obj-8", 0 ]
                                                 }
                                             }
-                                        ]
+                                        ],
+                                        "saved_attribute_attributes": {
+                                            "default_plcolor": {
+                                                "expression": ""
+                                            }
+                                        }
                                     },
                                     "patching_rect": [ 150.0, 402.0, 380.0, 22.0 ],
+                                    "saved_attribute_attributes": {
+                                        "default_plcolor": {
+                                            "expression": ""
+                                        }
+                                    },
+                                    "saved_object_attributes": {
+                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
+                                    },
                                     "text": "p flush"
                                 }
                             },
@@ -17909,8 +18905,8 @@
                                         "fileversion": 1,
                                         "appversion": {
                                             "major": 9,
-                                            "minor": 1,
-                                            "revision": 4,
+                                            "minor": 2,
+                                            "revision": 0,
                                             "architecture": "x64",
                                             "modernui": 1
                                         },
@@ -18021,9 +19017,24 @@
                                                     "source": [ "obj-92", 0 ]
                                                 }
                                             }
-                                        ]
+                                        ],
+                                        "saved_attribute_attributes": {
+                                            "default_plcolor": {
+                                                "expression": ""
+                                            }
+                                        }
                                     },
                                     "patching_rect": [ 510.5, 162.0, 61.0, 22.0 ],
+                                    "saved_attribute_attributes": {
+                                        "default_plcolor": {
+                                            "expression": ""
+                                        }
+                                    },
+                                    "saved_object_attributes": {
+                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
+                                    },
                                     "text": "p channel"
                                 }
                             },
@@ -18038,8 +19049,8 @@
                                         "fileversion": 1,
                                         "appversion": {
                                             "major": 9,
-                                            "minor": 1,
-                                            "revision": 4,
+                                            "minor": 2,
+                                            "revision": 0,
                                             "architecture": "x64",
                                             "modernui": 1
                                         },
@@ -18222,9 +19233,24 @@
                                                     "source": [ "obj-7", 0 ]
                                                 }
                                             }
-                                        ]
+                                        ],
+                                        "saved_attribute_attributes": {
+                                            "default_plcolor": {
+                                                "expression": ""
+                                            }
+                                        }
                                     },
                                     "patching_rect": [ 240.25, 223.0, 55.0, 22.0 ],
+                                    "saved_attribute_attributes": {
+                                        "default_plcolor": {
+                                            "expression": ""
+                                        }
+                                    },
+                                    "saved_object_attributes": {
+                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
+                                    },
                                     "text": "p spread"
                                 }
                             },
@@ -18239,8 +19265,8 @@
                                         "fileversion": 1,
                                         "appversion": {
                                             "major": 9,
-                                            "minor": 1,
-                                            "revision": 4,
+                                            "minor": 2,
+                                            "revision": 0,
                                             "architecture": "x64",
                                             "modernui": 1
                                         },
@@ -18351,9 +19377,24 @@
                                                     "source": [ "obj-92", 0 ]
                                                 }
                                             }
-                                        ]
+                                        ],
+                                        "saved_attribute_attributes": {
+                                            "default_plcolor": {
+                                                "expression": ""
+                                            }
+                                        }
                                     },
                                     "patching_rect": [ 463.75, 162.0, 42.0, 22.0 ],
+                                    "saved_attribute_attributes": {
+                                        "default_plcolor": {
+                                            "expression": ""
+                                        }
+                                    },
+                                    "saved_object_attributes": {
+                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
+                                    },
                                     "text": "p ratio"
                                 }
                             },
@@ -18368,8 +19409,8 @@
                                         "fileversion": 1,
                                         "appversion": {
                                             "major": 9,
-                                            "minor": 1,
-                                            "revision": 4,
+                                            "minor": 2,
+                                            "revision": 0,
                                             "architecture": "x64",
                                             "modernui": 1
                                         },
@@ -18480,9 +19521,24 @@
                                                     "source": [ "obj-89", 0 ]
                                                 }
                                             }
-                                        ]
+                                        ],
+                                        "saved_attribute_attributes": {
+                                            "default_plcolor": {
+                                                "expression": ""
+                                            }
+                                        }
                                     },
                                     "patching_rect": [ 421.75, 162.0, 36.0, 22.0 ],
+                                    "saved_attribute_attributes": {
+                                        "default_plcolor": {
+                                            "expression": ""
+                                        }
+                                    },
+                                    "saved_object_attributes": {
+                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
+                                    },
                                     "text": "p dur"
                                 }
                             },
@@ -18497,8 +19553,8 @@
                                         "fileversion": 1,
                                         "appversion": {
                                             "major": 9,
-                                            "minor": 1,
-                                            "revision": 4,
+                                            "minor": 2,
+                                            "revision": 0,
                                             "architecture": "x64",
                                             "modernui": 1
                                         },
@@ -18609,9 +19665,24 @@
                                                     "source": [ "obj-85", 0 ]
                                                 }
                                             }
-                                        ]
+                                        ],
+                                        "saved_attribute_attributes": {
+                                            "default_plcolor": {
+                                                "expression": ""
+                                            }
+                                        }
                                     },
                                     "patching_rect": [ 346.0, 162.0, 59.0, 22.0 ],
+                                    "saved_attribute_attributes": {
+                                        "default_plcolor": {
+                                            "expression": ""
+                                        }
+                                    },
+                                    "saved_object_attributes": {
+                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
+                                    },
                                     "text": "p velocity"
                                 }
                             },
@@ -18626,8 +19697,8 @@
                                         "fileversion": 1,
                                         "appversion": {
                                             "major": 9,
-                                            "minor": 1,
-                                            "revision": 4,
+                                            "minor": 2,
+                                            "revision": 0,
                                             "architecture": "x64",
                                             "modernui": 1
                                         },
@@ -18738,9 +19809,24 @@
                                                     "source": [ "obj-85", 0 ]
                                                 }
                                             }
-                                        ]
+                                        ],
+                                        "saved_attribute_attributes": {
+                                            "default_plcolor": {
+                                                "expression": ""
+                                            }
+                                        }
                                     },
                                     "patching_rect": [ 286.25, 162.0, 57.0, 22.0 ],
+                                    "saved_attribute_attributes": {
+                                        "default_plcolor": {
+                                            "expression": ""
+                                        }
+                                    },
+                                    "saved_object_attributes": {
+                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
+                                    },
                                     "text": "p interval"
                                 }
                             },
@@ -18755,8 +19841,8 @@
                                         "fileversion": 1,
                                         "appversion": {
                                             "major": 9,
-                                            "minor": 1,
-                                            "revision": 4,
+                                            "minor": 2,
+                                            "revision": 0,
                                             "architecture": "x64",
                                             "modernui": 1
                                         },
@@ -18867,9 +19953,24 @@
                                                     "source": [ "obj-81", 0 ]
                                                 }
                                             }
-                                        ]
+                                        ],
+                                        "saved_attribute_attributes": {
+                                            "default_plcolor": {
+                                                "expression": ""
+                                            }
+                                        }
                                     },
                                     "patching_rect": [ 139.0, 162.0, 38.0, 22.0 ],
+                                    "saved_attribute_attributes": {
+                                        "default_plcolor": {
+                                            "expression": ""
+                                        }
+                                    },
+                                    "saved_object_attributes": {
+                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
+                                    },
                                     "text": "p dev"
                                 }
                             },
@@ -18884,8 +19985,8 @@
                                         "fileversion": 1,
                                         "appversion": {
                                             "major": 9,
-                                            "minor": 1,
-                                            "revision": 4,
+                                            "minor": 2,
+                                            "revision": 0,
                                             "architecture": "x64",
                                             "modernui": 1
                                         },
@@ -18996,9 +20097,24 @@
                                                     "source": [ "obj-74", 0 ]
                                                 }
                                             }
-                                        ]
+                                        ],
+                                        "saved_attribute_attributes": {
+                                            "default_plcolor": {
+                                                "expression": ""
+                                            }
+                                        }
                                     },
                                     "patching_rect": [ 240.25, 162.0, 44.0, 22.0 ],
+                                    "saved_attribute_attributes": {
+                                        "default_plcolor": {
+                                            "expression": ""
+                                        }
+                                    },
+                                    "saved_object_attributes": {
+                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
+                                    },
                                     "text": "p pitch"
                                 }
                             },
@@ -19035,8 +20151,8 @@
                                         "fileversion": 1,
                                         "appversion": {
                                             "major": 9,
-                                            "minor": 1,
-                                            "revision": 4,
+                                            "minor": 2,
+                                            "revision": 0,
                                             "architecture": "x64",
                                             "modernui": 1
                                         },
@@ -19200,15 +20316,22 @@
                                                 }
                                             }
                                         ],
-                                        "patchlinecolor": [ 0.874509803921569, 0.811764705882353, 0.694117647058824, 1.0 ],
-                                        "bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                        "editing_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ]
+                                        "saved_attribute_attributes": {
+                                            "default_plcolor": {
+                                                "expression": ""
+                                            }
+                                        }
                                     },
                                     "patching_rect": [ 34.5, 92.0, 45.0, 22.0 ],
+                                    "saved_attribute_attributes": {
+                                        "default_plcolor": {
+                                            "expression": ""
+                                        }
+                                    },
                                     "saved_object_attributes": {
-                                        "editing_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                        "locked_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                        "patchlinecolor": [ 0.874509803921569, 0.811764705882353, 0.694117647058824, 1.0 ]
+                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
                                     },
                                     "text": "p mute"
                                 }
@@ -19224,8 +20347,8 @@
                                         "fileversion": 1,
                                         "appversion": {
                                             "major": 9,
-                                            "minor": 1,
-                                            "revision": 4,
+                                            "minor": 2,
+                                            "revision": 0,
                                             "architecture": "x64",
                                             "modernui": 1
                                         },
@@ -19465,15 +20588,22 @@
                                                 }
                                             }
                                         ],
-                                        "patchlinecolor": [ 0.874509803921569, 0.811764705882353, 0.694117647058824, 1.0 ],
-                                        "bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                        "editing_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ]
+                                        "saved_attribute_attributes": {
+                                            "default_plcolor": {
+                                                "expression": ""
+                                            }
+                                        }
                                     },
                                     "patching_rect": [ 139.0, 223.0, 67.0, 22.0 ],
+                                    "saved_attribute_attributes": {
+                                        "default_plcolor": {
+                                            "expression": ""
+                                        }
+                                    },
                                     "saved_object_attributes": {
-                                        "editing_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                        "locked_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                        "patchlinecolor": [ 0.874509803921569, 0.811764705882353, 0.694117647058824, 1.0 ]
+                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
                                     },
                                     "text": "p deviation"
                                 }
@@ -19489,8 +20619,8 @@
                                         "fileversion": 1,
                                         "appversion": {
                                             "major": 9,
-                                            "minor": 1,
-                                            "revision": 4,
+                                            "minor": 2,
+                                            "revision": 0,
                                             "architecture": "x64",
                                             "modernui": 1
                                         },
@@ -19871,15 +21001,22 @@
                                                 }
                                             }
                                         ],
-                                        "patchlinecolor": [ 0.874509803921569, 0.811764705882353, 0.694117647058824, 1.0 ],
-                                        "bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                        "editing_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ]
+                                        "saved_attribute_attributes": {
+                                            "default_plcolor": {
+                                                "expression": ""
+                                            }
+                                        }
                                     },
                                     "patching_rect": [ 420.75, 223.0, 62.0, 22.0 ],
+                                    "saved_attribute_attributes": {
+                                        "default_plcolor": {
+                                            "expression": ""
+                                        }
+                                    },
                                     "saved_object_attributes": {
-                                        "editing_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                        "locked_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                        "patchlinecolor": [ 0.874509803921569, 0.811764705882353, 0.694117647058824, 1.0 ]
+                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
                                     },
                                     "text": "p duration"
                                 }
@@ -19895,8 +21032,8 @@
                                         "fileversion": 1,
                                         "appversion": {
                                             "major": 9,
-                                            "minor": 1,
-                                            "revision": 4,
+                                            "minor": 2,
+                                            "revision": 0,
                                             "architecture": "x64",
                                             "modernui": 1
                                         },
@@ -20026,8 +21163,8 @@
                                                         "fileversion": 1,
                                                         "appversion": {
                                                             "major": 9,
-                                                            "minor": 1,
-                                                            "revision": 4,
+                                                            "minor": 2,
+                                                            "revision": 0,
                                                             "architecture": "x64",
                                                             "modernui": 1
                                                         },
@@ -20398,15 +21535,22 @@
                                                                 }
                                                             }
                                                         ],
-                                                        "patchlinecolor": [ 0.874509803921569, 0.811764705882353, 0.694117647058824, 1.0 ],
-                                                        "bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                                        "editing_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ]
+                                                        "saved_attribute_attributes": {
+                                                            "default_plcolor": {
+                                                                "expression": ""
+                                                            }
+                                                        }
                                                     },
                                                     "patching_rect": [ 248.0, 312.0, 79.0, 22.0 ],
+                                                    "saved_attribute_attributes": {
+                                                        "default_plcolor": {
+                                                            "expression": ""
+                                                        }
+                                                    },
                                                     "saved_object_attributes": {
-                                                        "editing_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                                        "locked_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                                        "patchlinecolor": [ 0.874509803921569, 0.811764705882353, 0.694117647058824, 1.0 ]
+                                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
                                                     },
                                                     "text": "p max_range"
                                                 }
@@ -20653,15 +21797,22 @@
                                                 }
                                             }
                                         ],
-                                        "patchlinecolor": [ 0.874509803921569, 0.811764705882353, 0.694117647058824, 1.0 ],
-                                        "bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                        "editing_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ]
+                                        "saved_attribute_attributes": {
+                                            "default_plcolor": {
+                                                "expression": ""
+                                            }
+                                        }
                                     },
                                     "patching_rect": [ 240.25, 258.0, 89.0, 22.0 ],
+                                    "saved_attribute_attributes": {
+                                        "default_plcolor": {
+                                            "expression": ""
+                                        }
+                                    },
                                     "saved_object_attributes": {
-                                        "editing_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                        "locked_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                        "patchlinecolor": [ 0.874509803921569, 0.811764705882353, 0.694117647058824, 1.0 ]
+                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
                                     },
                                     "text": "p relative_pitch"
                                 }
@@ -20699,8 +21850,8 @@
                                         "fileversion": 1,
                                         "appversion": {
                                             "major": 9,
-                                            "minor": 1,
-                                            "revision": 4,
+                                            "minor": 2,
+                                            "revision": 0,
                                             "architecture": "x64",
                                             "modernui": 1
                                         },
@@ -21338,15 +22489,22 @@
                                                 }
                                             }
                                         ],
-                                        "patchlinecolor": [ 0.874509803921569, 0.811764705882353, 0.694117647058824, 1.0 ],
-                                        "bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                        "editing_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ]
+                                        "saved_attribute_attributes": {
+                                            "default_plcolor": {
+                                                "expression": ""
+                                            }
+                                        }
                                     },
                                     "patching_rect": [ 150.0, 316.0, 379.0, 22.0 ],
+                                    "saved_attribute_attributes": {
+                                        "default_plcolor": {
+                                            "expression": ""
+                                        }
+                                    },
                                     "saved_object_attributes": {
-                                        "editing_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                        "locked_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                        "patchlinecolor": [ 0.874509803921569, 0.811764705882353, 0.694117647058824, 1.0 ]
+                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
                                     },
                                     "text": "p unpack_each_chord_note"
                                 }
@@ -21510,7 +22668,7 @@
                             },
                             {
                                 "patchline": {
-                                    "destination": [ "obj-5", 0 ],
+                                    "destination": [ "obj-8", 0 ],
                                     "source": [ "obj-3", 0 ]
                                 }
                             },
@@ -21555,6 +22713,12 @@
                                 "patchline": {
                                     "destination": [ "obj-33", 0 ],
                                     "source": [ "obj-76", 0 ]
+                                }
+                            },
+                            {
+                                "patchline": {
+                                    "destination": [ "obj-5", 0 ],
+                                    "source": [ "obj-8", 0 ]
                                 }
                             },
                             {
@@ -21612,15 +22776,22 @@
                                 }
                             }
                         ],
-                        "patchlinecolor": [ 0.874509803921569, 0.811764705882353, 0.694117647058824, 1.0 ],
-                        "bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                        "editing_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ]
+                        "saved_attribute_attributes": {
+                            "default_plcolor": {
+                                "expression": ""
+                            }
+                        }
                     },
                     "patching_rect": [ 42.0, 165.0, 115.0, 22.0 ],
+                    "saved_attribute_attributes": {
+                        "default_plcolor": {
+                            "expression": ""
+                        }
+                    },
                     "saved_object_attributes": {
-                        "editing_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                        "locked_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                        "patchlinecolor": [ 0.874509803921569, 0.811764705882353, 0.694117647058824, 1.0 ]
+                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
                     },
                     "text": "p 3_playback_event"
                 }
@@ -21636,210 +22807,353 @@
                         "fileversion": 1,
                         "appversion": {
                             "major": 9,
-                            "minor": 1,
-                            "revision": 4,
+                            "minor": 2,
+                            "revision": 0,
                             "architecture": "x64",
                             "modernui": 1
                         },
                         "classnamespace": "box",
-                        "rect": [ 386.0, 285.0, 697.0, 663.0 ],
+                        "rect": [ 49.0, 670.0, 938.0, 829.0 ],
                         "boxes": [
                             {
                                 "box": {
-                                    "id": "obj-3",
+                                    "id": "obj-16",
+                                    "maxclass": "newobj",
+                                    "numinlets": 2,
+                                    "numoutlets": 1,
+                                    "outlettype": [ "float" ],
+                                    "patching_rect": [ 274.0, 548.0, 29.5, 22.0 ],
+                                    "text": "f"
+                                }
+                            },
+                            {
+                                "box": {
+                                    "id": "obj-15",
+                                    "maxclass": "newobj",
+                                    "numinlets": 2,
+                                    "numoutlets": 1,
+                                    "outlettype": [ "int" ],
+                                    "patching_rect": [ 274.0, 580.0, 33.0, 22.0 ],
+                                    "text": "% 1."
+                                }
+                            },
+                            {
+                                "box": {
+                                    "id": "obj-150",
+                                    "linecount": 17,
+                                    "maxclass": "comment",
+                                    "numinlets": 1,
+                                    "numoutlets": 0,
+                                    "patching_rect": [ 502.0, 319.0, 154.0, 234.0 ],
+                                    "text": "handle local beat clock offset when switching sync states, on start of new voice.\nsync = off: offset = 0 as clock starts from 0 on voice start\n\nsync = internal: offset is rounded beatclock of any other active voice internally in the plug\n\nsync = daw: same as internal, but with additional update on daw transport start/stopp."
+                                }
+                            },
+                            {
+                                "box": {
+                                    "id": "obj-148",
+                                    "maxclass": "newobj",
+                                    "numinlets": 2,
+                                    "numoutlets": 1,
+                                    "outlettype": [ "" ],
+                                    "patching_rect": [ 294.0, 57.0, 32.0, 22.0 ],
+                                    "text": "gate"
+                                }
+                            },
+                            {
+                                "box": {
+                                    "id": "obj-121",
+                                    "maxclass": "newobj",
+                                    "numinlets": 2,
+                                    "numoutlets": 1,
+                                    "outlettype": [ "" ],
+                                    "patching_rect": [ 347.0, 128.0, 32.0, 22.0 ],
+                                    "text": "gate"
+                                }
+                            },
+                            {
+                                "box": {
+                                    "id": "obj-120",
+                                    "maxclass": "newobj",
+                                    "numinlets": 1,
+                                    "numoutlets": 2,
+                                    "outlettype": [ "bang", "bang" ],
+                                    "patching_rect": [ 347.0, 155.0, 52.0, 22.0 ],
+                                    "text": "togedge"
+                                }
+                            },
+                            {
+                                "box": {
+                                    "id": "obj-112",
+                                    "maxclass": "newobj",
+                                    "numinlets": 1,
+                                    "numoutlets": 9,
+                                    "outlettype": [ "int", "int", "int", "float", "list", "float", "float", "int", "int" ],
+                                    "patching_rect": [ 361.0, 100.0, 103.0, 22.0 ],
+                                    "text": "plugsync~"
+                                }
+                            },
+                            {
+                                "box": {
+                                    "id": "obj-109",
                                     "maxclass": "newobj",
                                     "numinlets": 2,
                                     "numoutlets": 2,
                                     "outlettype": [ "bang", "" ],
-                                    "patching_rect": [ 450.5, 163.0, 34.0, 22.0 ],
+                                    "patching_rect": [ 108.0, 155.0, 34.0, 22.0 ],
                                     "text": "sel 0"
                                 }
                             },
                             {
                                 "box": {
-                                    "id": "obj-14",
-                                    "maxclass": "newobj",
-                                    "numinlets": 2,
-                                    "numoutlets": 2,
-                                    "outlettype": [ "bang", "" ],
-                                    "patching_rect": [ 496.0, 168.0, 34.0, 22.0 ],
-                                    "text": "sel 1"
-                                }
-                            },
-                            {
-                                "box": {
-                                    "id": "obj-13",
-                                    "maxclass": "newobj",
-                                    "numinlets": 2,
-                                    "numoutlets": 1,
-                                    "outlettype": [ "int" ],
-                                    "patching_rect": [ 496.0, 271.0, 29.5, 22.0 ],
-                                    "text": "i"
-                                }
-                            },
-                            {
-                                "box": {
-                                    "id": "obj-23",
-                                    "maxclass": "newobj",
-                                    "numinlets": 1,
-                                    "numoutlets": 2,
-                                    "outlettype": [ "int", "bang" ],
-                                    "patching_rect": [ 419.0, 163.0, 29.5, 22.0 ],
-                                    "text": "t i b"
-                                }
-                            },
-                            {
-                                "box": {
-                                    "id": "obj-21",
-                                    "maxclass": "newobj",
-                                    "numinlets": 2,
-                                    "numoutlets": 1,
-                                    "outlettype": [ "" ],
-                                    "patching_rect": [ 341.0, 203.0, 32.0, 22.0 ],
-                                    "text": "gate"
-                                }
-                            },
-                            {
-                                "box": {
-                                    "id": "obj-57",
+                                    "id": "obj-110",
                                     "maxclass": "newobj",
                                     "numinlets": 0,
                                     "numoutlets": 1,
                                     "outlettype": [ "" ],
-                                    "patching_rect": [ 419.0, 99.0, 125.0, 22.0 ],
+                                    "patching_rect": [ 108.0, 126.0, 125.0, 22.0 ],
                                     "text": "r #0-generator"
                                 }
                             },
                             {
                                 "box": {
-                                    "id": "obj-56",
-                                    "maxclass": "newobj",
-                                    "numinlets": 0,
+                                    "id": "obj-102",
+                                    "maxclass": "toggle",
+                                    "numinlets": 1,
                                     "numoutlets": 1,
-                                    "outlettype": [ "" ],
-                                    "patching_rect": [ 170.0, 203.0, 54.0, 22.0 ],
-                                    "text": "r ---clear"
+                                    "outlettype": [ "int" ],
+                                    "parameter_enable": 0,
+                                    "patching_rect": [ 508.0, 160.0, 24.0, 24.0 ]
                                 }
                             },
                             {
                                 "box": {
-                                    "id": "obj-55",
-                                    "maxclass": "message",
-                                    "numinlets": 2,
-                                    "numoutlets": 1,
-                                    "outlettype": [ "" ],
-                                    "patching_rect": [ 170.0, 246.0, 29.5, 22.0 ],
-                                    "text": "0"
-                                }
-                            },
-                            {
-                                "box": {
-                                    "id": "obj-34",
+                                    "id": "obj-103",
                                     "maxclass": "newobj",
                                     "numinlets": 2,
                                     "numoutlets": 1,
                                     "outlettype": [ "int" ],
-                                    "patching_rect": [ 275.0, 271.0, 29.5, 22.0 ],
-                                    "text": "i"
-                                }
-                            },
-                            {
-                                "box": {
-                                    "id": "obj-35",
-                                    "maxclass": "newobj",
-                                    "numinlets": 2,
-                                    "numoutlets": 1,
-                                    "outlettype": [ "int" ],
-                                    "patching_rect": [ 275.0, 306.0, 29.5, 22.0 ],
-                                    "text": "- 0"
-                                }
-                            },
-                            {
-                                "box": {
-                                    "id": "obj-33",
-                                    "maxclass": "newobj",
-                                    "numinlets": 3,
-                                    "numoutlets": 3,
-                                    "outlettype": [ "bang", "bang", "" ],
-                                    "patching_rect": [ 238.0, 203.0, 94.0, 22.0 ],
-                                    "text": "sel 0 1"
-                                }
-                            },
-                            {
-                                "box": {
-                                    "id": "obj-32",
-                                    "maxclass": "newobj",
-                                    "numinlets": 2,
-                                    "numoutlets": 1,
-                                    "outlettype": [ "int" ],
-                                    "patching_rect": [ 237.0, 271.0, 29.5, 22.0 ],
-                                    "text": "i"
-                                }
-                            },
-                            {
-                                "box": {
-                                    "id": "obj-31",
-                                    "maxclass": "newobj",
-                                    "numinlets": 2,
-                                    "numoutlets": 1,
-                                    "outlettype": [ "int" ],
-                                    "patching_rect": [ 237.0, 306.0, 29.5, 22.0 ],
-                                    "text": "- 0"
-                                }
-                            },
-                            {
-                                "box": {
-                                    "id": "obj-30",
-                                    "maxclass": "newobj",
-                                    "numinlets": 2,
-                                    "numoutlets": 1,
-                                    "outlettype": [ "float" ],
-                                    "patching_rect": [ 147.0, 290.0, 42.0, 22.0 ],
-                                    "text": "+ 0."
-                                }
-                            },
-                            {
-                                "box": {
-                                    "id": "obj-183",
-                                    "maxclass": "newobj",
-                                    "numinlets": 2,
-                                    "numoutlets": 1,
-                                    "outlettype": [ "int" ],
-                                    "patching_rect": [ 147.0, 88.0, 29.5, 22.0 ],
+                                    "patching_rect": [ 508.0, 190.0, 29.5, 22.0 ],
                                     "text": "+ 1"
                                 }
                             },
                             {
                                 "box": {
-                                    "id": "obj-175",
+                                    "id": "obj-104",
                                     "maxclass": "newobj",
                                     "numinlets": 0,
                                     "numoutlets": 1,
                                     "outlettype": [ "" ],
-                                    "patching_rect": [ 147.0, 36.0, 52.0, 22.0 ],
+                                    "patching_rect": [ 508.0, 128.0, 52.0, 22.0 ],
                                     "text": "r ---sync"
                                 }
                             },
                             {
                                 "box": {
-                                    "id": "obj-12",
+                                    "id": "obj-106",
+                                    "maxclass": "newobj",
+                                    "numinlets": 2,
+                                    "numoutlets": 2,
+                                    "outlettype": [ "", "" ],
+                                    "patching_rect": [ 508.0, 225.0, 52.0, 22.0 ],
+                                    "text": "gate 2 1"
+                                }
+                            },
+                            {
+                                "box": {
+                                    "id": "obj-101",
+                                    "maxclass": "newobj",
+                                    "numinlets": 2,
+                                    "numoutlets": 2,
+                                    "outlettype": [ "bang", "" ],
+                                    "patching_rect": [ 541.0, 190.0, 34.0, 22.0 ],
+                                    "text": "sel 1"
+                                }
+                            },
+                            {
+                                "box": {
+                                    "id": "obj-100",
+                                    "maxclass": "newobj",
+                                    "numinlets": 0,
+                                    "numoutlets": 1,
+                                    "outlettype": [ "" ],
+                                    "patching_rect": [ 541.0, 158.0, 125.0, 22.0 ],
+                                    "text": "r #0-generator"
+                                }
+                            },
+                            {
+                                "box": {
+                                    "id": "obj-93",
+                                    "maxclass": "button",
+                                    "numinlets": 1,
+                                    "numoutlets": 1,
+                                    "outlettype": [ "bang" ],
+                                    "parameter_enable": 0,
+                                    "patching_rect": [ 297.0, 272.0, 24.0, 24.0 ]
+                                }
+                            },
+                            {
+                                "box": {
+                                    "id": "obj-91",
+                                    "maxclass": "button",
+                                    "numinlets": 1,
+                                    "numoutlets": 1,
+                                    "outlettype": [ "bang" ],
+                                    "parameter_enable": 0,
+                                    "patching_rect": [ 158.0, 272.0, 24.0, 24.0 ]
+                                }
+                            },
+                            {
+                                "box": {
+                                    "id": "obj-87",
+                                    "maxclass": "newobj",
+                                    "numinlets": 2,
+                                    "numoutlets": 1,
+                                    "outlettype": [ "float" ],
+                                    "patching_rect": [ 85.0, 393.0, 42.0, 22.0 ],
+                                    "text": "+ 0."
+                                }
+                            },
+                            {
+                                "box": {
+                                    "id": "obj-80",
+                                    "maxclass": "newobj",
+                                    "numinlets": 0,
+                                    "numoutlets": 1,
+                                    "outlettype": [ "" ],
+                                    "patching_rect": [ 197.0, 196.0, 52.0, 22.0 ],
+                                    "text": "r ---sync"
+                                }
+                            },
+                            {
+                                "box": {
+                                    "id": "obj-75",
+                                    "maxclass": "newobj",
+                                    "numinlets": 2,
+                                    "numoutlets": 1,
+                                    "outlettype": [ "int" ],
+                                    "patching_rect": [ 297.0, 319.0, 29.5, 22.0 ],
+                                    "text": "i"
+                                }
+                            },
+                            {
+                                "box": {
+                                    "id": "obj-76",
+                                    "maxclass": "newobj",
+                                    "numinlets": 2,
+                                    "numoutlets": 1,
+                                    "outlettype": [ "int" ],
+                                    "patching_rect": [ 297.0, 354.0, 29.5, 22.0 ],
+                                    "text": "- 0"
+                                }
+                            },
+                            {
+                                "box": {
+                                    "id": "obj-77",
+                                    "maxclass": "newobj",
+                                    "numinlets": 3,
+                                    "numoutlets": 3,
+                                    "outlettype": [ "bang", "bang", "" ],
+                                    "patching_rect": [ 197.0, 225.0, 94.0, 22.0 ],
+                                    "text": "sel 0 1"
+                                }
+                            },
+                            {
+                                "box": {
+                                    "id": "obj-78",
+                                    "maxclass": "newobj",
+                                    "numinlets": 2,
+                                    "numoutlets": 1,
+                                    "outlettype": [ "int" ],
+                                    "patching_rect": [ 158.0, 319.0, 29.5, 22.0 ],
+                                    "text": "i"
+                                }
+                            },
+                            {
+                                "box": {
+                                    "id": "obj-79",
+                                    "maxclass": "newobj",
+                                    "numinlets": 2,
+                                    "numoutlets": 1,
+                                    "outlettype": [ "int" ],
+                                    "patching_rect": [ 158.0, 354.0, 29.5, 22.0 ],
+                                    "text": "- 0"
+                                }
+                            },
+                            {
+                                "box": {
+                                    "id": "obj-71",
+                                    "maxclass": "newobj",
+                                    "numinlets": 0,
+                                    "numoutlets": 1,
+                                    "outlettype": [ "" ],
+                                    "patching_rect": [ 143.5, 155.0, 54.0, 22.0 ],
+                                    "text": "r ---clear"
+                                }
+                            },
+                            {
+                                "box": {
+                                    "id": "obj-72",
+                                    "maxclass": "message",
+                                    "numinlets": 2,
+                                    "numoutlets": 1,
+                                    "outlettype": [ "" ],
+                                    "patching_rect": [ 108.0, 196.0, 29.5, 22.0 ],
+                                    "text": "0"
+                                }
+                            },
+                            {
+                                "box": {
+                                    "id": "obj-69",
+                                    "maxclass": "newobj",
+                                    "numinlets": 0,
+                                    "numoutlets": 1,
+                                    "outlettype": [ "" ],
+                                    "patching_rect": [ 307.0, 16.0, 79.0, 22.0 ],
+                                    "text": "r ---beatclock"
+                                }
+                            },
+                            {
+                                "box": {
+                                    "id": "obj-51",
+                                    "maxclass": "newobj",
+                                    "numinlets": 2,
+                                    "numoutlets": 1,
+                                    "outlettype": [ "int" ],
+                                    "patching_rect": [ 85.0, 57.0, 29.5, 22.0 ],
+                                    "text": "+ 1"
+                                }
+                            },
+                            {
+                                "box": {
+                                    "id": "obj-52",
+                                    "maxclass": "newobj",
+                                    "numinlets": 0,
+                                    "numoutlets": 1,
+                                    "outlettype": [ "" ],
+                                    "patching_rect": [ 85.0, 16.0, 52.0, 22.0 ],
+                                    "text": "r ---sync"
+                                }
+                            },
+                            {
+                                "box": {
+                                    "id": "obj-50",
                                     "maxclass": "newobj",
                                     "numinlets": 3,
                                     "numoutlets": 1,
                                     "outlettype": [ "" ],
-                                    "patching_rect": [ 147.0, 147.0, 185.0, 22.0 ],
+                                    "patching_rect": [ 85.0, 98.0, 185.0, 22.0 ],
                                     "text": "switch 2 1"
                                 }
                             },
                             {
                                 "box": {
-                                    "id": "obj-46",
+                                    "id": "obj-18",
                                     "maxclass": "newobj",
-                                    "numinlets": 2,
+                                    "numinlets": 0,
                                     "numoutlets": 1,
                                     "outlettype": [ "" ],
-                                    "patching_rect": [ 377.0, 88.0, 32.0, 22.0 ],
-                                    "text": "gate"
+                                    "patching_rect": [ 347.0, 72.0, 81.0, 22.0 ],
+                                    "text": "r ---daw_sync"
                                 }
                             },
                             {
@@ -21853,13 +23167,13 @@
                                         "fileversion": 1,
                                         "appversion": {
                                             "major": 9,
-                                            "minor": 1,
-                                            "revision": 4,
+                                            "minor": 2,
+                                            "revision": 0,
                                             "architecture": "x64",
                                             "modernui": 1
                                         },
                                         "classnamespace": "box",
-                                        "rect": [ 72.0, 422.0, 714.0, 511.0 ],
+                                        "rect": [ 94.0, 453.0, 714.0, 511.0 ],
                                         "boxes": [
                                             {
                                                 "box": {
@@ -21894,8 +23208,8 @@
                                                         "fileversion": 1,
                                                         "appversion": {
                                                             "major": 9,
-                                                            "minor": 1,
-                                                            "revision": 4,
+                                                            "minor": 2,
+                                                            "revision": 0,
                                                             "architecture": "x64",
                                                             "modernui": 1
                                                         },
@@ -22172,15 +23486,22 @@
                                                                 }
                                                             }
                                                         ],
-                                                        "patchlinecolor": [ 0.874509803921569, 0.811764705882353, 0.694117647058824, 1.0 ],
-                                                        "bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                                        "editing_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ]
+                                                        "saved_attribute_attributes": {
+                                                            "default_plcolor": {
+                                                                "expression": ""
+                                                            }
+                                                        }
                                                     },
                                                     "patching_rect": [ 50.0, 325.0, 117.0, 22.0 ],
+                                                    "saved_attribute_attributes": {
+                                                        "default_plcolor": {
+                                                            "expression": ""
+                                                        }
+                                                    },
                                                     "saved_object_attributes": {
-                                                        "editing_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                                        "locked_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                                        "patchlinecolor": [ 0.874509803921569, 0.811764705882353, 0.694117647058824, 1.0 ]
+                                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
                                                     },
                                                     "text": "p tempo_modulation"
                                                 }
@@ -22338,8 +23659,8 @@
                                                         "fileversion": 1,
                                                         "appversion": {
                                                             "major": 9,
-                                                            "minor": 1,
-                                                            "revision": 4,
+                                                            "minor": 2,
+                                                            "revision": 0,
                                                             "architecture": "x64",
                                                             "modernui": 1
                                                         },
@@ -22548,7 +23869,6 @@
                                                             {
                                                                 "box": {
                                                                     "id": "obj-5",
-                                                                    "linecount": 2,
                                                                     "maxclass": "newobj",
                                                                     "numinlets": 2,
                                                                     "numoutlets": 3,
@@ -22626,8 +23946,8 @@
                                                                         "fileversion": 1,
                                                                         "appversion": {
                                                                             "major": 9,
-                                                                            "minor": 1,
-                                                                            "revision": 4,
+                                                                            "minor": 2,
+                                                                            "revision": 0,
                                                                             "architecture": "x64",
                                                                             "modernui": 1
                                                                         },
@@ -22886,15 +24206,22 @@
                                                                                 }
                                                                             }
                                                                         ],
-                                                                        "patchlinecolor": [ 0.874509803921569, 0.811764705882353, 0.694117647058824, 1.0 ],
-                                                                        "bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                                                        "editing_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ]
+                                                                        "saved_attribute_attributes": {
+                                                                            "default_plcolor": {
+                                                                                "expression": ""
+                                                                            }
+                                                                        }
                                                                     },
                                                                     "patching_rect": [ 289.0, 482.0, 79.0, 22.0 ],
+                                                                    "saved_attribute_attributes": {
+                                                                        "default_plcolor": {
+                                                                            "expression": ""
+                                                                        }
+                                                                    },
                                                                     "saved_object_attributes": {
-                                                                        "editing_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                                                        "locked_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                                                        "patchlinecolor": [ 0.874509803921569, 0.811764705882353, 0.694117647058824, 1.0 ]
+                                                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
                                                                     },
                                                                     "text": "p smooth"
                                                                 }
@@ -23142,15 +24469,22 @@
                                                                 }
                                                             }
                                                         ],
-                                                        "patchlinecolor": [ 0.874509803921569, 0.811764705882353, 0.694117647058824, 1.0 ],
-                                                        "bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                                        "editing_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ]
+                                                        "saved_attribute_attributes": {
+                                                            "default_plcolor": {
+                                                                "expression": ""
+                                                            }
+                                                        }
                                                     },
                                                     "patching_rect": [ 264.0, 128.0, 52.0, 22.0 ],
+                                                    "saved_attribute_attributes": {
+                                                        "default_plcolor": {
+                                                            "expression": ""
+                                                        }
+                                                    },
                                                     "saved_object_attributes": {
-                                                        "editing_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                                        "locked_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                                        "patchlinecolor": [ 0.874509803921569, 0.811764705882353, 0.694117647058824, 1.0 ]
+                                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
                                                     },
                                                     "text": "p tempo"
                                                 }
@@ -23366,28 +24700,24 @@
                                                 }
                                             }
                                         ],
-                                        "patchlinecolor": [ 0.874509803921569, 0.811764705882353, 0.694117647058824, 1.0 ],
-                                        "bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                        "editing_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ]
+                                        "saved_attribute_attributes": {
+                                            "default_plcolor": {
+                                                "expression": ""
+                                            }
+                                        }
                                     },
-                                    "patching_rect": [ 248.0, 88.0, 122.0, 22.0 ],
+                                    "patching_rect": [ 168.0, 57.0, 92.0, 22.0 ],
+                                    "saved_attribute_attributes": {
+                                        "default_plcolor": {
+                                            "expression": ""
+                                        }
+                                    },
                                     "saved_object_attributes": {
-                                        "editing_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                        "locked_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                        "patchlinecolor": [ 0.874509803921569, 0.811764705882353, 0.694117647058824, 1.0 ]
+                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
                                     },
-                                    "text": "p internal_beat_clock"
-                                }
-                            },
-                            {
-                                "box": {
-                                    "id": "obj-10",
-                                    "maxclass": "newobj",
-                                    "numinlets": 0,
-                                    "numoutlets": 1,
-                                    "outlettype": [ "" ],
-                                    "patching_rect": [ 506.5, 36.0, 79.0, 22.0 ],
-                                    "text": "r ---beatclock"
+                                    "text": "p internal_clock"
                                 }
                             },
                             {
@@ -23396,7 +24726,7 @@
                                     "maxclass": "newobj",
                                     "numinlets": 1,
                                     "numoutlets": 0,
-                                    "patching_rect": [ 210.0, 344.0, 126.0, 22.0 ],
+                                    "patching_rect": [ 141.0, 436.0, 126.0, 22.0 ],
                                     "text": "s #0-beatclock"
                                 }
                             },
@@ -23407,7 +24737,7 @@
                                     "numinlets": 0,
                                     "numoutlets": 1,
                                     "outlettype": [ "" ],
-                                    "patching_rect": [ 248.0, 36.0, 125.0, 22.0 ],
+                                    "patching_rect": [ 168.0, 16.0, 125.0, 22.0 ],
                                     "text": "r #0-generator"
                                 }
                             },
@@ -23419,7 +24749,7 @@
                                     "maxclass": "outlet",
                                     "numinlets": 1,
                                     "numoutlets": 0,
-                                    "patching_rect": [ 147.0, 623.0, 30.0, 30.0 ]
+                                    "patching_rect": [ 85.0, 715.0, 30.0, 30.0 ]
                                 }
                             },
                             {
@@ -23431,7 +24761,7 @@
                                     "numinlets": 0,
                                     "numoutlets": 1,
                                     "outlettype": [ "" ],
-                                    "patching_rect": [ 187.0, 438.0, 30.0, 30.0 ]
+                                    "patching_rect": [ 125.0, 530.0, 30.0, 30.0 ]
                                 }
                             },
                             {
@@ -23441,7 +24771,7 @@
                                     "numinlets": 1,
                                     "numoutlets": 2,
                                     "outlettype": [ "int", "int" ],
-                                    "patching_rect": [ 187.0, 490.0, 38.0, 22.0 ],
+                                    "patching_rect": [ 125.0, 582.0, 38.0, 22.0 ],
                                     "text": "t i i"
                                 }
                             },
@@ -23449,21 +24779,66 @@
                                 "box": {
                                     "id": "obj-242",
                                     "maxclass": "newobj",
-                                    "numinlets": 1,
+                                    "numinlets": 2,
                                     "numoutlets": 1,
                                     "outlettype": [ "float" ],
                                     "patcher": {
                                         "fileversion": 1,
                                         "appversion": {
                                             "major": 9,
-                                            "minor": 1,
-                                            "revision": 4,
+                                            "minor": 2,
+                                            "revision": 0,
                                             "architecture": "x64",
                                             "modernui": 1
                                         },
                                         "classnamespace": "box",
-                                        "rect": [ 596.0, 221.0, 882.0, 727.0 ],
+                                        "rect": [ 1510.0, 704.0, 882.0, 727.0 ],
                                         "boxes": [
+                                            {
+                                                "box": {
+                                                    "id": "obj-27",
+                                                    "linecount": 2,
+                                                    "maxclass": "comment",
+                                                    "numinlets": 1,
+                                                    "numoutlets": 0,
+                                                    "patching_rect": [ 519.0, 454.5, 150.0, 33.0 ],
+                                                    "text": "daw sync start stop: reset beat position"
+                                                }
+                                            },
+                                            {
+                                                "box": {
+                                                    "id": "obj-22",
+                                                    "maxclass": "newobj",
+                                                    "numinlets": 2,
+                                                    "numoutlets": 1,
+                                                    "outlettype": [ "float" ],
+                                                    "patching_rect": [ 475.5, 460.0, 29.5, 22.0 ],
+                                                    "text": "f"
+                                                }
+                                            },
+                                            {
+                                                "box": {
+                                                    "comment": "",
+                                                    "id": "obj-18",
+                                                    "index": 2,
+                                                    "maxclass": "inlet",
+                                                    "numinlets": 0,
+                                                    "numoutlets": 1,
+                                                    "outlettype": [ "bang" ],
+                                                    "patching_rect": [ 547.0, 44.0, 30.0, 30.0 ]
+                                                }
+                                            },
+                                            {
+                                                "box": {
+                                                    "id": "obj-33",
+                                                    "maxclass": "newobj",
+                                                    "numinlets": 0,
+                                                    "numoutlets": 1,
+                                                    "outlettype": [ "" ],
+                                                    "patching_rect": [ 442.0, 286.0, 147.0, 22.0 ],
+                                                    "text": "r #0-add_to_beatclock"
+                                                }
+                                            },
                                             {
                                                 "box": {
                                                     "id": "obj-51",
@@ -23475,8 +24850,8 @@
                                                         "fileversion": 1,
                                                         "appversion": {
                                                             "major": 9,
-                                                            "minor": 1,
-                                                            "revision": 4,
+                                                            "minor": 2,
+                                                            "revision": 0,
                                                             "architecture": "x64",
                                                             "modernui": 1
                                                         },
@@ -23571,9 +24946,24 @@
                                                                     "source": [ "obj-45", 0 ]
                                                                 }
                                                             }
-                                                        ]
+                                                        ],
+                                                        "saved_attribute_attributes": {
+                                                            "default_plcolor": {
+                                                                "expression": ""
+                                                            }
+                                                        }
                                                     },
                                                     "patching_rect": [ 91.0, 308.0, 51.0, 22.0 ],
+                                                    "saved_attribute_attributes": {
+                                                        "default_plcolor": {
+                                                            "expression": ""
+                                                        }
+                                                    },
+                                                    "saved_object_attributes": {
+                                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
+                                                    },
                                                     "text": "p empty"
                                                 }
                                             },
@@ -23605,7 +24995,7 @@
                                                     "maxclass": "newobj",
                                                     "numinlets": 1,
                                                     "numoutlets": 0,
-                                                    "patching_rect": [ 348.0, 467.0, 133.0, 22.0 ],
+                                                    "patching_rect": [ 348.0, 538.0, 133.0, 22.0 ],
                                                     "text": "s #0-next_position"
                                                 }
                                             },
@@ -23631,8 +25021,8 @@
                                                         "fileversion": 1,
                                                         "appversion": {
                                                             "major": 9,
-                                                            "minor": 1,
-                                                            "revision": 4,
+                                                            "minor": 2,
+                                                            "revision": 0,
                                                             "architecture": "x64",
                                                             "modernui": 1
                                                         },
@@ -23814,9 +25204,24 @@
                                                                     "source": [ "obj-8", 0 ]
                                                                 }
                                                             }
-                                                        ]
+                                                        ],
+                                                        "saved_attribute_attributes": {
+                                                            "default_plcolor": {
+                                                                "expression": ""
+                                                            }
+                                                        }
                                                     },
                                                     "patching_rect": [ 315.0, 240.0, 55.0, 22.0 ],
+                                                    "saved_attribute_attributes": {
+                                                        "default_plcolor": {
+                                                            "expression": ""
+                                                        }
+                                                    },
+                                                    "saved_object_attributes": {
+                                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
+                                                    },
                                                     "text": "p spread"
                                                 }
                                             },
@@ -24022,19 +25427,8 @@
                                                     "maxclass": "comment",
                                                     "numinlets": 1,
                                                     "numoutlets": 0,
-                                                    "patching_rect": [ 447.0, 297.0, 123.0, 33.0 ],
+                                                    "patching_rect": [ 450.0, 314.0, 123.0, 33.0 ],
                                                     "text": "add pauses after last event in sequence"
-                                                }
-                                            },
-                                            {
-                                                "box": {
-                                                    "id": "obj-6",
-                                                    "maxclass": "newobj",
-                                                    "numinlets": 0,
-                                                    "numoutlets": 1,
-                                                    "outlettype": [ "" ],
-                                                    "patching_rect": [ 441.0, 272.0, 122.0, 22.0 ],
-                                                    "text": "r ---add_to_beatclock"
                                                 }
                                             },
                                             {
@@ -24081,8 +25475,8 @@
                                                         "fileversion": 1,
                                                         "appversion": {
                                                             "major": 9,
-                                                            "minor": 1,
-                                                            "revision": 4,
+                                                            "minor": 2,
+                                                            "revision": 0,
                                                             "architecture": "x64",
                                                             "modernui": 1
                                                         },
@@ -24264,15 +25658,22 @@
                                                                 }
                                                             }
                                                         ],
-                                                        "patchlinecolor": [ 0.874509803921569, 0.811764705882353, 0.694117647058824, 1.0 ],
-                                                        "bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                                        "editing_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ]
+                                                        "saved_attribute_attributes": {
+                                                            "default_plcolor": {
+                                                                "expression": ""
+                                                            }
+                                                        }
                                                     },
                                                     "patching_rect": [ 348.0, 364.0, 71.0, 22.0 ],
+                                                    "saved_attribute_attributes": {
+                                                        "default_plcolor": {
+                                                            "expression": ""
+                                                        }
+                                                    },
                                                     "saved_object_attributes": {
-                                                        "editing_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                                        "locked_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                                        "patchlinecolor": [ 0.874509803921569, 0.811764705882353, 0.694117647058824, 1.0 ]
+                                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
                                                     },
                                                     "text": "p downbeat"
                                                 }
@@ -24284,7 +25685,7 @@
                                                     "numinlets": 0,
                                                     "numoutlets": 1,
                                                     "outlettype": [ "" ],
-                                                    "patching_rect": [ 439.0, 240.0, 54.0, 22.0 ],
+                                                    "patching_rect": [ 442.0, 213.0, 54.0, 22.0 ],
                                                     "text": "r ---clear"
                                                 }
                                             },
@@ -24394,7 +25795,7 @@
                                                     "maxclass": "comment",
                                                     "numinlets": 1,
                                                     "numoutlets": 0,
-                                                    "patching_rect": [ 205.0, 612.0, 150.0, 60.0 ],
+                                                    "patching_rect": [ 205.0, 612.0, 153.0, 60.0 ],
                                                     "text": "add scheduled starttime at the end of the info of the event scheduled in buffer history"
                                                 }
                                             },
@@ -24426,6 +25827,14 @@
                                             {
                                                 "patchline": {
                                                     "destination": [ "obj-13", 0 ],
+                                                    "order": 1,
+                                                    "source": [ "obj-1", 0 ]
+                                                }
+                                            },
+                                            {
+                                                "patchline": {
+                                                    "destination": [ "obj-22", 1 ],
+                                                    "order": 0,
                                                     "source": [ "obj-1", 0 ]
                                                 }
                                             },
@@ -24433,6 +25842,12 @@
                                                 "patchline": {
                                                     "destination": [ "obj-43", 0 ],
                                                     "source": [ "obj-120", 0 ]
+                                                }
+                                            },
+                                            {
+                                                "patchline": {
+                                                    "destination": [ "obj-22", 0 ],
+                                                    "source": [ "obj-18", 0 ]
                                                 }
                                             },
                                             {
@@ -24445,6 +25860,20 @@
                                                 "patchline": {
                                                     "destination": [ "obj-25", 0 ],
                                                     "source": [ "obj-21", 0 ]
+                                                }
+                                            },
+                                            {
+                                                "patchline": {
+                                                    "destination": [ "obj-64", 1 ],
+                                                    "order": 1,
+                                                    "source": [ "obj-22", 0 ]
+                                                }
+                                            },
+                                            {
+                                                "patchline": {
+                                                    "destination": [ "obj-70", 1 ],
+                                                    "order": 0,
+                                                    "source": [ "obj-22", 0 ]
                                                 }
                                             },
                                             {
@@ -24481,6 +25910,12 @@
                                                 "patchline": {
                                                     "destination": [ "obj-51", 0 ],
                                                     "source": [ "obj-32", 1 ]
+                                                }
+                                            },
+                                            {
+                                                "patchline": {
+                                                    "destination": [ "obj-70", 0 ],
+                                                    "source": [ "obj-33", 0 ]
                                                 }
                                             },
                                             {
@@ -24565,12 +26000,6 @@
                                                 "patchline": {
                                                     "destination": [ "obj-48", 0 ],
                                                     "source": [ "obj-55", 0 ]
-                                                }
-                                            },
-                                            {
-                                                "patchline": {
-                                                    "destination": [ "obj-70", 0 ],
-                                                    "source": [ "obj-6", 0 ]
                                                 }
                                             },
                                             {
@@ -24693,15 +26122,22 @@
                                                 }
                                             }
                                         ],
-                                        "patchlinecolor": [ 0.874509803921569, 0.811764705882353, 0.694117647058824, 1.0 ],
-                                        "bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                        "editing_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ]
+                                        "saved_attribute_attributes": {
+                                            "default_plcolor": {
+                                                "expression": ""
+                                            }
+                                        }
                                     },
-                                    "patching_rect": [ 187.0, 527.0, 229.0, 22.0 ],
+                                    "patching_rect": [ 125.0, 619.0, 229.0, 22.0 ],
+                                    "saved_attribute_attributes": {
+                                        "default_plcolor": {
+                                            "expression": ""
+                                        }
+                                    },
                                     "saved_object_attributes": {
-                                        "editing_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                        "locked_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                        "patchlinecolor": [ 0.874509803921569, 0.811764705882353, 0.694117647058824, 1.0 ]
+                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
                                     },
                                     "text": "p accumulated_sum_of_generated_ratios"
                                 }
@@ -24717,14 +26153,26 @@
                                         "fileversion": 1,
                                         "appversion": {
                                             "major": 9,
-                                            "minor": 1,
-                                            "revision": 4,
+                                            "minor": 2,
+                                            "revision": 0,
                                             "architecture": "x64",
                                             "modernui": 1
                                         },
                                         "classnamespace": "box",
-                                        "rect": [ 451.0, 169.0, 1027.0, 779.0 ],
+                                        "rect": [ 449.0, 641.0, 1027.0, 721.0 ],
                                         "boxes": [
+                                            {
+                                                "box": {
+                                                    "format": 6,
+                                                    "id": "obj-36",
+                                                    "maxclass": "flonum",
+                                                    "numinlets": 1,
+                                                    "numoutlets": 2,
+                                                    "outlettype": [ "", "bang" ],
+                                                    "parameter_enable": 0,
+                                                    "patching_rect": [ 122.0, 311.0, 50.0, 22.0 ]
+                                                }
+                                            },
                                             {
                                                 "box": {
                                                     "id": "obj-17",
@@ -25387,6 +26835,14 @@
                                             {
                                                 "patchline": {
                                                     "destination": [ "obj-281", 0 ],
+                                                    "order": 0,
+                                                    "source": [ "obj-128", 0 ]
+                                                }
+                                            },
+                                            {
+                                                "patchline": {
+                                                    "destination": [ "obj-36", 0 ],
+                                                    "order": 1,
                                                     "source": [ "obj-128", 0 ]
                                                 }
                                             },
@@ -25742,15 +27198,22 @@
                                                 }
                                             }
                                         ],
-                                        "patchlinecolor": [ 0.874509803921569, 0.811764705882353, 0.694117647058824, 1.0 ],
-                                        "bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                        "editing_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ]
+                                        "saved_attribute_attributes": {
+                                            "default_plcolor": {
+                                                "expression": ""
+                                            }
+                                        }
                                     },
-                                    "patching_rect": [ 147.0, 569.0, 78.0, 22.0 ],
+                                    "patching_rect": [ 85.0, 661.0, 78.0, 22.0 ],
+                                    "saved_attribute_attributes": {
+                                        "default_plcolor": {
+                                            "expression": ""
+                                        }
+                                    },
                                     "saved_object_attributes": {
-                                        "editing_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                        "locked_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                        "patchlinecolor": [ 0.874509803921569, 0.811764705882353, 0.694117647058824, 1.0 ]
+                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
                                     },
                                     "text": "p timekeeper"
                                 }
@@ -25759,21 +27222,44 @@
                                 "box": {
                                     "id": "obj-27",
                                     "maxclass": "newobj",
-                                    "numinlets": 1,
+                                    "numinlets": 2,
                                     "numoutlets": 1,
                                     "outlettype": [ "int" ],
                                     "patcher": {
                                         "fileversion": 1,
                                         "appversion": {
                                             "major": 9,
-                                            "minor": 1,
-                                            "revision": 4,
+                                            "minor": 2,
+                                            "revision": 0,
                                             "architecture": "x64",
                                             "modernui": 1
                                         },
                                         "classnamespace": "box",
-                                        "rect": [ 890.0, 456.0, 588.0, 492.0 ],
+                                        "rect": [ 324.0, 157.0, 588.0, 492.0 ],
                                         "boxes": [
+                                            {
+                                                "box": {
+                                                    "id": "obj-16",
+                                                    "maxclass": "message",
+                                                    "numinlets": 2,
+                                                    "numoutlets": 1,
+                                                    "outlettype": [ "" ],
+                                                    "patching_rect": [ 331.0, 177.0, 29.5, 22.0 ],
+                                                    "text": "0."
+                                                }
+                                            },
+                                            {
+                                                "box": {
+                                                    "comment": "",
+                                                    "id": "obj-3",
+                                                    "index": 2,
+                                                    "maxclass": "inlet",
+                                                    "numinlets": 0,
+                                                    "numoutlets": 1,
+                                                    "outlettype": [ "bang" ],
+                                                    "patching_rect": [ 331.0, 123.0, 30.0, 30.0 ]
+                                                }
+                                            },
                                             {
                                                 "box": {
                                                     "id": "obj-7",
@@ -25879,7 +27365,7 @@
                                                     "numinlets": 2,
                                                     "numoutlets": 2,
                                                     "outlettype": [ "float", "int" ],
-                                                    "patching_rect": [ 141.0, 258.0, 74.0, 22.0 ],
+                                                    "patching_rect": [ 141.0, 256.0, 74.0, 22.0 ],
                                                     "text": "maximum 0."
                                                 }
                                             },
@@ -25958,7 +27444,7 @@
                                                     "numinlets": 0,
                                                     "numoutlets": 1,
                                                     "outlettype": [ "float" ],
-                                                    "patching_rect": [ 50.0, 96.0, 30.0, 30.0 ]
+                                                    "patching_rect": [ 50.0, 70.0, 30.0, 30.0 ]
                                                 }
                                             },
                                             {
@@ -26052,6 +27538,20 @@
                                             },
                                             {
                                                 "patchline": {
+                                                    "destination": [ "obj-22", 1 ],
+                                                    "order": 1,
+                                                    "source": [ "obj-16", 0 ]
+                                                }
+                                            },
+                                            {
+                                                "patchline": {
+                                                    "destination": [ "obj-94", 0 ],
+                                                    "order": 0,
+                                                    "source": [ "obj-16", 0 ]
+                                                }
+                                            },
+                                            {
+                                                "patchline": {
                                                     "destination": [ "obj-22", 0 ],
                                                     "source": [ "obj-19", 1 ]
                                                 }
@@ -26078,6 +27578,20 @@
                                                 "patchline": {
                                                     "destination": [ "obj-105", 0 ],
                                                     "source": [ "obj-25", 0 ]
+                                                }
+                                            },
+                                            {
+                                                "patchline": {
+                                                    "destination": [ "obj-116", 0 ],
+                                                    "order": 1,
+                                                    "source": [ "obj-3", 0 ]
+                                                }
+                                            },
+                                            {
+                                                "patchline": {
+                                                    "destination": [ "obj-16", 0 ],
+                                                    "order": 0,
+                                                    "source": [ "obj-3", 0 ]
                                                 }
                                             },
                                             {
@@ -26119,15 +27633,22 @@
                                                 }
                                             }
                                         ],
-                                        "patchlinecolor": [ 0.874509803921569, 0.811764705882353, 0.694117647058824, 1.0 ],
-                                        "bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                        "editing_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ]
+                                        "saved_attribute_attributes": {
+                                            "default_plcolor": {
+                                                "expression": ""
+                                            }
+                                        }
                                     },
-                                    "patching_rect": [ 166.0, 383.0, 64.0, 22.0 ],
+                                    "patching_rect": [ 104.0, 475.0, 64.0, 22.0 ],
+                                    "saved_attribute_attributes": {
+                                        "default_plcolor": {
+                                            "expression": ""
+                                        }
+                                    },
                                     "saved_object_attributes": {
-                                        "editing_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                        "locked_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                                        "patchlinecolor": [ 0.874509803921569, 0.811764705882353, 0.694117647058824, 1.0 ]
+                                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
                                     },
                                     "text": "p direction"
                                 }
@@ -26139,7 +27660,7 @@
                                     "numinlets": 1,
                                     "numoutlets": 2,
                                     "outlettype": [ "float", "float" ],
-                                    "patching_rect": [ 147.0, 344.0, 38.0, 22.0 ],
+                                    "patching_rect": [ 85.0, 436.0, 38.0, 22.0 ],
                                     "text": "t f f"
                                 }
                             },
@@ -26150,7 +27671,7 @@
                                     "maxclass": "comment",
                                     "numinlets": 1,
                                     "numoutlets": 0,
-                                    "patching_rect": [ 221.0, 437.0, 113.0, 33.0 ],
+                                    "patching_rect": [ 159.0, 529.0, 113.0, 33.0 ],
                                     "text": "index of next generated event"
                                 }
                             }
@@ -26170,16 +27691,32 @@
                             },
                             {
                                 "patchline": {
-                                    "destination": [ "obj-13", 1 ],
-                                    "order": 0,
-                                    "source": [ "obj-10", 0 ]
+                                    "destination": [ "obj-101", 0 ],
+                                    "source": [ "obj-100", 0 ]
                                 }
                             },
                             {
                                 "patchline": {
-                                    "destination": [ "obj-46", 1 ],
-                                    "order": 1,
-                                    "source": [ "obj-10", 0 ]
+                                    "destination": [ "obj-106", 1 ],
+                                    "source": [ "obj-101", 0 ]
+                                }
+                            },
+                            {
+                                "patchline": {
+                                    "destination": [ "obj-103", 0 ],
+                                    "source": [ "obj-102", 0 ]
+                                }
+                            },
+                            {
+                                "patchline": {
+                                    "destination": [ "obj-106", 0 ],
+                                    "source": [ "obj-103", 0 ]
+                                }
+                            },
+                            {
+                                "patchline": {
+                                    "destination": [ "obj-102", 0 ],
+                                    "source": [ "obj-104", 0 ]
                                 }
                             },
                             {
@@ -26196,54 +27733,104 @@
                             },
                             {
                                 "patchline": {
-                                    "destination": [ "obj-30", 0 ],
-                                    "source": [ "obj-12", 0 ]
+                                    "destination": [ "obj-91", 0 ],
+                                    "source": [ "obj-106", 0 ]
                                 }
                             },
                             {
                                 "patchline": {
-                                    "destination": [ "obj-35", 1 ],
-                                    "source": [ "obj-13", 0 ]
+                                    "destination": [ "obj-93", 0 ],
+                                    "source": [ "obj-106", 1 ]
                                 }
                             },
                             {
                                 "patchline": {
-                                    "destination": [ "obj-13", 0 ],
-                                    "source": [ "obj-14", 0 ]
+                                    "destination": [ "obj-72", 0 ],
+                                    "source": [ "obj-109", 0 ]
                                 }
                             },
                             {
                                 "patchline": {
-                                    "destination": [ "obj-40", 0 ],
+                                    "destination": [ "obj-109", 0 ],
+                                    "source": [ "obj-110", 0 ]
+                                }
+                            },
+                            {
+                                "patchline": {
+                                    "destination": [ "obj-121", 1 ],
+                                    "source": [ "obj-112", 0 ]
+                                }
+                            },
+                            {
+                                "patchline": {
+                                    "destination": [ "obj-16", 0 ],
+                                    "order": 1,
+                                    "source": [ "obj-120", 0 ]
+                                }
+                            },
+                            {
+                                "patchline": {
+                                    "destination": [ "obj-242", 1 ],
+                                    "order": 0,
+                                    "source": [ "obj-120", 0 ]
+                                }
+                            },
+                            {
+                                "patchline": {
+                                    "destination": [ "obj-27", 1 ],
+                                    "midpoints": [ 356.5, 456.0, 279.0, 456.0, 279.0, 471.0, 158.5, 471.0 ],
+                                    "order": 2,
+                                    "source": [ "obj-120", 0 ]
+                                }
+                            },
+                            {
+                                "patchline": {
+                                    "destination": [ "obj-72", 0 ],
+                                    "source": [ "obj-120", 1 ]
+                                }
+                            },
+                            {
+                                "patchline": {
+                                    "destination": [ "obj-120", 0 ],
+                                    "source": [ "obj-121", 0 ]
+                                }
+                            },
+                            {
+                                "patchline": {
+                                    "destination": [ "obj-50", 2 ],
+                                    "source": [ "obj-148", 0 ]
+                                }
+                            },
+                            {
+                                "patchline": {
+                                    "destination": [ "obj-59", 2 ],
+                                    "source": [ "obj-15", 0 ]
+                                }
+                            },
+                            {
+                                "patchline": {
+                                    "destination": [ "obj-15", 0 ],
+                                    "source": [ "obj-16", 0 ]
+                                }
+                            },
+                            {
+                                "patchline": {
+                                    "destination": [ "obj-148", 0 ],
+                                    "order": 0,
                                     "source": [ "obj-161", 0 ]
                                 }
                             },
                             {
                                 "patchline": {
-                                    "destination": [ "obj-183", 0 ],
-                                    "order": 2,
-                                    "source": [ "obj-175", 0 ]
-                                }
-                            },
-                            {
-                                "patchline": {
-                                    "destination": [ "obj-21", 0 ],
-                                    "order": 0,
-                                    "source": [ "obj-175", 0 ]
-                                }
-                            },
-                            {
-                                "patchline": {
-                                    "destination": [ "obj-33", 0 ],
-                                    "midpoints": [ 156.5, 80.68560791015625, 135.359619140625, 80.68560791015625, 135.359619140625, 185.57440185546875, 247.5, 185.57440185546875 ],
+                                    "destination": [ "obj-40", 0 ],
                                     "order": 1,
-                                    "source": [ "obj-175", 0 ]
+                                    "source": [ "obj-161", 0 ]
                                 }
                             },
                             {
                                 "patchline": {
-                                    "destination": [ "obj-12", 0 ],
-                                    "source": [ "obj-183", 0 ]
+                                    "destination": [ "obj-121", 0 ],
+                                    "source": [ "obj-18", 0 ]
                                 }
                             },
                             {
@@ -26254,25 +27841,15 @@
                             },
                             {
                                 "patchline": {
-                                    "destination": [ "obj-34", 0 ],
-                                    "source": [ "obj-21", 0 ]
-                                }
-                            },
-                            {
-                                "patchline": {
-                                    "destination": [ "obj-21", 1 ],
-                                    "source": [ "obj-23", 1 ]
-                                }
-                            },
-                            {
-                                "patchline": {
-                                    "destination": [ "obj-46", 0 ],
-                                    "source": [ "obj-23", 0 ]
+                                    "destination": [ "obj-16", 1 ],
+                                    "order": 0,
+                                    "source": [ "obj-242", 0 ]
                                 }
                             },
                             {
                                 "patchline": {
                                     "destination": [ "obj-59", 2 ],
+                                    "order": 1,
                                     "source": [ "obj-242", 0 ]
                                 }
                             },
@@ -26284,164 +27861,40 @@
                             },
                             {
                                 "patchline": {
-                                    "destination": [ "obj-55", 0 ],
-                                    "source": [ "obj-3", 0 ]
-                                }
-                            },
-                            {
-                                "patchline": {
-                                    "destination": [ "obj-105", 0 ],
-                                    "order": 3,
-                                    "source": [ "obj-30", 0 ]
-                                }
-                            },
-                            {
-                                "patchline": {
-                                    "destination": [ "obj-164", 0 ],
-                                    "order": 2,
-                                    "source": [ "obj-30", 0 ]
-                                }
-                            },
-                            {
-                                "patchline": {
-                                    "destination": [ "obj-32", 1 ],
-                                    "order": 1,
-                                    "source": [ "obj-30", 0 ]
-                                }
-                            },
-                            {
-                                "patchline": {
-                                    "destination": [ "obj-34", 1 ],
-                                    "order": 0,
-                                    "source": [ "obj-30", 0 ]
-                                }
-                            },
-                            {
-                                "patchline": {
-                                    "destination": [ "obj-30", 1 ],
-                                    "source": [ "obj-31", 0 ]
-                                }
-                            },
-                            {
-                                "patchline": {
-                                    "destination": [ "obj-31", 0 ],
-                                    "source": [ "obj-32", 0 ]
-                                }
-                            },
-                            {
-                                "patchline": {
-                                    "destination": [ "obj-32", 0 ],
-                                    "source": [ "obj-33", 0 ]
-                                }
-                            },
-                            {
-                                "patchline": {
-                                    "destination": [ "obj-34", 0 ],
-                                    "source": [ "obj-33", 1 ]
-                                }
-                            },
-                            {
-                                "patchline": {
-                                    "destination": [ "obj-35", 0 ],
-                                    "source": [ "obj-34", 0 ]
-                                }
-                            },
-                            {
-                                "patchline": {
-                                    "destination": [ "obj-30", 1 ],
-                                    "source": [ "obj-35", 0 ]
-                                }
-                            },
-                            {
-                                "patchline": {
-                                    "destination": [ "obj-12", 1 ],
-                                    "midpoints": [ 257.5, 127.043701171875, 239.5, 127.043701171875 ],
+                                    "destination": [ "obj-50", 1 ],
                                     "order": 1,
                                     "source": [ "obj-40", 0 ]
                                 }
                             },
                             {
                                 "patchline": {
-                                    "destination": [ "obj-31", 1 ],
+                                    "destination": [ "obj-79", 1 ],
                                     "order": 0,
                                     "source": [ "obj-40", 0 ]
                                 }
                             },
                             {
                                 "patchline": {
-                                    "destination": [ "obj-12", 2 ],
-                                    "midpoints": [ 386.5, 132.0, 322.5, 132.0 ],
-                                    "order": 0,
-                                    "source": [ "obj-46", 0 ]
+                                    "destination": [ "obj-87", 0 ],
+                                    "source": [ "obj-50", 0 ]
                                 }
                             },
                             {
                                 "patchline": {
-                                    "destination": [ "obj-35", 1 ],
-                                    "midpoints": [ 386.5, 296.20037841796875, 295.0, 296.20037841796875 ],
-                                    "order": 1,
-                                    "source": [ "obj-46", 0 ]
+                                    "destination": [ "obj-50", 0 ],
+                                    "source": [ "obj-51", 0 ]
                                 }
                             },
                             {
                                 "patchline": {
-                                    "destination": [ "obj-30", 1 ],
-                                    "order": 2,
-                                    "source": [ "obj-55", 0 ]
-                                }
-                            },
-                            {
-                                "patchline": {
-                                    "destination": [ "obj-30", 0 ],
-                                    "order": 3,
-                                    "source": [ "obj-55", 0 ]
-                                }
-                            },
-                            {
-                                "patchline": {
-                                    "destination": [ "obj-32", 1 ],
-                                    "order": 1,
-                                    "source": [ "obj-55", 0 ]
-                                }
-                            },
-                            {
-                                "patchline": {
-                                    "destination": [ "obj-34", 1 ],
-                                    "order": 0,
-                                    "source": [ "obj-55", 0 ]
-                                }
-                            },
-                            {
-                                "patchline": {
-                                    "destination": [ "obj-55", 0 ],
-                                    "source": [ "obj-56", 0 ]
-                                }
-                            },
-                            {
-                                "patchline": {
-                                    "destination": [ "obj-14", 0 ],
-                                    "order": 0,
-                                    "source": [ "obj-57", 0 ]
-                                }
-                            },
-                            {
-                                "patchline": {
-                                    "destination": [ "obj-23", 0 ],
-                                    "order": 2,
-                                    "source": [ "obj-57", 0 ]
-                                }
-                            },
-                            {
-                                "patchline": {
-                                    "destination": [ "obj-3", 0 ],
-                                    "order": 1,
-                                    "source": [ "obj-57", 0 ]
+                                    "destination": [ "obj-51", 0 ],
+                                    "source": [ "obj-52", 0 ]
                                 }
                             },
                             {
                                 "patchline": {
                                     "destination": [ "obj-40", 1 ],
-                                    "midpoints": [ 156.5, 607.52099609375, 583.291748046875, 607.52099609375, 583.291748046875, 65.261962890625, 361.824462890625, 65.261962890625, 361.824462890625, 84.0, 360.5, 84.0 ],
+                                    "midpoints": [ 94.5, 707.9140625, 711.109375, 707.9140625, 711.109375, 49.625, 282.0, 49.625, 282.0, 49.62109375, 270.0, 49.62109375, 270.0, 49.8984375, 250.5, 49.8984375 ],
                                     "order": 0,
                                     "source": [ "obj-59", 0 ]
                                 }
@@ -26452,17 +27905,149 @@
                                     "order": 1,
                                     "source": [ "obj-59", 0 ]
                                 }
+                            },
+                            {
+                                "patchline": {
+                                    "destination": [ "obj-148", 1 ],
+                                    "order": 1,
+                                    "source": [ "obj-69", 0 ]
+                                }
+                            },
+                            {
+                                "patchline": {
+                                    "destination": [ "obj-76", 1 ],
+                                    "order": 0,
+                                    "source": [ "obj-69", 0 ]
+                                }
+                            },
+                            {
+                                "patchline": {
+                                    "destination": [ "obj-72", 0 ],
+                                    "source": [ "obj-71", 0 ]
+                                }
+                            },
+                            {
+                                "patchline": {
+                                    "destination": [ "obj-75", 1 ],
+                                    "order": 0,
+                                    "source": [ "obj-72", 0 ]
+                                }
+                            },
+                            {
+                                "patchline": {
+                                    "destination": [ "obj-78", 1 ],
+                                    "order": 1,
+                                    "source": [ "obj-72", 0 ]
+                                }
+                            },
+                            {
+                                "patchline": {
+                                    "destination": [ "obj-87", 1 ],
+                                    "order": 2,
+                                    "source": [ "obj-72", 0 ]
+                                }
+                            },
+                            {
+                                "patchline": {
+                                    "destination": [ "obj-76", 0 ],
+                                    "source": [ "obj-75", 0 ]
+                                }
+                            },
+                            {
+                                "patchline": {
+                                    "destination": [ "obj-87", 1 ],
+                                    "source": [ "obj-76", 0 ]
+                                }
+                            },
+                            {
+                                "patchline": {
+                                    "destination": [ "obj-91", 0 ],
+                                    "source": [ "obj-77", 0 ]
+                                }
+                            },
+                            {
+                                "patchline": {
+                                    "destination": [ "obj-93", 0 ],
+                                    "source": [ "obj-77", 1 ]
+                                }
+                            },
+                            {
+                                "patchline": {
+                                    "destination": [ "obj-79", 0 ],
+                                    "source": [ "obj-78", 0 ]
+                                }
+                            },
+                            {
+                                "patchline": {
+                                    "destination": [ "obj-87", 1 ],
+                                    "source": [ "obj-79", 0 ]
+                                }
+                            },
+                            {
+                                "patchline": {
+                                    "destination": [ "obj-77", 0 ],
+                                    "source": [ "obj-80", 0 ]
+                                }
+                            },
+                            {
+                                "patchline": {
+                                    "destination": [ "obj-105", 0 ],
+                                    "order": 3,
+                                    "source": [ "obj-87", 0 ]
+                                }
+                            },
+                            {
+                                "patchline": {
+                                    "destination": [ "obj-164", 0 ],
+                                    "order": 2,
+                                    "source": [ "obj-87", 0 ]
+                                }
+                            },
+                            {
+                                "patchline": {
+                                    "destination": [ "obj-75", 1 ],
+                                    "midpoints": [ 94.5, 416.0, 282.0, 416.0, 282.0, 305.0, 317.0, 305.0 ],
+                                    "order": 0,
+                                    "source": [ "obj-87", 0 ]
+                                }
+                            },
+                            {
+                                "patchline": {
+                                    "destination": [ "obj-78", 1 ],
+                                    "midpoints": [ 94.5, 416.0, 144.0, 416.0, 144.0, 305.0, 178.0, 305.0 ],
+                                    "order": 1,
+                                    "source": [ "obj-87", 0 ]
+                                }
+                            },
+                            {
+                                "patchline": {
+                                    "destination": [ "obj-78", 0 ],
+                                    "source": [ "obj-91", 0 ]
+                                }
+                            },
+                            {
+                                "patchline": {
+                                    "destination": [ "obj-75", 0 ],
+                                    "source": [ "obj-93", 0 ]
+                                }
                             }
                         ],
-                        "patchlinecolor": [ 0.874509803921569, 0.811764705882353, 0.694117647058824, 1.0 ],
-                        "bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                        "editing_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ]
+                        "saved_attribute_attributes": {
+                            "default_plcolor": {
+                                "expression": ""
+                            }
+                        }
                     },
                     "patching_rect": [ 42.0, 128.0, 84.0, 22.0 ],
+                    "saved_attribute_attributes": {
+                        "default_plcolor": {
+                            "expression": ""
+                        }
+                    },
                     "saved_object_attributes": {
-                        "editing_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                        "locked_bgcolor": [ 0.305882352941176, 0.286274509803922, 0.211764705882353, 1.0 ],
-                        "patchlinecolor": [ 0.874509803921569, 0.811764705882353, 0.694117647058824, 1.0 ]
+                        "editing_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                        "locked_bgcolor": [ 0.3058823529411765, 0.28627450980392155, 0.21176470588235294, 1.0 ],
+                        "patchlinecolor": [ 0.8745098039215686, 0.8117647058823529, 0.6941176470588235, 1.0 ]
                     },
                     "text": "p 2_scheduler"
                 }
@@ -26533,6 +28118,11 @@
                     "source": [ "obj-95", 0 ]
                 }
             }
-        ]
+        ],
+        "saved_attribute_attributes": {
+            "default_plcolor": {
+                "expression": ""
+            }
+        }
     }
 }
